@@ -54,10 +54,15 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
     if (stored) {
       try {
         const m = JSON.parse(stored)
-        // Vérifier que le membre existe encore en DB
-        const {data:dbM} = await supabase.from('membres').select('*').eq('id',m.id).single()
-        if (dbM) setMembre(dbM)
-        else localStorage.removeItem(`crew2-${params.code}`)
+        const {data:dbM, error:dbErr} = await supabase.from('membres')
+          .select('*').eq('id', m.id).maybeSingle()
+        if (dbM) {
+          // Normaliser is_createur (peut être null sur anciens membres)
+          setMembre({...dbM, is_createur: dbM.is_createur ?? false})
+        } else {
+          // Membre supprimé ou retiré — effacer localStorage
+          localStorage.removeItem(`crew2-${params.code}`)
+        }
       } catch {}
     }
     setLoading(false)

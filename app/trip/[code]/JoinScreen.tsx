@@ -59,9 +59,11 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       }
     }
     const { data: existing } = await supabase.from('membres')
-      .select('*').eq('trip_id',trip.id).ilike('prenom',nom).single()
-    if (existing) { onJoin(existing); return }
-    const isFirst = (await supabase.from('membres').select('id').eq('trip_id',trip.id)).data?.length === 0
+      .select('*').eq('trip_id',trip.id).ilike('prenom',nom).maybeSingle()
+    if (existing) { onJoin({...existing, is_createur: existing.is_createur ?? false}); return }
+    const { count } = await supabase.from('membres')
+      .select('id', {count:'exact',head:true}).eq('trip_id',trip.id)
+    const isFirst = (count ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const { data, error } = await supabase.from('membres')
       .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst})
