@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
@@ -12,13 +12,14 @@ function countdown(d?: string) {
   return `${diff}j avant le départ`
 }
 
-function isYoutube(url: string) {
-  return /youtube\.com|youtu\.be/.test(url)
-}
-
 function getYoutubeId(url: string) {
   const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
   return m ? m[1] : null
+}
+
+function isPdf(url?: string) {
+  if (!url) return false
+  return url.toLowerCase().includes('.pdf') || url.includes('application/pdf')
 }
 
 function ago(ts: string) {
@@ -26,6 +27,12 @@ function ago(ts: string) {
   if (d < 3600000) return `${Math.floor(d/60000)}min`
   if (d < 86400000) return `${Math.floor(d/3600000)}h`
   return new Date(ts).toLocaleDateString('fr-CA',{day:'numeric',month:'short'})
+}
+
+function fmtBytes(b: number) {
+  if (b < 1024) return `${b} B`
+  if (b < 1048576) return `${(b/1024).toFixed(0)} KB`
+  return `${(b/1048576).toFixed(1)} MB`
 }
 
 export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) {
@@ -37,7 +44,11 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
   const [titre, setTitre] = useState('')
   const [contenu, setContenu] = useState('')
   const [lien, setLien] = useState('')
+  const [pdfFile, setPdfFile] = useState<File|null>(null)
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [pdfViewer, setPdfViewer] = useState<{url:string,nom:string}|null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [lodge, setLodge] = useState({
     nom: trip.lodge_nom||'', adresse: trip.lodge_adresse||'',
     tel: trip.lodge_tel||'', wifi: trip.lodge_wifi||'',
@@ -55,15 +66,47 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
 
   const filtered = filtre === 'all' ? cards : cards.filter(c => c.categorie === filtre)
 
+  async function uploadPdf(file: File): Promise<string|null> {
+    setUploading(true)
+    const ext = file.name.split('.').pop() || 'pdf'
+    const path = `${trip.id}/docs/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g,'_')}`
+    const { error } = await supabase.storage.from('trip-photos').upload(path, file, {
+      contentType: 'application/pdf', upsert: false
+    })
+    setUploading(false)
+    if (error) { alert('Erreur upload: ' + error.message); return null }
+    const { data: { publicUrl } } = supabase.storage.from('trip-photos').getPublicUrl(path)
+    return publicUrl
+  }
+
   async function save() {
     if (!titre.trim()) return
     setSaving(true)
+    let fichierUrl: string|null = null
+    let fichierNom: string|null = null
+    let fichierTaille: number|null = null
+
+    if (pdfFile) {
+      fichierUrl = await uploadPdf(pdfFile)
+      if (!fichierUrl) { setSaving(false); return }
+      fichierNom = pdfFile.name
+      fichierTaille = pdfFile.size
+    }
+
     const { data, error } = await supabase.from('infos').insert({
       trip_id: trip.id, categorie: cat, titre: titre.trim(),
-      contenu: contenu.trim()||null, lien: lien.trim()||null,
+      contenu: contenu.trim()||null,
+      lien: lien.trim()||null,
+      fichier_url: fichierUrl,
+      fichier_nom: fichierNom,
+      fichier_taille: fichierTaille,
       membre_prenom: membre.prenom,
     }).select().single()
-    if (!error && data) { setCards(p => [data, ...p]); setTitre(''); setContenu(''); setLien(''); setSheetOpen(false) }
+    if (!error && data) {
+      setCards(p => [data, ...p])
+      setTitre(''); setContenu(''); setLien(''); setPdfFile(null)
+      setSheetOpen(false)
+    }
     setSaving(false)
   }
 
@@ -95,6 +138,30 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
 
   return (
     <>
+      {/* PDF Viewer Sheet */}
+      {pdfViewer && (
+        <>
+          <div className="overlay open" onClick={() => setPdfViewer(null)} />
+          <div className="sheet open" style={{height:'92dvh',display:'flex',flexDirection:'column',padding:0}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 16px',borderBottom:'1px solid var(--border)',flexShrink:0}}>
+              <div style={{fontWeight:700,fontSize:15,flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                📄 {pdfViewer.nom}
+              </div>
+              <div style={{display:'flex',gap:8,flexShrink:0}}>
+                <a href={pdfViewer.url} target="_blank" rel="noreferrer"
+                  style={{fontSize:13,fontWeight:600,color:'var(--green)',background:'var(--sand)',padding:'6px 12px',borderRadius:8,textDecoration:'none'}}>
+                  ↗ Ouvrir
+                </a>
+                <button onClick={() => setPdfViewer(null)}
+                  style={{background:'none',border:'none',fontSize:22,color:'var(--text-3)',cursor:'pointer',lineHeight:1}}>×</button>
+              </div>
+            </div>
+            <iframe src={`${pdfViewer.url}#toolbar=0`} style={{flex:1,border:'none',width:'100%'}}
+              title={pdfViewer.nom} />
+          </div>
+        </>
+      )}
+
       {/* Header trip */}
       <div style={{background:'var(--forest)',padding:'18px 16px 16px',color:'#fff'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
@@ -105,13 +172,13 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
             <div style={{fontSize:20,fontWeight:800,letterSpacing:'-.02em',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
               {trip.nom}
             </div>
-            {(tripDate) && (
+            {tripDate && (
               <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:4}}>
                 {tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}
               </div>
             )}
           </div>
-          <button onClick={copyLink} style={{background: copied ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',flexShrink:0,marginLeft:12,transition:'background .2s'}}>
+          <button onClick={copyLink} style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',flexShrink:0,marginLeft:12,transition:'background .2s'}}>
             {copied ? '✓ Copié !' : '🔗 Inviter'}
           </button>
         </div>
@@ -124,13 +191,11 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
 
       {/* Section Lodge */}
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom: haslodge||editLodge ? 12 : 0}}>
-          <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-            🏕 Le Lodge
-          </div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:haslodge||editLodge?12:0}}>
+          <div style={{fontWeight:700,fontSize:14}}>🏕 Le Lodge</div>
           <button onClick={()=>setEditLodge(!editLodge)}
             style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-            {editLodge ? 'Fermer' : haslodge ? 'Modifier' : '+ Ajouter'}
+            {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
           </button>
         </div>
         {!editLodge && haslodge && (
@@ -150,27 +215,25 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
                 {k:'nom',label:'Nom du Lodge',ph:'Ex: Babine Norlakes'},
                 {k:'adresse',label:'Adresse',ph:'Ex: Smithers, BC'},
                 {k:'tel',label:'Téléphone',ph:'+1 250 000 0000'},
-                {k:'wifi',label:'Mot de passe WiFi',ph:'Ex: fishing2025'},
+                {k:'wifi',label:'WiFi',ph:'Ex: fishing2025'},
                 {k:'code',label:"Code d'accès",ph:'Ex: 4521#'},
-                {k:'arrivee',label:"Heure d'arrivée",ph:'Ex: 14h00 le 8 juin'},
+                {k:'arrivee',label:"Heure d'arrivée",ph:'Ex: 14h le 8 juin'},
               ].map(f=>(
                 <div key={f.k}>
                   <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>{f.label}</div>
-                  <input className="input" placeholder={f.ph}
-                    value={lodge[f.k as keyof typeof lodge]}
-                    onChange={e=>setLodge(p=>({...p,[f.k]:e.target.value}))}
-                    style={{padding:'9px 11px',fontSize:13}} />
+                  <input className="input" placeholder={f.ph} value={lodge[f.k as keyof typeof lodge]}
+                    onChange={e=>setLodge(p=>({...p,[f.k]:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
                 </div>
               ))}
             </div>
             <button className="btn btn-primary" onClick={saveLodge} disabled={savingLodge} style={{padding:'10px',fontSize:13}}>
-              {savingLodge ? 'Sauvegarde…' : 'Sauvegarder'}
+              {savingLodge?'Sauvegarde…':'Sauvegarder'}
             </button>
           </div>
         )}
       </div>
 
-      {/* Filtres catégories */}
+      {/* Filtres */}
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',overflowX:'auto',display:'flex',gap:6,padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
         <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
         {CATEGORIES.map(c=>(
@@ -185,12 +248,15 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
         {filtered.length === 0 ? (
           <div className="empty">
             <span className="empty-icon">{filtre==='all'?'📋':getCat(filtre).icon}</span>
-            Aucune info ici pour l'instant.<br/>Appuyez sur <strong>+</strong> pour ajouter.
+            Aucune info ici.<br/>Appuyez sur <strong>+</strong> pour ajouter.
           </div>
-        ) : filtered.map(card => <InfoCardView key={card.id} card={card} onDelete={()=>removeCard(card.id)} />)}
+        ) : filtered.map(card => (
+          <InfoCardView key={card.id} card={card}
+            onDelete={()=>removeCard(card.id)}
+            onViewPdf={(url,nom)=>setPdfViewer({url,nom})} />
+        ))}
       </div>
 
-      {/* FAB */}
       <button className="fab" onClick={()=>setSheetOpen(true)}>+</button>
 
       {/* Sheet ajouter */}
@@ -212,16 +278,44 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
           </div>
         </div>
         <div className="field"><label>Titre</label>
-          <input className="input" placeholder="Ex: Vol Air Canada YQB → YVR" value={titre} onChange={e=>setTitre(e.target.value)} />
+          <input className="input" placeholder="Ex: Liste d'équipement pêche Spey" value={titre} onChange={e=>setTitre(e.target.value)} />
         </div>
         <div className="field"><label>Détails (optionnel)</label>
-          <textarea className="input" rows={3} placeholder="Numéro de vol, horaire, instructions…" value={contenu} onChange={e=>setContenu(e.target.value)} />
+          <textarea className="input" rows={2} placeholder="Notes, instructions…" value={contenu} onChange={e=>setContenu(e.target.value)} />
         </div>
-        <div className="field"><label>Lien (optionnel)</label>
-          <input className="input" type="url" placeholder="https://…" value={lien} onChange={e=>setLien(e.target.value)} />
+        <div className="field"><label>Lien externe (optionnel)</label>
+          <input className="input" type="url" placeholder="https://… (PDF, YouTube, site web)" value={lien} onChange={e=>setLien(e.target.value)} />
         </div>
-        <button className="btn btn-primary" onClick={save} disabled={saving||!titre.trim()}>{saving?'Ajout…':'Ajouter'}</button>
-        <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>setSheetOpen(false)}>Annuler</button>
+
+        {/* Upload PDF */}
+        <div className="field">
+          <label>Document PDF (optionnel)</label>
+          <input ref={fileRef} type="file" accept="application/pdf,.pdf" style={{display:'none'}}
+            onChange={e=>{ const f=e.target.files?.[0]; if(f){ if(f.size>10485760){alert('Max 10 MB');return;} setPdfFile(f) } }} />
+          {pdfFile ? (
+            <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,padding:'10px 14px'}}>
+              <span style={{fontSize:24}}>📄</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{pdfFile.name}</div>
+                <div style={{fontSize:11,color:'var(--text-3)'}}>{fmtBytes(pdfFile.size)}</div>
+              </div>
+              <button onClick={()=>{setPdfFile(null);if(fileRef.current)fileRef.current.value='';}}
+                style={{background:'none',border:'none',fontSize:20,color:'var(--text-3)',cursor:'pointer'}}>×</button>
+            </div>
+          ) : (
+            <button onClick={()=>fileRef.current?.click()}
+              style={{width:'100%',padding:'12px',border:'1.5px dashed var(--border)',borderRadius:10,
+                background:'var(--sand)',color:'var(--text-2)',fontSize:14,fontWeight:600,cursor:'pointer',
+                display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+              📎 Choisir un PDF <span style={{fontSize:11,color:'var(--text-3)',fontWeight:400}}>(max 10 MB)</span>
+            </button>
+          )}
+        </div>
+
+        <button className="btn btn-primary" onClick={save} disabled={saving||uploading||!titre.trim()}>
+          {uploading?'Upload en cours…':saving?'Ajout…':'Ajouter'}
+        </button>
+        <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>{setSheetOpen(false);setPdfFile(null)}}>Annuler</button>
       </div>
     </>
   )
@@ -240,23 +334,22 @@ function LodgeItem({icon,label,val,link}:{icon:string,label:string,val:string,li
 function FilterBtn({active,onClick,color,children}:{active:boolean,onClick:()=>void,color?:string,children:React.ReactNode}) {
   return (
     <button onClick={onClick} style={{
-      flexShrink:0,padding:'6px 13px',borderRadius:20,border:`1.5px solid ${active?(color||'var(--forest)'):'var(--border)'}`,
+      flexShrink:0,padding:'6px 13px',borderRadius:20,
+      border:`1.5px solid ${active?(color||'var(--forest)'):'var(--border)'}`,
       background:active?(color||'var(--forest)'):'transparent',
       color:active?'#fff':'var(--text-2)',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'
     }}>{children}</button>
   )
 }
 
-function InfoCardView({card,onDelete}:{card:InfoCard,onDelete:()=>void}) {
+function InfoCardView({card,onDelete,onViewPdf}:{
+  card:InfoCard, onDelete:()=>void, onViewPdf:(url:string,nom:string)=>void
+}) {
   const c = getCat(card.categorie)
   const ytId = card.lien ? getYoutubeId(card.lien) : null
-
-  function ago(ts: string) {
-    const d = Date.now() - new Date(ts).getTime()
-    if (d < 3600000) return `${Math.floor(d/60000)}min`
-    if (d < 86400000) return `${Math.floor(d/3600000)}h`
-    return new Date(ts).toLocaleDateString('fr-CA',{day:'numeric',month:'short'})
-  }
+  const hasPdf = !!card.fichier_url || (card.lien && isPdf(card.lien))
+  const pdfUrl = card.fichier_url || card.lien || ''
+  const pdfNom = (card as any).fichier_nom || card.titre || 'Document'
 
   return (
     <div className="card">
@@ -265,27 +358,50 @@ function InfoCardView({card,onDelete}:{card:InfoCard,onDelete:()=>void}) {
           {c.icon}
         </div>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-            <span style={{fontSize:10,fontWeight:700,color:c.color,textTransform:'uppercase',letterSpacing:'.06em'}}>{c.label}</span>
-          </div>
+          <div style={{fontSize:10,fontWeight:700,color:c.color,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:4}}>{c.label}</div>
           <div style={{fontWeight:700,fontSize:15,letterSpacing:'-.01em',marginBottom:card.contenu?5:0}}>{card.titre}</div>
-          {card.contenu && <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap'}}>{card.contenu}</div>}
-          {card.lien && !ytId && (
+          {card.contenu && <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap',marginBottom:6}}>{card.contenu}</div>}
+
+          {/* Bouton PDF */}
+          {hasPdf && (
+            <button onClick={()=>onViewPdf(pdfUrl, pdfNom)}
+              style={{display:'inline-flex',alignItems:'center',gap:7,marginTop:4,marginBottom:4,
+                padding:'9px 14px',borderRadius:10,border:'1.5px solid var(--border)',
+                background:'var(--sand)',color:'var(--text)',fontWeight:600,fontSize:13,
+                cursor:'pointer',width:'100%',justifyContent:'center'}}>
+              <span style={{fontSize:18}}>📄</span>
+              Voir le document
+              <span style={{marginLeft:'auto',fontSize:18,color:'var(--text-3)'}}>›</span>
+            </button>
+          )}
+
+          {/* Lien non-PDF et non-YouTube */}
+          {card.lien && !ytId && !isPdf(card.lien) && (
             <a href={card.lien} target="_blank" rel="noreferrer"
-              style={{display:'inline-flex',alignItems:'center',gap:5,marginTop:8,fontSize:13,color:'var(--green)',fontWeight:600,textDecoration:'none',background:'var(--sand)',padding:'5px 10px',borderRadius:7}}>
+              style={{display:'inline-flex',alignItems:'center',gap:5,marginTop:6,fontSize:13,
+                color:'var(--green)',fontWeight:600,textDecoration:'none',
+                background:'var(--sand)',padding:'5px 10px',borderRadius:7}}>
               🔗 Ouvrir le lien ↗
             </a>
           )}
+
+          {/* Aperçu YouTube */}
           {ytId && (
-            <a href={card.lien!} target="_blank" rel="noreferrer" style={{display:'block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative'}}>
-              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="" style={{width:'100%',display:'block',borderRadius:10}} />
-              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.25)',borderRadius:10}}>
-                <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,0,0,.85)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,color:'#fff'}}>▶</div>
+            <a href={card.lien!} target="_blank" rel="noreferrer"
+              style={{display:'block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative'}}>
+              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt=""
+                style={{width:'100%',display:'block',borderRadius:10}} />
+              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
+                background:'rgba(0,0,0,.25)',borderRadius:10}}>
+                <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,0,0,.85)',
+                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,color:'#fff'}}>▶</div>
               </div>
             </a>
           )}
+
           <div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>
             {card.membre_prenom} · {ago(card.created_at)}
+            {(card as any).fichier_taille ? ` · ${fmtBytes((card as any).fichier_taille)}` : ''}
           </div>
         </div>
         <button onClick={onDelete} style={{background:'none',border:'none',color:'var(--border)',fontSize:20,cursor:'pointer',flexShrink:0,padding:2}}>×</button>
