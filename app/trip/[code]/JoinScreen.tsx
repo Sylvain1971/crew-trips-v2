@@ -4,7 +4,10 @@ import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
 
-const ICONS: Record<string,string> = { peche:'🎣', ski:'⛷', chasse:'🦌', autre:'🏕' }
+const ICONS: Record<string,string> = { 
+  peche:'🎣', ski:'⛷', skinordique:'🎿', motoneige:'🛷',
+  hike:'🥾', velo:'🚵', chasse:'🦌', autre:'🏕' 
+}
 
 function fmt(d?: string) {
   if (!d) return ''

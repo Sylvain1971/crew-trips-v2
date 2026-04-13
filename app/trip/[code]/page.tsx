@@ -8,7 +8,10 @@ import Chat from './Chat'
 import Membres from './Membres'
 
 type Tab = 'infos'|'chat'|'membres'
-const ICONS: Record<string,string> = { peche:'🎣', ski:'⛷', chasse:'🦌', autre:'🏕' }
+const ICONS: Record<string,string> = { 
+  peche:'🎣', ski:'⛷', skinordique:'🎿', motoneige:'🛷', 
+  hike:'🥾', velo:'🚵', chasse:'🦌', autre:'🏕' 
+}
 
 function NavIcon({tab}:{tab:Tab}) {
   if (tab==='infos') return (
