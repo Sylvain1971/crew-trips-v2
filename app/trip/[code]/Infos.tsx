@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
+import InfoCardView from './InfoCardView'
 
 // Ordre fixe pour "Tout"
 const CAT_ORDER = ['transport','lodge','permis','equipement','liens']
@@ -39,6 +40,9 @@ function formatSize(b: number) {
 }
 
 export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) {
+  const isCreateur = membre.is_createur
+  const canDelete = isCreateur || trip.can_delete
+  const canEdit = isCreateur || trip.can_edit
   const [cards, setCards] = useState<InfoCard[]>([])
   const [filtre, setFiltre] = useState<string>('all')
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -80,10 +84,11 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
     return sorted
   })()
 
-  async function uploadPdf(file: File): Promise<string|null> {
-    const ext = file.name.split('.').pop() || 'pdf'
+  async function uploadFichier(file: File): Promise<string|null> {
+    const ext = file.name.split('.').pop() || 'bin'
     const path = `${trip.id}/docs/${Date.now()}-${membre.prenom.toLowerCase().replace(/\s/g,'')}.${ext}`
-    const { error } = await supabase.storage.from('trip-photos').upload(path, file, { contentType: 'application/pdf' })
+    const contentType = file.type || 'application/octet-stream'
+    const { error } = await supabase.storage.from('trip-photos').upload(path, file, { contentType })
     if (error) { alert('Erreur upload: ' + error.message); return null }
     const { data } = supabase.storage.from('trip-photos').getPublicUrl(path)
     return data.publicUrl
@@ -95,7 +100,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
     let fichier_url: string|null = null
     if (pdfFile) {
       setUploading(true)
-      fichier_url = await uploadPdf(pdfFile)
+      fichier_url = await uploadFichier(pdfFile)
       setUploading(false)
       if (!fichier_url) { setSaving(false); return }
     }
@@ -253,6 +258,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
           </div>
         ) : filtered.map(card => (
           <InfoCardView key={card.id} card={card}
+            canDelete={canDelete}
             onDelete={()=>removeCard(card.id)}
             onOpenPdf={(url,nom)=>setPdfViewer({url,nom})} />
         ))}
@@ -291,7 +297,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
         {/* Upload PDF */}
         <div className="field">
           <label>Document PDF (optionnel)</label>
-          <input ref={fileRef} type="file" accept="application/pdf" style={{display:'none'}}
+          <input ref={fileRef} type="file" accept="application/pdf,image/*" style={{display:'none'}}
             onChange={e=>setPdfFile(e.target.files?.[0]||null)} />
           {pdfFile ? (
             <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,padding:'10px 14px',border:'1.5px solid var(--border)'}}>
@@ -305,8 +311,8 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
             </div>
           ) : (
             <button onClick={()=>fileRef.current?.click()}
-              style={{width:'100%',padding:'12px',borderRadius:10,border:'2px dashed var(--border)',background:'transparent',color:'var(--text-2)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-              📎 Choisir un PDF
+              style={{background:'transparent',border:'2px dashed var(--border)',color:'var(--text-2)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+              📎 Choisir un PDF ou une photo
             </button>
           )}
         </div>
@@ -347,62 +353,3 @@ function FilterBtn({active,onClick,color,children}:{active:boolean,onClick:()=>v
   )
 }
 
-function InfoCardView({card,onDelete,onOpenPdf}:{
-  card:InfoCard,onDelete:()=>void,onOpenPdf:(url:string,nom:string)=>void
-}) {
-  const c = getCat(card.categorie)
-  const ytId = card.lien ? getYoutubeId(card.lien) : null
-  const hasPdf = isPdf(card.fichier_url) || isPdf(card.lien)
-  const pdfUrl = isPdf(card.fichier_url) ? card.fichier_url : isPdf(card.lien) ? card.lien : null
-
-  return (
-    <div className="card">
-      <div style={{display:'flex',alignItems:'flex-start',gap:12,padding:'13px 14px'}}>
-        <div style={{width:40,height:40,borderRadius:10,background:c.bg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>
-          {c.icon}
-        </div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:10,fontWeight:700,color:c.color,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:4}}>{c.label}</div>
-          <div style={{fontWeight:700,fontSize:15,letterSpacing:'-.01em',marginBottom:card.contenu?5:0}}>{card.titre}</div>
-          {card.contenu && <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap'}}>{card.contenu}</div>}
-
-          {/* Lien externe non-PDF non-YouTube */}
-          {card.lien && !ytId && !hasPdf && (
-            <a href={card.lien} target="_blank" rel="noreferrer"
-              style={{display:'inline-flex',alignItems:'center',gap:5,marginTop:8,fontSize:13,color:'var(--green)',fontWeight:600,textDecoration:'none',background:'var(--sand)',padding:'5px 10px',borderRadius:7}}>
-              🔗 Ouvrir le lien ↗
-            </a>
-          )}
-
-          {/* YouTube */}
-          {ytId && (
-            <a href={card.lien!} target="_blank" rel="noreferrer" style={{display:'block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative'}}>
-              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt="" style={{width:'100%',display:'block',borderRadius:10}} />
-              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.25)',borderRadius:10}}>
-                <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,0,0,.85)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,color:'#fff'}}>▶</div>
-              </div>
-            </a>
-          )}
-
-          {/* PDF */}
-          {pdfUrl && (
-            <button onClick={()=>onOpenPdf(pdfUrl, card.titre)}
-              style={{display:'flex',alignItems:'center',gap:10,marginTop:10,width:'100%',background:'var(--sand)',border:'1.5px solid var(--border)',borderRadius:10,padding:'10px 14px',cursor:'pointer',textAlign:'left'}}>
-              <div style={{width:36,height:36,borderRadius:8,background:'#FEE2E2',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>📄</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>Voir le document</div>
-                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{card.titre}.pdf</div>
-              </div>
-              <div style={{fontSize:18,color:'var(--text-3)'}}>›</div>
-            </button>
-          )}
-
-          <div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>
-            {card.membre_prenom} · {ago(card.created_at)}
-          </div>
-        </div>
-        <button onClick={onDelete} style={{background:'none',border:'none',color:'var(--border)',fontSize:20,cursor:'pointer',flexShrink:0,padding:2}}>×</button>
-      </div>
-    </div>
-  )
-}
