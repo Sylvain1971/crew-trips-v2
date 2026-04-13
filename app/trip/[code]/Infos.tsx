@@ -63,7 +63,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
 
   useEffect(() => {
     supabase.from('infos').select('*').eq('trip_id', trip.id)
-      .order('created_at', {ascending:false})
+      .order('created_at', {ascending:true})
       .then(({data}) => data && setCards(data))
   }, [trip.id])
 
@@ -75,7 +75,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       const ai = CAT_ORDER.indexOf(a.categorie)
       const bi = CAT_ORDER.indexOf(b.categorie)
       if (ai !== bi) return ai - bi
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     })
     return sorted
   })()
@@ -107,7 +107,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       membre_prenom: membre.prenom,
     }).select().single()
     if (!error && data) {
-      setCards(p => [data, ...p])
+      setCards(p => [...p, data])
       setTitre(''); setContenu(''); setLien(''); setPdfFile(null)
       setSheetOpen(false)
     }
