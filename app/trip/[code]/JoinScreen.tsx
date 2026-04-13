@@ -1,12 +1,12 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
 
 const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', skinordique:'🎿', motoneige:'🛷',
-  hike:'🥾', velo:'🚵', chasse:'🦌', autre:'🏕' 
+  peche:'🎣', ski:'⛷', motoneige:'🏔',
+  hike:'🥾', velo:'🚵', chasse:'🎯', yoga:'🧘', autre:'🏕' 
 }
 
 function fmt(d?: string) {

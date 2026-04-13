@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState, useCallback, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
@@ -9,8 +9,8 @@ import Membres from './Membres'
 
 type Tab = 'infos'|'chat'|'membres'
 const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', skinordique:'🎿', motoneige:'🛷', 
-  hike:'🥾', velo:'🚵', chasse:'🦌', autre:'🏕' 
+  peche:'🎣', ski:'⛷', motoneige:'🏔', 
+  hike:'🥾', velo:'🚵', chasse:'🎯', yoga:'🧘', autre:'🏕' 
 }
 
 function NavIcon({tab}:{tab:Tab}) {
