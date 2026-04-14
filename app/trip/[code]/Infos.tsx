@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
@@ -13,7 +13,7 @@ function countdown(d?: string) {
   const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000)
   if (diff < 0) return null
   if (diff === 0) return "C'est aujourd'hui !"
-  return `${diff}j avant le départ`
+  return `${diff} jour${diff>1?'s':''} avant le départ`
 }
 
 function getYoutubeId(url: string) {
