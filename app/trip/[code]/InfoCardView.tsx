@@ -67,18 +67,9 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
           {/* Image uploadée */}
           {isImage && (
             <a href={card.fichier_url!} target="_blank" rel="noreferrer"
-              style={{display:'flex',alignItems:'center',gap:10,marginTop:10,width:'100%',
-                background:'var(--sand)',border:'1.5px solid var(--border)',borderRadius:10,
-                padding:'10px 14px',textDecoration:'none'}}>
-              <div style={{width:36,height:36,borderRadius:8,overflow:'hidden',flexShrink:0}}>
-                <img src={card.fichier_url!} alt={card.titre}
-                  style={{width:36,height:36,objectFit:'cover',display:'block'}} />
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>Voir la photo</div>
-                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{card.titre}</div>
-              </div>
-              <div style={{fontSize:18,color:'var(--text-3)'}}>›</div>
+              style={{display:'inline-block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative',width:160}}>
+              <img src={card.fichier_url!} alt={card.titre}
+                style={{width:160,height:90,objectFit:'cover',display:'block',borderRadius:10}} />
             </a>
           )}
 
