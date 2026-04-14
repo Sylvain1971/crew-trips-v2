@@ -1,20 +1,53 @@
 ﻿'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+
+const ICONS: Record<string,string> = {
+  peche:'🎣', ski:'⛷', motoneige:'🗻', hike:'🥾',
+  velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕'
+}
 
 function genCode() {
   return Array.from({length:6},()=>'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random()*32)]).join('')
 }
 
+interface SavedTrip {
+  code: string
+  nom: string
+  type: string
+  destination?: string
+  participants?: string[]
+  savedAt: number
+}
+
 export default function Home() {
   const router = useRouter()
-  const [nom, setNom] = useState('')
-  const [type, setType] = useState('peche')
-  const [dest, setDest] = useState('')
+  const searchParams = useSearchParams()
+  const [nom, setNom] = useState(searchParams.get('nom')||'')
+  const [type, setType] = useState(searchParams.get('type')||'peche')
+  const [dest, setDest] = useState(searchParams.get('dest')||'')
   const [d1, setD1] = useState('')
   const [d2, setD2] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mesTrips, setMesTrips] = useState<SavedTrip[]>([])
+  const [showMesTrips, setShowMesTrips] = useState(false)
+
+  useEffect(() => {
+    const raw = localStorage.getItem('crew-mes-trips')
+    if (raw) {
+      try { setMesTrips(JSON.parse(raw)) } catch {}
+    }
+  }, [])
+
+  function saveTripLocal(trip: SavedTrip) {
+    const raw = localStorage.getItem('crew-mes-trips')
+    const existing: SavedTrip[] = raw ? JSON.parse(raw) : []
+    const filtered = existing.filter(t => t.code !== trip.code)
+    const updated = [trip, ...filtered].slice(0, 20)
+    localStorage.setItem('crew-mes-trips', JSON.stringify(updated))
+    setMesTrips(updated)
+  }
 
   async function creer() {
     if (!nom.trim()) return
@@ -24,21 +57,112 @@ export default function Home() {
       code, nom: nom.trim(), type, destination: dest.trim()||null,
       date_debut: d1||null, date_fin: d2||null,
     })
-    if (!error) router.push(`/trip/${code}`)
-    else { alert('Erreur: ' + error.message); setLoading(false) }
+    if (!error) {
+      // Récupérer les participants pré-remplis si duplication
+      const participants = searchParams.get('participants')?.split(',').filter(Boolean) || []
+      saveTripLocal({ code, nom: nom.trim(), type, destination: dest.trim()||undefined, participants, savedAt: Date.now() })
+      // Re-créer les participants autorisés si duplication
+      if (participants.length > 0) {
+        const { data: tripData } = await supabase.from('trips').select('id').eq('code', code).single()
+        if (tripData) {
+          await supabase.from('participants_autorises').insert(
+            participants.map(p => ({ trip_id: tripData.id, prenom: p }))
+          )
+        }
+      }
+      router.push(`/trip/${code}`)
+    } else {
+      alert('Erreur: ' + error.message)
+      setLoading(false)
+    }
   }
+
+  function dupliquer(trip: SavedTrip) {
+    const params = new URLSearchParams({
+      nom: trip.nom,
+      type: trip.type,
+      dest: trip.destination || '',
+      participants: (trip.participants||[]).join(','),
+    })
+    router.push(`/?${params.toString()}`)
+    setShowMesTrips(false)
+    // Effacer les dates
+    setD1(''); setD2('')
+    setNom(trip.nom)
+    setType(trip.type)
+    setDest(trip.destination||'')
+  }
+
+  function fmt(ts: number) {
+    return new Date(ts).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'})
+  }
+
+  const isDuplicate = searchParams.get('nom') !== null
 
   return (
     <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',background:'var(--forest)'}}>
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'40px 20px 24px'}}>
-        <div style={{textAlign:'center',marginBottom:40}}>
+
+        {/* Header */}
+        <div style={{textAlign:'center',marginBottom:32}}>
           <div style={{fontSize:56,marginBottom:12}}>🎣</div>
           <h1 style={{fontSize:32,fontWeight:800,color:'#fff',letterSpacing:'-.04em',lineHeight:1.1}}>Crew Trips</h1>
           <p style={{fontSize:15,color:'rgba(255,255,255,.55)',marginTop:10,lineHeight:1.5}}>
             Tout ce que ton groupe a besoin de savoir.<br/>Un seul lien.
           </p>
+          {mesTrips.length > 0 && (
+            <button onClick={()=>setShowMesTrips(!showMesTrips)}
+              style={{marginTop:14,background:'rgba(255,255,255,.12)',border:'1px solid rgba(255,255,255,.2)',
+                borderRadius:20,padding:'7px 18px',color:'rgba(255,255,255,.85)',fontSize:13,
+                fontWeight:600,cursor:'pointer'}}>
+              📋 Mes trips ({mesTrips.length})
+            </button>
+          )}
         </div>
-        <div style={{width:'100%',maxWidth:420,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:'1px solid rgba(255,255,255,.1)'}}>
+
+        {/* Mes trips panel */}
+        {showMesTrips && (
+          <div style={{width:'100%',maxWidth:420,marginBottom:20,background:'rgba(255,255,255,.06)',
+            borderRadius:16,border:'1px solid rgba(255,255,255,.1)',overflow:'hidden'}}>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,.08)',
+              fontWeight:700,fontSize:14,color:'rgba(255,255,255,.7)'}}>
+              Mes trips passés
+            </div>
+            {mesTrips.map(t=>(
+              <div key={t.code} style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,.06)',
+                display:'flex',alignItems:'center',gap:12}}>
+                <div style={{fontSize:28,flexShrink:0}}>{ICONS[t.type]||'🏕'}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,color:'#fff',whiteSpace:'nowrap',
+                    overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
+                  {t.destination && <div style={{fontSize:12,color:'rgba(255,255,255,.45)',marginTop:1}}>{t.destination}</div>}
+                  <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:1}}>{fmt(t.savedAt)}</div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',gap:6,flexShrink:0}}>
+                  <button onClick={()=>router.push(`/trip/${t.code}`)}
+                    style={{padding:'5px 10px',borderRadius:8,border:'1px solid rgba(255,255,255,.2)',
+                      background:'transparent',color:'rgba(255,255,255,.7)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                    Ouvrir
+                  </button>
+                  <button onClick={()=>dupliquer(t)}
+                    style={{padding:'5px 10px',borderRadius:8,border:'none',
+                      background:'rgba(255,255,255,.9)',color:'var(--forest)',fontSize:12,fontWeight:700,cursor:'pointer'}}>
+                    Dupliquer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Formulaire */}
+        <div style={{width:'100%',maxWidth:420,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:`1px solid ${isDuplicate?'rgba(255,255,255,.3)':'rgba(255,255,255,.1)'}`}}>
+          {isDuplicate && (
+            <div style={{background:'rgba(255,255,255,.1)',borderRadius:10,padding:'8px 12px',
+              marginBottom:16,fontSize:13,color:'rgba(255,255,255,.75)',textAlign:'center'}}>
+              📋 Duplication — ajustez les dates et créez
+            </div>
+          )}
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
             <input className="input" placeholder="Ex: Babine River — Octobre 2025"
@@ -79,8 +203,9 @@ export default function Home() {
             </div>
           </div>
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()}
-            style={{background:loading||!nom.trim()?'rgba(255,255,255,.15)':'#fff',color:loading||!nom.trim()?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
-            {loading ? 'Création en cours…' : 'Créer le trip →'}
+            style={{background:loading||!nom.trim()?'rgba(255,255,255,.15)':'#fff',
+              color:loading||!nom.trim()?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
+            {loading ? 'Création en cours…' : isDuplicate ? 'Créer ce nouveau trip →' : 'Créer le trip →'}
           </button>
         </div>
         <p style={{fontSize:12,color:'rgba(255,255,255,.3)',marginTop:20,textAlign:'center',lineHeight:1.6}}>

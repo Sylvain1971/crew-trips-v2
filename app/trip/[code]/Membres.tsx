@@ -1,5 +1,6 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
 
@@ -17,6 +18,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [showDelete, setShowDelete] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const router = useRouter()
   const isCreateur = membre.is_createur
 
   useEffect(()=>{
@@ -255,6 +257,27 @@ export default function Membres({trip, membre, onTripUpdate}: {
           </div>
         ))}
       </div>
+
+      {/* Dupliquer le trip — créateur seulement */}
+      {isCreateur && (
+        <div style={{marginBottom:16}}>
+          <button onClick={()=>{
+            const participants = autorises.map(a=>a.prenom)
+            const params = new URLSearchParams({
+              nom: trip.nom,
+              type: trip.type,
+              dest: trip.destination||'',
+              participants: participants.join(','),
+            })
+            router.push(/?+params.toString())
+          }}
+            style={{width:'100%',padding:'12px',borderRadius:10,border:'1.5px solid var(--forest)',
+              background:'transparent',color:'var(--forest)',fontWeight:600,fontSize:14,cursor:'pointer',
+              display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            📋 Dupliquer ce trip
+          </button>
+        </div>
+      )}
 
       {/* Supprimer le trip — créateur seulement */}
       {isCreateur && (
