@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
@@ -21,7 +21,7 @@ interface SavedTrip {
   savedAt: number
 }
 
-export default function Home() {
+function HomeInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [nom, setNom] = useState(searchParams.get('nom')||'')
@@ -213,5 +213,12 @@ export default function Home() {
         </p>
       </div>
     </main>
+  )
+}
+export default function Home() {
+  return (
+    <Suspense fallback={<div style={{minHeight:'100dvh',background:'var(--forest)'}} />}>
+      <HomeInner />
+    </Suspense>
   )
 }
