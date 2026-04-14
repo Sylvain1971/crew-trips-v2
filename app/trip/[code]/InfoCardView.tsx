@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { getCat } from '@/lib/types'
 import type { InfoCard } from '@/lib/types'
 
@@ -27,7 +27,7 @@ export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
   const ytId = card.lien ? getYoutubeId(card.lien) : null
   const hasPdf = isPdf(card.fichier_url) || isPdf(card.lien)
   const pdfUrl = isPdf(card.fichier_url) ? card.fichier_url : isPdf(card.lien) ? card.lien : null
-  const isImage = card.fichier_url && !hasPdf && /\.(jpg|jpeg|png|gif|webp|heic)$/i.test(card.fichier_url)
+  const isImage = card.fichier_url && !hasPdf && /\.(jpg|jpeg|png|gif|webp|heic)/i.test(card.fichier_url.split('?')[0])
 
   return (
     <div className="card">
@@ -75,10 +75,12 @@ export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
 
           {/* Image uploadée */}
           {isImage && (
-            <div style={{marginTop:10,borderRadius:10,overflow:'hidden',maxHeight:220}}>
+            <a href={card.fichier_url!} target="_blank" rel="noreferrer"
+              style={{display:'inline-block',marginTop:10,borderRadius:10,overflow:'hidden',
+                width:110,height:110,flexShrink:0}}>
               <img src={card.fichier_url!} alt={card.titre}
-                style={{width:'100%',display:'block',objectFit:'cover',borderRadius:10}} />
-            </div>
+                style={{width:110,height:110,objectFit:'cover',display:'block',borderRadius:10}} />
+            </a>
           )}
 
           {/* PDF */}
