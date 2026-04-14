@@ -26,7 +26,7 @@ export const CATEGORIES = [
   { id: 'transport',  label: 'Vols & Transport',   icon: '✈️', color: '#2563EB', bg: '#EFF6FF' },
   { id: 'lodge',      label: 'Lodge & Séjour',      icon: '🏠', color: '#16A34A', bg: '#F0FDF4' },
   { id: 'permis',     label: 'Permis & Règlements', icon: '🪪', color: '#B45309', bg: '#FFFBEB' },
-  { id: 'equipement', label: 'Équipement',           icon: '🎒', color: '#6B7280', bg: '#F9FAFB' },
+  { id: 'equipement', label: 'Équipement',           icon: '🧰', color: '#6B7280', bg: '#F9FAFB' },
   { id: 'liens',      label: 'Liens & Ressources',  icon: '🔗', color: '#7C3AED', bg: '#F5F3FF' },
 ]
 export const COULEURS_MEMBRES = [
