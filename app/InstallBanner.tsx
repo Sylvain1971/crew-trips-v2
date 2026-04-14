@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 
 export default function InstallBanner() {
@@ -6,12 +6,11 @@ export default function InstallBanner() {
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
-    // Afficher seulement sur iOS Safari, pas déjà installé
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
     if (isIOS && !isStandalone && !wasDismissed) {
-      setTimeout(() => setShow(true), 3000) // Après 3s
+      setTimeout(() => setShow(true), 3000)
     }
   }, [])
 
@@ -47,9 +46,12 @@ export default function InstallBanner() {
         </button>
       </div>
       <div style={{background:'var(--sand)',borderRadius:10,padding:'10px 12px',fontSize:13,
-        color:'var(--text-2)',lineHeight:1.6}}>
-        <div style={{marginBottom:4}}>1. Appuyez sur <strong style={{color:'var(--text)'}}>⬆ Partager</strong> en bas de Safari</div>
-        <div>2. Choisissez <strong style={{color:'var(--text)'}}>« Sur l'écran d'accueil »</strong></div>
+        color:'var(--text-2)',lineHeight:1.8}}>
+        <div>1. Appuyez sur <strong style={{color:'var(--text)'}}>···</strong> en bas à gauche</div>
+        <div>2. Appuyez sur <strong style={{color:'var(--text)'}}>Partager</strong> ↗</div>
+        <div>3. Appuyez sur <strong style={{color:'var(--text)'}}>Afficher plus</strong></div>
+        <div>4. Choisissez <strong style={{color:'var(--text)'}}>Ajouter sur l'écran d'accueil</strong></div>
+        <div>5. Appuyez sur <strong style={{color:'var(--text)'}}>Ajouter</strong></div>
       </div>
     </div>
   )

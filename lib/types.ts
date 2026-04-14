@@ -1,4 +1,4 @@
-export interface Trip {
+﻿export interface Trip {
   id: string; code: string; nom: string; type: string
   destination?: string; date_debut?: string; date_fin?: string
   lodge_nom?: string; lodge_adresse?: string; lodge_tel?: string
@@ -46,8 +46,20 @@ export function levenshtein(a: string, b: string): number {
 }
 export function findClosestPrenom(input: string, list: string[]): string|null {
   const inp = input.toLowerCase().trim()
+  // 1. Match exact
   const exact = list.find(p=>p.toLowerCase()===inp)
   if (exact) return exact
-  for (const p of list) { if (levenshtein(inp,p.toLowerCase())<=2) return p }
+  // 2. Le texte tapé correspond à un mot dans un prénom de la liste (ex: "Bergeron" dans "Sylvain Bergeron")
+  const wordMatch = list.find(p=>p.toLowerCase().split(/\s+/).includes(inp))
+  if (wordMatch) return wordMatch
+  // 3. Un mot du prénom de la liste correspond à ce qui est tapé
+  const reverseWordMatch = list.find(p=>inp.split(/\s+/).some(w=>p.toLowerCase()===w))
+  if (reverseWordMatch) return reverseWordMatch
+  // 4. Levenshtein <=2 sur le prénom complet ou sur chaque mot
+  for (const p of list) {
+    if (levenshtein(inp, p.toLowerCase()) <= 2) return p
+    const words = p.toLowerCase().split(/\s+/)
+    if (words.some(w => levenshtein(inp, w) <= 2)) return p
+  }
   return null
 }
