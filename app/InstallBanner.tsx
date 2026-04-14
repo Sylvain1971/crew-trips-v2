@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 export default function InstallBanner() {
   const [show, setShow] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const [keyboardOpen, setKeyboardOpen] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -17,6 +18,20 @@ export default function InstallBanner() {
     }
   }, [pathname])
 
+  useEffect(() => {
+    function onFocus() {
+      const tag = document.activeElement?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') setKeyboardOpen(true)
+    }
+    function onBlur() { setKeyboardOpen(false) }
+    document.addEventListener('focusin', onFocus)
+    document.addEventListener('focusout', onBlur)
+    return () => {
+      document.removeEventListener('focusin', onFocus)
+      document.removeEventListener('focusout', onBlur)
+    }
+  }, [])
+
   function dismiss() {
     setDismissed(true)
     setShow(false)
@@ -25,12 +40,17 @@ export default function InstallBanner() {
 
   if (!show || dismissed) return null
 
+  // Quand clavier ouvert: coller au bas de l'écran visible (au-dessus du clavier)
+  // Quand clavier fermé: position normale au-dessus de la nav
+  const bottomPos = keyboardOpen ? 8 : 90
+
   return (
     <div style={{
-      position: 'fixed', bottom: 90, left: 12, right: 12, zIndex: 200,
+      position: 'fixed', bottom: bottomPos, left: 12, right: 12, zIndex: 200,
       background: '#fff', borderRadius: 12, padding: '10px 12px',
       boxShadow: '0 4px 24px rgba(0,0,0,.18)', border: '1px solid rgba(0,0,0,.08)',
       display: 'flex', alignItems: 'flex-start', gap: 10,
+      transition: 'bottom .2s ease',
       animation: 'slideUp .3s ease'
     }}>
       <style>{`@keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform: translateY(0); opacity:1 } }`}</style>
@@ -40,7 +60,7 @@ export default function InstallBanner() {
         <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>Installer Crew Trips</div>
         <div style={{fontSize:11,color:'#666',lineHeight:1.7}}>
           <span>1. <strong>···</strong> en bas à gauche</span><br/>
-          <span>2. <strong>Partager</strong> ⬆ → <strong>En afficher plus</strong> ↑</span><br/>
+          <span>2. <strong>Partager</strong> ⬆ → <strong>En afficher plus</strong> ↓</span><br/>
           <span>3. <strong>Ajouter sur l'écran d'accueil</strong> → <strong>Ajouter</strong></span>
         </div>
       </div>
