@@ -253,7 +253,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
             </FilterBtn>
           )})}
         </div>
-        <div style={{display:'flex',gap:6,paddingLeft:58}}>
+        <div style={{display:'flex',gap:6}}>
           {['equipement'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
             <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
               {c.icon} Équipement
