@@ -172,7 +172,7 @@ function HomeInner() {
 
         {/* Header */}
         <div style={{textAlign:'center',marginBottom:32}}>
-          <div style={{fontSize:56,marginBottom:12}}>🎣</div>
+          <div style={{fontSize:56,marginBottom:12}}>{TRIP_ICONS[type]||'🏕'}</div>
           <h1 style={{fontSize:32,fontWeight:800,color:'#fff',letterSpacing:'-.04em',lineHeight:1.1}}>Crew Trips</h1>
           <p style={{fontSize:15,color:'rgba(255,255,255,.55)',marginTop:10,lineHeight:1.5}}>
             Tout ce que ton groupe a besoin de savoir.<br/>Un seul lien.
@@ -232,7 +232,7 @@ function HomeInner() {
           )}
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
-            <input className="input" placeholder="Ex: Babine River — Octobre 2025"
+            <input className="input" placeholder="Ex: Dean River — Septembre 2025"
               value={nom} onChange={e=>setNom(e.target.value)}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}
               onFocus={e=>{e.target.style.border='1.5px solid rgba(255,255,255,.4)'}}
@@ -255,7 +255,7 @@ function HomeInner() {
           </div>
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>DESTINATION</label>
-            <input className="input" placeholder="Ex: Rivière Babine, Colombie-Britannique"
+            <input className="input" placeholder="Ex: Dean River, Colombie-Britannique"
               value={dest} onChange={e=>setDest(e.target.value)}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}
             />
