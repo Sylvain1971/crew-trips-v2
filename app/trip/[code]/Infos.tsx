@@ -22,11 +22,18 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
   const [cards, setCards] = useState<InfoCard[]>([])
   const [filtre, setFiltre] = useState<string>('all')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editCard, setEditCard] = useState<InfoCard|null>(null)
   const [editLodge, setEditLodge] = useState(false)
   const [cat, setCat] = useState('transport')
   const [titre, setTitre] = useState('')
   const [contenu, setContenu] = useState('')
   const [lien, setLien] = useState('')
+  // États pour l'édition d'une card existante
+  const [editCat, setEditCat] = useState('transport')
+  const [editTitre, setEditTitre] = useState('')
+  const [editContenu, setEditContenu] = useState('')
+  const [editLien, setEditLien] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
   const [pdfFile, setPdfFile] = useState<File|null>(null)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -115,6 +122,30 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
     if (!confirm('Supprimer cette info ? Cette action est irréversible.')) return
     await supabase.from('infos').delete().eq('id', id)
     setCards(p => p.filter(c => c.id !== id))
+  }
+
+  function openEdit(card: InfoCard) {
+    setEditCard(card)
+    setEditCat(card.categorie)
+    setEditTitre(card.titre)
+    setEditContenu(card.contenu||'')
+    setEditLien(card.lien||'')
+  }
+
+  async function updateCard() {
+    if (!editCard || !editTitre.trim()) return
+    setSavingEdit(true)
+    const { data, error } = await supabase.from('infos').update({
+      categorie: editCat,
+      titre: editTitre.trim(),
+      contenu: editContenu.trim()||null,
+      lien: editLien.trim()||null,
+    }).eq('id', editCard.id).select().single()
+    if (!error && data) {
+      setCards(p => p.map(c => c.id === editCard.id ? data : c))
+      setEditCard(null)
+    }
+    setSavingEdit(false)
   }
 
   function copyLink() {
@@ -277,12 +308,47 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
         ) : filtered.map(card => (
           <InfoCardView key={card.id} card={card}
             canDelete={canDelete}
+            canEdit={canEdit}
             onDelete={()=>removeCard(card.id)}
+            onEdit={()=>openEdit(card)}
             onOpenPdf={(url,nom)=>setPdfViewer({url,nom})} />
         ))}
       </div>
 
       <button className="fab" onClick={()=>{if(filtre!=='all')setCat(filtre);setSheetOpen(true)}}>+</button>
+
+      {/* Sheet modifier card */}
+      <div className={`overlay ${editCard?'open':''}`} onClick={()=>setEditCard(null)} />
+      <div className={`sheet ${editCard?'open':''}`}>
+        <div className="sheet-handle" />
+        <div className="sheet-title">Modifier</div>
+        <div className="field">
+          <label>Catégorie</label>
+          <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
+            {CATEGORIES.map(c=>(
+              <button key={c.id} onClick={()=>setEditCat(c.id)}
+                style={{padding:'7px 12px',borderRadius:20,border:`1.5px solid ${editCat===c.id?c.color:'var(--border)'}`,
+                  background:editCat===c.id?c.bg:'transparent',color:editCat===c.id?c.color:'var(--text-2)',
+                  fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                {c.icon} {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="field"><label>Titre</label>
+          <input className="input" value={editTitre} onChange={e=>setEditTitre(e.target.value)} />
+        </div>
+        <div className="field"><label>Détails (optionnel)</label>
+          <textarea className="input" rows={3} value={editContenu} onChange={e=>setEditContenu(e.target.value)} />
+        </div>
+        <div className="field"><label>Lien (optionnel)</label>
+          <input className="input" type="url" placeholder="https://…" value={editLien} onChange={e=>setEditLien(e.target.value)} />
+        </div>
+        <button className="btn btn-primary" onClick={updateCard} disabled={savingEdit||!editTitre.trim()}>
+          {savingEdit?'Sauvegarde…':'Sauvegarder'}
+        </button>
+        <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>setEditCard(null)}>Annuler</button>
+      </div>
 
       {/* Sheet ajouter */}
       <div className={`overlay ${sheetOpen?'open':''}`} onClick={()=>setSheetOpen(false)} />

@@ -3,10 +3,12 @@ import { getCat } from '@/lib/types'
 import { getYoutubeId, isPdf, ago } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
 
-export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
+export default function InfoCardView({card, canDelete, canEdit, onDelete, onEdit, onOpenPdf}: {
   card: InfoCard
   canDelete: boolean
+  canEdit: boolean
   onDelete: () => void
+  onEdit: () => void
   onOpenPdf: (url: string, nom: string) => void
 }) {
   const c = getCat(card.categorie)
@@ -62,10 +64,18 @@ export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
           {/* Image uploadée */}
           {isImage && (
             <a href={card.fichier_url!} target="_blank" rel="noreferrer"
-              style={{display:'inline-block',marginTop:10,borderRadius:10,overflow:'hidden',
-                width:110,height:110,flexShrink:0}}>
-              <img src={card.fichier_url!} alt={card.titre}
-                style={{width:110,height:110,objectFit:'cover',display:'block',borderRadius:10}} />
+              style={{display:'flex',alignItems:'center',gap:10,marginTop:10,width:'100%',
+                background:'var(--sand)',border:'1.5px solid var(--border)',borderRadius:10,
+                padding:'10px 14px',textDecoration:'none'}}>
+              <div style={{width:36,height:36,borderRadius:8,overflow:'hidden',flexShrink:0}}>
+                <img src={card.fichier_url!} alt={card.titre}
+                  style={{width:36,height:36,objectFit:'cover',display:'block'}} />
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>Voir la photo</div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{card.titre}</div>
+              </div>
+              <div style={{fontSize:18,color:'var(--text-3)'}}>›</div>
             </a>
           )}
 
@@ -92,13 +102,22 @@ export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
           </div>
         </div>
 
-        {canDelete && (
-          <button onClick={onDelete}
-            style={{background:'none',border:'none',color:'var(--border)',
-              fontSize:20,cursor:'pointer',flexShrink:0,padding:2}}>
-            ×
-          </button>
-        )}
+        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+          {canEdit && (
+            <button onClick={onEdit}
+              style={{background:'none',border:'none',color:'var(--text-3)',
+                fontSize:16,cursor:'pointer',padding:2,lineHeight:1}}>
+              ✏️
+            </button>
+          )}
+          {canDelete && (
+            <button onClick={onDelete}
+              style={{background:'none',border:'none',color:'var(--border)',
+                fontSize:20,cursor:'pointer',padding:2,lineHeight:1}}>
+              ×
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

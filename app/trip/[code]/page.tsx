@@ -67,6 +67,19 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
 
   useEffect(()=>{ load() },[load])
 
+  // Override du manifest PWA avec le nom du trip (pour l'icône iOS/Android)
+  useEffect(()=>{
+    if (!trip) return
+    const existing = document.querySelector('link[rel="manifest"]')
+    if (existing) existing.setAttribute('href', `/trip/${params.code}/manifest`)
+    const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+    if (appleTitle) appleTitle.setAttribute('content', trip.nom.slice(0, 20))
+    return () => {
+      const el = document.querySelector('link[rel="manifest"]')
+      if (el) el.setAttribute('href', '/manifest.json')
+    }
+  },[trip, params.code])
+
   function saveMembre(m: Membre) {
     setMembre(m)
     try {
@@ -85,7 +98,6 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
       <div style={{color:'rgba(255,255,255,.5)',fontSize:14}}>Chargement…</div>
     </div>
   )
-
   if (error||!trip) return (
     <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',
       justifyContent:'center',gap:14,padding:24,textAlign:'center',background:'var(--forest)'}}>
