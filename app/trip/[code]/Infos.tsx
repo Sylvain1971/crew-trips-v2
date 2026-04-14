@@ -244,7 +244,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       </div>
 
       {/* Filtres */}
-      <div style={{background:'#fff',borderBottom:'1px solid var(--border)',overflowX:'auto',display:'flex',gap:6,padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
+      <div style={{background:'#fff',borderBottom:'1px solid var(--border)',display:'flex',flexWrap:'wrap',gap:6,padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
         <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
         {CATEGORIES.map(c=>(
           <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
