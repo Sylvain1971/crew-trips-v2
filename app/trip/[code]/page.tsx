@@ -67,19 +67,6 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
 
   useEffect(()=>{ load() },[load])
 
-  // Override du manifest PWA avec le nom du trip (pour l'icône iOS/Android)
-  useEffect(()=>{
-    if (!trip) return
-    const existing = document.querySelector('link[rel="manifest"]')
-    if (existing) existing.setAttribute('href', `/trip/${params.code}/manifest`)
-    const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
-    if (appleTitle) appleTitle.setAttribute('content', trip.nom.slice(0, 20))
-    return () => {
-      const el = document.querySelector('link[rel="manifest"]')
-      if (el) el.setAttribute('href', '/manifest.json')
-    }
-  },[trip, params.code])
-
   function saveMembre(m: Membre) {
     setMembre(m)
     try {
