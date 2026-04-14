@@ -1,21 +1,7 @@
 ﻿'use client'
 import { getCat } from '@/lib/types'
+import { getYoutubeId, isPdf, ago } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
-
-function getYoutubeId(url: string) {
-  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-  return m ? m[1] : null
-}
-function isPdf(url?: string|null) {
-  if (!url) return false
-  return url.toLowerCase().includes('.pdf') || url.includes('application%2Fpdf')
-}
-function ago(ts: string) {
-  const d = Date.now() - new Date(ts).getTime()
-  if (d < 3600000) return `${Math.floor(d/60000)}min`
-  if (d < 86400000) return `${Math.floor(d/3600000)}h`
-  return new Date(ts).toLocaleDateString('fr-CA',{day:'numeric',month:'short'})
-}
 
 export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
   card: InfoCard

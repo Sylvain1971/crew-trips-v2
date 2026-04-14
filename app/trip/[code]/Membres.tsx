@@ -48,9 +48,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
   async function retirerAutorise(id: string, prenom: string) {
     await supabase.from('participants_autorises').delete().eq('id',id)
     setAutorises(p=>p.filter(a=>a.id!==id))
-    // Déconnecter le membre actif correspondant
+    // Déconnecter le membre actif correspondant (jamais le créateur)
     const m = membres.find(m=>m.prenom.toLowerCase()===prenom.toLowerCase())
-    if (m) {
+    if (m && !m.is_createur) {
       await supabase.from('membres').delete().eq('id',m.id)
       setMembres(p=>p.filter(x=>x.id!==m.id))
       // Effacer du localStorage si c'est nous
@@ -268,6 +268,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
               type: trip.type,
               dest: trip.destination||'',
               participants: participants.join(','),
+              sourceCode: trip.code,
             })
             router.push('/' + '?' + params.toString())
           }}

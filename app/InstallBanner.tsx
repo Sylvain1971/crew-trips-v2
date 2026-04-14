@@ -59,9 +59,9 @@ export default function InstallBanner() {
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>Installer Crew Trips</div>
         <div style={{fontSize:11,color:'#666',lineHeight:1.7}}>
-          <span>1. <strong>···</strong> en bas à gauche</span><br/>
-          <span>2. <strong>Partager</strong> ⬆ → <strong>En afficher plus</strong> ↓</span><br/>
-          <span>3. <strong>Ajouter sur l'écran d'accueil</strong> → <strong>Ajouter</strong></span>
+          <span>1. Appuyez sur <strong>Partager</strong> ⬆ en bas</span><br/>
+          <span>2. Faites défiler → <strong>Ajouter à l'écran d'accueil</strong></span><br/>
+          <span>3. Appuyez sur <strong>Ajouter</strong> en haut à droite</span>
         </div>
       </div>
       <button onClick={dismiss}

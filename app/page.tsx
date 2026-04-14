@@ -2,11 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-
-const ICONS: Record<string,string> = {
-  peche:'🎣', ski:'⛷', motoneige:'🗻', hike:'🥾',
-  velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕'
-}
+import { TRIP_ICONS } from '@/lib/utils'
 
 function genCode() {
   return Array.from({length:6},()=>'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random()*32)]).join('')
@@ -52,12 +48,16 @@ function HomeInner() {
   }, [])
 
   function saveTripLocal(trip: SavedTrip) {
-    const raw = localStorage.getItem('crew-mes-trips')
-    const existing: SavedTrip[] = raw ? JSON.parse(raw) : []
-    const filtered = existing.filter(t => t.code !== trip.code)
-    const updated = [trip, ...filtered].slice(0, 20)
-    localStorage.setItem('crew-mes-trips', JSON.stringify(updated))
-    setMesTrips(updated)
+    try {
+      const raw = localStorage.getItem('crew-mes-trips')
+      const existing: SavedTrip[] = raw ? JSON.parse(raw) : []
+      const filtered = existing.filter(t => t.code !== trip.code)
+      const updated = [trip, ...filtered].slice(0, 20)
+      localStorage.setItem('crew-mes-trips', JSON.stringify(updated))
+      setMesTrips(updated)
+    } catch {
+      // localStorage plein ou indisponible — on ignore silencieusement
+    }
   }
 
   async function creer() {
@@ -68,42 +68,52 @@ function HomeInner() {
       code, nom: nom.trim(), type, destination: dest.trim()||null,
       date_debut: d1||null, date_fin: d2||null,
     })
-    if (!error) {
+    if (error) {
+      alert('Erreur lors de la création du trip : ' + error.message)
+      setLoading(false)
+      return
+    }
+    try {
       const participants = searchParams.get('participants')?.split(',').filter(Boolean) || []
       const sourceCode = searchParams.get('sourceCode') || null
       saveTripLocal({ code, nom: nom.trim(), type, destination: dest.trim()||undefined, participants, savedAt: Date.now() })
       // Récupérer le nouvel ID du trip
-      const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
-      if (newTrip) {
-        // Participants autorisés
-        if (participants.length > 0) {
-          await supabase.from('participants_autorises').insert(
-            participants.map(p => ({ trip_id: newTrip.id, prenom: p }))
-          )
-        }
-        // Copier lodge + infos du trip source
-        if (sourceCode) {
-          const { data: src } = await supabase.from('trips').select('*').eq('code', sourceCode).single()
-          if (src) {
-            await supabase.from('trips').update({
-              lodge_nom: src.lodge_nom, lodge_adresse: src.lodge_adresse,
-              lodge_tel: src.lodge_tel, lodge_wifi: src.lodge_wifi,
-              lodge_code: src.lodge_code, lodge_arrivee: src.lodge_arrivee,
-              whatsapp_lien: src.whatsapp_lien,
-            }).eq('id', newTrip.id)
-            const { data: srcInfos } = await supabase.from('infos').select('*').eq('trip_id', src.id)
-            if (srcInfos && srcInfos.length > 0) {
-              await supabase.from('infos').insert(
-                srcInfos.map(({id, trip_id, created_at, ...rest}: any) => ({...rest, trip_id: newTrip.id}))
-              )
-            }
+      const { data: newTrip, error: fetchErr } = await supabase.from('trips').select('id').eq('code', code).single()
+      if (fetchErr || !newTrip) throw new Error(fetchErr?.message || 'Trip introuvable après création')
+      // Participants autorisés
+      if (participants.length > 0) {
+        const { error: partErr } = await supabase.from('participants_autorises').insert(
+          participants.map(p => ({ trip_id: newTrip.id, prenom: p }))
+        )
+        if (partErr) console.error('Erreur participants_autorises:', partErr.message)
+      }
+      // Copier lodge + infos du trip source
+      if (sourceCode) {
+        const { data: src } = await supabase.from('trips').select('*').eq('code', sourceCode).single()
+        if (src) {
+          const { error: lodgeErr } = await supabase.from('trips').update({
+            lodge_nom: src.lodge_nom, lodge_adresse: src.lodge_adresse,
+            lodge_tel: src.lodge_tel, lodge_wifi: src.lodge_wifi,
+            lodge_code: src.lodge_code, lodge_arrivee: src.lodge_arrivee,
+            whatsapp_lien: src.whatsapp_lien,
+          }).eq('id', newTrip.id)
+          if (lodgeErr) console.error('Erreur copie lodge:', lodgeErr.message)
+          const { data: srcInfos } = await supabase.from('infos').select('*').eq('trip_id', src.id)
+          if (srcInfos && srcInfos.length > 0) {
+            type InfoInsert = Omit<typeof srcInfos[0], 'id'|'trip_id'|'created_at'>
+            const { error: infosErr } = await supabase.from('infos').insert(
+              srcInfos.map(({id: _id, trip_id: _tid, created_at: _cat, ...rest}: InfoInsert & {id:string,trip_id:string,created_at:string}) =>
+                ({...rest, trip_id: newTrip.id}))
+            )
+            if (infosErr) console.error('Erreur copie infos:', infosErr.message)
           }
         }
       }
       router.push('/trip/' + code)
-    } else {
-      alert('Erreur: ' + error.message)
-      setLoading(false)
+    } catch (err) {
+      console.error('Erreur post-création:', err)
+      // Le trip est créé — on redirige quand même
+      router.push('/trip/' + code)
     }
   }
 
@@ -162,7 +172,7 @@ function HomeInner() {
             {mesTrips.map(t=>(
               <div key={t.code} style={{padding:'12px 16px',borderBottom:'1px solid rgba(255,255,255,.06)',
                 display:'flex',alignItems:'center',gap:12}}>
-                <div style={{fontSize:28,flexShrink:0}}>{ICONS[t.type]||'🏕'}</div>
+                <div style={{fontSize:28,flexShrink:0}}>{TRIP_ICONS[t.type]||'🏕'}</div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontWeight:700,fontSize:14,color:'#fff',whiteSpace:'nowrap',
                     overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>

@@ -1,6 +1,7 @@
 ﻿'use client'
 import { useEffect, useState, useCallback, use } from 'react'
 import { supabase } from '@/lib/supabase'
+import { TRIP_ICONS } from '@/lib/utils'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
 import JoinScreen from './JoinScreen'
 import Infos from './Infos'
@@ -8,10 +9,6 @@ import Chat from './Chat'
 import Membres from './Membres'
 
 type Tab = 'infos'|'chat'|'membres'
-const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', motoneige:'🗻', 
-  hike:'🥾', velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕' 
-}
 
 function NavIcon({tab}:{tab:Tab}) {
   if (tab==='infos') return (
@@ -72,7 +69,11 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
 
   function saveMembre(m: Membre) {
     setMembre(m)
-    localStorage.setItem(`crew2-${params.code}`,JSON.stringify(m))
+    try {
+      localStorage.setItem(`crew2-${params.code}`, JSON.stringify(m))
+    } catch {
+      // localStorage plein ou indisponible
+    }
   }
 
   function onTripUpdate(updates: Partial<Trip>) {
@@ -101,7 +102,7 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
     <div style={{display:'flex',flexDirection:'column',minHeight:'100dvh',background:'var(--sand)'}}>
       {tab!=='infos' && (
         <div style={{background:'var(--forest)',padding:'12px 16px 10px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
-          <span style={{fontSize:20}}>{ICONS[trip.type]||'🏕'}</span>
+          <span style={{fontSize:20}}>{TRIP_ICONS[trip.type]||'🏕'}</span>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:700,fontSize:15,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
               {trip.nom}

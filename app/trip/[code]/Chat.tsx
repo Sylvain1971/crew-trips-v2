@@ -27,6 +27,15 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
         if ((p.new as Message).epingle) setEpingle(p.new as Message)
         scroll()
       })
+      .on('postgres_changes', {event:'UPDATE',schema:'public',table:'messages',filter:`trip_id=eq.${tripId}`}, p => {
+        const updated = p.new as Message
+        setMsgs(prev => prev.map(x => x.id===updated.id ? {...x, epingle: updated.epingle} : x))
+        setEpingle(prev => {
+          if (updated.epingle) return updated
+          if (prev?.id === updated.id) return null
+          return prev
+        })
+      })
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [tripId])

@@ -2,23 +2,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
+import { countdown, TRIP_ICONS } from '@/lib/utils'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
-
-const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', motoneige:'🗻',
-  hike:'🥾', velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕' 
-}
 
 function fmt(d?: string) {
   if (!d) return ''
   return new Date(d).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'})
-}
-function countdown(d?: string) {
-  if (!d) return null
-  const diff = Math.ceil((new Date(d).getTime()-Date.now())/86400000)
-  if (diff<0) return null
-  if (diff===0) return "C'est aujourd'hui ! 🎉"
-  return `${diff} jour${diff>1?'s':''} avant le départ`
 }
 
 export default function JoinScreen({trip,autorises,onJoin}:{
@@ -80,7 +69,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 20px'}}>
         <div style={{textAlign:'center',marginBottom:32}}>
-          <div style={{fontSize:60,marginBottom:10}}>{ICONS[trip.type]||'🏕'}</div>
+          <div style={{fontSize:60,marginBottom:10}}>{TRIP_ICONS[trip.type]||'🏕'}</div>
           <h1 style={{fontSize:26,fontWeight:800,color:'#fff',letterSpacing:'-.03em',lineHeight:1.15,marginBottom:6}}>{trip.nom}</h1>
           {trip.destination && <p style={{fontSize:14,color:'rgba(255,255,255,.55)',marginBottom:4}}>📍 {trip.destination}</p>}
           {trip.date_debut && (

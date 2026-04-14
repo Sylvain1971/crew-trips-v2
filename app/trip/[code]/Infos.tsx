@@ -2,36 +2,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
+import { getYoutubeId, isPdf, ago, countdown } from '@/lib/utils'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
 
 // Ordre fixe pour "Tout"
 const CAT_ORDER = ['transport','lodge','permis','equipement','liens']
-
-function countdown(d?: string) {
-  if (!d) return null
-  const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000)
-  if (diff < 0) return null
-  if (diff === 0) return "C'est aujourd'hui !"
-  return `${diff} jour${diff>1?'s':''} avant le départ`
-}
-
-function getYoutubeId(url: string) {
-  const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-  return m ? m[1] : null
-}
-
-function isPdf(url?: string | null) {
-  if (!url) return false
-  return url.toLowerCase().includes('.pdf') || url.includes('application%2Fpdf')
-}
-
-function ago(ts: string) {
-  const d = Date.now() - new Date(ts).getTime()
-  if (d < 3600000) return `${Math.floor(d/60000)}min`
-  if (d < 86400000) return `${Math.floor(d/3600000)}h`
-  return new Date(ts).toLocaleDateString('fr-CA',{day:'numeric',month:'short'})
-}
 
 function formatSize(b: number) {
   if (b < 1024) return `${b} B`
@@ -136,6 +112,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
   }
 
   async function removeCard(id: string) {
+    if (!confirm('Supprimer cette info ? Cette action est irréversible.')) return
     await supabase.from('infos').delete().eq('id', id)
     setCards(p => p.filter(c => c.id !== id))
   }
