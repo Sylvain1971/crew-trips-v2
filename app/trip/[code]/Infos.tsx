@@ -388,8 +388,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         </div>
         <div className="field"><label>Dates</label>
           <div style={{display:'flex',gap:8}}>
-            <input className="input" type="date" value={editD1} onChange={e=>setEditD1(e.target.value)} style={{flex:1}} />
-            <input className="input" type="date" value={editD2} onChange={e=>setEditD2(e.target.value)} style={{flex:1}} />
+            <input className="input" type="date" value={editD1} onChange={e=>setEditD1(e.target.value)} style={{flex:1,colorScheme:'dark'}} />
+            <input className="input" type="date" value={editD2} onChange={e=>setEditD2(e.target.value)} style={{flex:1,colorScheme:'dark'}} />
           </div>
         </div>
         <button className="btn btn-primary" onClick={saveTrip} disabled={savingTrip||!editNom.trim()}>

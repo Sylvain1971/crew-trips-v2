@@ -264,9 +264,9 @@ function HomeInner() {
             <label style={{color:'rgba(255,255,255,.5)'}}>DATES</label>
             <div style={{display:'flex',gap:8}}>
               <input className="input" type="date" value={d1} onChange={e=>setD1(e.target.value)}
-                style={{flex:1,background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+                style={{flex:1,background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',colorScheme:'dark'}}/>
               <input className="input" type="date" value={d2} onChange={e=>setD2(e.target.value)}
-                style={{flex:1,background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+                style={{flex:1,background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',colorScheme:'dark'}}/>
             </div>
           </div>
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()}
