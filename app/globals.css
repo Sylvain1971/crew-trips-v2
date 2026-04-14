@@ -102,7 +102,16 @@ textarea.input { resize: none; line-height: 1.5; }
   padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
 }
 
-/* Bottom nav */
+/* Date inputs — iOS Safari fix */
+input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: light;
+}
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  color: inherit;
+}
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: rgba(255,255,255,.95); backdrop-filter: blur(12px);

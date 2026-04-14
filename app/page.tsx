@@ -263,10 +263,16 @@ function HomeInner() {
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>DATES</label>
             <div style={{display:'flex',gap:8}}>
-              <input className="input" type="date" value={d1} onChange={e=>setD1(e.target.value)}
-                style={{flex:1,background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',colorScheme:'dark'}}/>
-              <input className="input" type="date" value={d2} onChange={e=>setD2(e.target.value)}
-                style={{flex:1,background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',colorScheme:'dark'}}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:4}}>Début</div>
+                <input className="input" type="date" value={d1} onChange={e=>setD1(e.target.value)}
+                  style={{background:'rgba(255,255,255,.15)',border:'1.5px solid rgba(255,255,255,.25)',color:'#fff',colorScheme:'dark'}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:4}}>Fin</div>
+                <input className="input" type="date" value={d2} onChange={e=>setD2(e.target.value)}
+                  style={{background:'rgba(255,255,255,.15)',border:'1.5px solid rgba(255,255,255,.25)',color:'#fff',colorScheme:'dark'}}/>
+              </div>
             </div>
           </div>
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()}
