@@ -210,8 +210,8 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
             {lodge.adresse && <LodgeItem icon="📍" label="Adresse" val={lodge.adresse} />}
             {lodge.tel && <LodgeItem icon="📞" label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
             {lodge.wifi && <LodgeItem icon="📶" label="WiFi" val={lodge.wifi} />}
-            {lodge.code && <LodgeItem icon="🕐" label="Départ" val={lodge.code} />}
-            {lodge.arrivee && <LodgeItem icon="🕐" label="Arrivée" val={lodge.arrivee} />}
+            {lodge.arrivee && <LodgeItem icon="🛬" label="Arrivée" val={lodge.arrivee} />}
+            {lodge.code && <LodgeItem icon="🛫" label="Départ" val={lodge.code} />}
           </div>
         )}
         {editLodge && (
@@ -222,8 +222,8 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
                 {k:'adresse',label:'Adresse',ph:'Ex: Smithers, BC'},
                 {k:'tel',label:'Téléphone',ph:'+1 250 000 0000'},
                 {k:'wifi',label:'Mot de passe WiFi',ph:'Ex: fishing2025'},
-                {k:'code',label:'Heure de départ',ph:'Ex: 10h00 le 25 avril'},
                 {k:'arrivee',label:"Heure d'arrivée",ph:'Ex: 14h00 le 8 juin'},
+                {k:'code',label:'Heure de départ',ph:'Ex: 10h00 le 25 avril'},
               ].map(f=>(
                 <div key={f.k}>
                   <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>{f.label}</div>
