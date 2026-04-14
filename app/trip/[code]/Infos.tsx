@@ -33,7 +33,10 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
   const [editTitre, setEditTitre] = useState('')
   const [editContenu, setEditContenu] = useState('')
   const [editLien, setEditLien] = useState('')
+  const [editPdfFile, setEditPdfFile] = useState<File|null>(null)
+  const [editUploading, setEditUploading] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
+  const editFileRef = useRef<HTMLInputElement>(null)
   const [pdfFile, setPdfFile] = useState<File|null>(null)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -130,20 +133,31 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
     setEditTitre(card.titre)
     setEditContenu(card.contenu||'')
     setEditLien(card.lien||'')
+    setEditPdfFile(null)
   }
 
   async function updateCard() {
     if (!editCard || !editTitre.trim()) return
     setSavingEdit(true)
+    let fichier_url = editCard.fichier_url ?? null
+    if (editPdfFile) {
+      setEditUploading(true)
+      const uploaded = await uploadFichier(editPdfFile)
+      setEditUploading(false)
+      if (!uploaded) { setSavingEdit(false); return }
+      fichier_url = uploaded
+    }
     const { data, error } = await supabase.from('infos').update({
       categorie: editCat,
       titre: editTitre.trim(),
       contenu: editContenu.trim()||null,
       lien: editLien.trim()||null,
+      fichier_url,
     }).eq('id', editCard.id).select().single()
     if (!error && data) {
       setCards(p => p.map(c => c.id === editCard.id ? data : c))
       setEditCard(null)
+      setEditPdfFile(null)
     }
     setSavingEdit(false)
   }
@@ -344,8 +358,49 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
         <div className="field"><label>Lien (optionnel)</label>
           <input className="input" type="url" placeholder="https://…" value={editLien} onChange={e=>setEditLien(e.target.value)} />
         </div>
+        <div className="field">
+          <label>Photo / PDF (optionnel)</label>
+          <input ref={editFileRef} type="file" accept="application/pdf,image/*" style={{display:'none'}}
+            onChange={e=>setEditPdfFile(e.target.files?.[0]||null)} />
+          {editCard?.fichier_url && !editPdfFile && (
+            <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,
+              padding:'10px 14px',border:'1.5px solid var(--border)',marginBottom:8}}>
+              <span style={{fontSize:20}}>{isPdf(editCard.fichier_url)?'📄':'🖼️'}</span>
+              <div style={{flex:1,fontSize:12,color:'var(--text-2)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
+                Fichier actuel
+              </div>
+              <button onClick={()=>editFileRef.current?.click()}
+                style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
+                  fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer',flexShrink:0}}>
+                Remplacer
+              </button>
+            </div>
+          )}
+          {editPdfFile ? (
+            <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,padding:'10px 14px',border:'1.5px solid var(--border)'}}>
+              <span style={{fontSize:24}}>📄</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{editPdfFile.name}</div>
+                <div style={{fontSize:11,color:'var(--text-3)'}}>{formatSize(editPdfFile.size)}</div>
+              </div>
+              <button onClick={()=>setEditPdfFile(null)}
+                style={{background:'none',border:'none',fontSize:18,color:'var(--text-3)',cursor:'pointer'}}>×</button>
+            </div>
+          ) : !editCard?.fichier_url && (
+            <button onClick={()=>editFileRef.current?.click()}
+              style={{background:'transparent',border:'2px dashed var(--border)',color:'var(--text-2)',
+                fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+              📎 Choisir un PDF ou une photo
+            </button>
+          )}
+        </div>
+        {editUploading && (
+          <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10}}>
+            ⏳ Upload en cours…
+          </div>
+        )}
         <button className="btn btn-primary" onClick={updateCard} disabled={savingEdit||!editTitre.trim()}>
-          {savingEdit?'Sauvegarde…':'Sauvegarder'}
+          {savingEdit?(editUploading?'Upload…':'Sauvegarde…'):'Sauvegarder'}
         </button>
         <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>setEditCard(null)}>Annuler</button>
       </div>
