@@ -60,13 +60,13 @@ export default function InfoCardView({card, canDelete, onDelete, onOpenPdf}: {
           {/* YouTube */}
           {ytId && (
             <a href={card.lien!} target="_blank" rel="noreferrer"
-              style={{display:'block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative'}}>
+              style={{display:'inline-block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative',width:160}}>
               <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt=""
-                style={{width:'100%',display:'block',borderRadius:10}} />
+                style={{width:160,display:'block',borderRadius:10}} />
               <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',
-                justifyContent:'center',background:'rgba(0,0,0,.25)',borderRadius:10}}>
-                <div style={{width:48,height:48,borderRadius:'50%',background:'rgba(255,0,0,.85)',
-                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,color:'#fff'}}>
+                justifyContent:'center',background:'rgba(0,0,0,.3)',borderRadius:10}}>
+                <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(255,0,0,.9)',
+                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'#fff'}}>
                   ▶
                 </div>
               </div>

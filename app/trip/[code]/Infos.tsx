@@ -247,16 +247,16 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
         <div style={{display:'flex',gap:6,marginBottom:6}}>
           <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
-          {['transport','lodge','permis','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
+          {['transport','lodge','permis','equipement'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
             <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
-              {c.icon} {id==='transport'?'Vols':id==='lodge'?'Lodge':id==='permis'?'Permis':'Liens'}
+              {c.icon} {id==='transport'?'Vols':id==='lodge'?'Lodge':id==='permis'?'Permis':'Équipement'}
             </FilterBtn>
           )})}
         </div>
         <div style={{display:'flex',gap:6}}>
-          {['equipement'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
+          {['liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
             <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
-              {c.icon} Équipement
+              {c.icon} Liens
             </FilterBtn>
           )})}
         </div>
