@@ -253,7 +253,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       <div style={{padding:'14px 14px 100px',display:'flex',flexDirection:'column',gap:10}}>
         {filtered.length === 0 ? (
           <div className="empty">
-            <span className="empty-icon">{filtre==='all'?'📋':getCat(filtre).icon}</span>
+            <span className="empty-icon">📋</span>
             Aucune info ici pour l'instant.<br/>Appuyez sur <strong>+</strong> pour ajouter.
           </div>
         ) : filtered.map(card => (
