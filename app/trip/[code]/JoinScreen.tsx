@@ -44,6 +44,26 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     const nom = (nomFinal || prenom).trim()
     if (!nom) return
     setLoading(true); setErreur(null); setSuggestion(null)
+
+    // Charger tous les membres existants du trip
+    const { data: membresExistants } = await supabase.from('membres')
+      .select('*').eq('trip_id', trip.id)
+
+    // Fuzzy match sur les membres existants
+    if (membresExistants && membresExistants.length > 0) {
+      const prenomsMembres = membresExistants.map((m: {prenom: string}) => m.prenom)
+      const match = findClosestPrenom(nom, prenomsMembres)
+      if (match) {
+        const membreExistant = membresExistants.find((m: {prenom: string}) => m.prenom === match)
+        if (membreExistant) {
+          setLoading(false)
+          onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
+          return
+        }
+      }
+    }
+
+    // Validation liste autorisée
     if (listeActive) {
       const valide = valider(nom)
       if (!valide) {
@@ -51,12 +71,9 @@ export default function JoinScreen({trip,autorises,onJoin}:{
         setLoading(false); return
       }
     }
-    const { data: existing } = await supabase.from('membres')
-      .select('*').eq('trip_id',trip.id).ilike('prenom',nom).maybeSingle()
-    if (existing) { setLoading(false); onJoin({...existing, is_createur: existing.is_createur ?? false}); return }
-    const { count } = await supabase.from('membres')
-      .select('id', {count:'exact',head:true}).eq('trip_id',trip.id)
-    const isFirst = (count ?? 0) === 0
+
+    // Nouveau membre
+    const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const { data, error } = await supabase.from('membres')
       .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst})
