@@ -1,18 +1,22 @@
 ﻿'use client'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function InstallBanner() {
   const [show, setShow] = useState(false)
   const [dismissed, setDismissed] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
+    // Ne pas afficher sur les pages trip
+    if (pathname.startsWith('/trip/')) return
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
     if (isIOS && !isStandalone && !wasDismissed) {
       setTimeout(() => setShow(true), 3000)
     }
-  }, [])
+  }, [pathname])
 
   function dismiss() {
     setDismissed(true)
