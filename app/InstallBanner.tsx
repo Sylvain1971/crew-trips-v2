@@ -14,7 +14,7 @@ export default function InstallBanner() {
     if (isIOS && !isStandalone && !wasDismissed) {
       // Sur les pages trip, attendre 30s (le temps que l'utilisateur se connecte et explore)
       // Sur la page d'accueil, 4s
-      const delay = pathname.startsWith('/trip/') ? 30000 : 4000
+      const delay = 4000
       const t = setTimeout(() => setShow(true), delay)
       return () => clearTimeout(t)
     }
@@ -30,7 +30,7 @@ export default function InstallBanner() {
 
   return (
     <div style={{
-      position: 'fixed', bottom: 90, left: 12, right: 12, zIndex: 200,
+      position: 'fixed', top: 12, left: 12, right: 12, zIndex: 200,
       background: '#fff', borderRadius: 16, padding: '14px 16px',
       boxShadow: '0 8px 40px rgba(0,0,0,.22)', border: '1px solid rgba(0,0,0,.08)',
       display: 'flex', flexDirection: 'column', gap: 10,
