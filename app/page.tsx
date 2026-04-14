@@ -35,9 +35,19 @@ function HomeInner() {
 
   useEffect(() => {
     const raw = localStorage.getItem('crew-mes-trips')
-    if (raw) {
-      try { setMesTrips(JSON.parse(raw)) } catch {}
-    }
+    if (!raw) return
+    try {
+      const saved: SavedTrip[] = JSON.parse(raw)
+      if (saved.length === 0) return
+      // Vérifier quels trips existent encore en DB
+      const codes = saved.map(t => t.code)
+      supabase.from('trips').select('code').in('code', codes).then(({data}) => {
+        const existingCodes = new Set((data||[]).map((t:any) => t.code))
+        const filtered = saved.filter(t => existingCodes.has(t.code))
+        setMesTrips(filtered)
+        localStorage.setItem('crew-mes-trips', JSON.stringify(filtered))
+      })
+    } catch {}
   }, [])
 
   function saveTripLocal(trip: SavedTrip) {
