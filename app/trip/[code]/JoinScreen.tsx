@@ -5,8 +5,8 @@ import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
 
 const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', motoneige:'🏔',
-  hike:'🥾', velo:'🚵', chasse:'🎯', yoga:'🧘', autre:'🏕' 
+  peche:'🎣', ski:'⛷', motoneige:'🛻',
+  hike:'🥾', velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕' 
 }
 
 function fmt(d?: string) {

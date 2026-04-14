@@ -9,8 +9,8 @@ import Membres from './Membres'
 
 type Tab = 'infos'|'chat'|'membres'
 const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', motoneige:'🏔', 
-  hike:'🥾', velo:'🚵', chasse:'🎯', yoga:'🧘', autre:'🏕' 
+  peche:'🎣', ski:'⛷', motoneige:'🛻', 
+  hike:'🥾', velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕' 
 }
 
 function NavIcon({tab}:{tab:Tab}) {
