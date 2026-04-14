@@ -46,20 +46,23 @@ export function levenshtein(a: string, b: string): number {
 }
 export function findClosestPrenom(input: string, list: string[]): string|null {
   const inp = input.toLowerCase().trim()
-  // 1. Match exact
+  if (inp.length < 2) return null
+  // 1. Match exact complet
   const exact = list.find(p=>p.toLowerCase()===inp)
   if (exact) return exact
-  // 2. Le texte tapé correspond à un mot dans un prénom de la liste (ex: "Bergeron" dans "Sylvain Bergeron")
-  const wordMatch = list.find(p=>p.toLowerCase().split(/\s+/).includes(inp))
+  // 2. Un mot tapé correspond exactement à un mot dans la liste (ex: "Bergeron" dans "Sylvain Bergeron")
+  const inpWords = inp.split(/\s+/).filter(w=>w.length>=2)
+  const wordMatch = list.find(p=>{
+    const pWords = p.toLowerCase().split(/\s+/)
+    return inpWords.some(w => pWords.includes(w))
+  })
   if (wordMatch) return wordMatch
-  // 3. Un mot du prénom de la liste correspond à ce qui est tapé
-  const reverseWordMatch = list.find(p=>inp.split(/\s+/).some(w=>p.toLowerCase()===w))
-  if (reverseWordMatch) return reverseWordMatch
-  // 4. Levenshtein <=2 sur le prénom complet ou sur chaque mot
-  for (const p of list) {
-    if (levenshtein(inp, p.toLowerCase()) <= 2) return p
-    const words = p.toLowerCase().split(/\s+/)
-    if (words.some(w => levenshtein(inp, w) <= 2)) return p
+  // 3. Levenshtein <=2 sur le prénom COMPLET seulement (pas sur les mots individuels)
+  // Seulement si la saisie fait au moins 4 caractères (évite les faux positifs courts)
+  if (inp.length >= 4) {
+    for (const p of list) {
+      if (levenshtein(inp, p.toLowerCase()) <= 2) return p
+    }
   }
   return null
 }
