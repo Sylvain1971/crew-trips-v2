@@ -91,24 +91,10 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
 
   useEffect(()=>{ load() },[load])
 
-  // Enregistrer le Service Worker et mémoriser l'URL du trip pour le lancement PWA
+  // Enregistrer le Service Worker pour le cache membre (PWA standalone iOS)
   useEffect(()=>{
     if (!('serviceWorker' in navigator)) return
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      // Attendre que le SW soit actif
-      const sw = reg.active || reg.installing || reg.waiting
-      if (sw) {
-        sw.postMessage({ type: 'SET_LAUNCH_URL', url: `/trip/${params.code}` })
-      }
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing
-        newSW?.addEventListener('statechange', () => {
-          if (newSW.state === 'activated') {
-            newSW.postMessage({ type: 'SET_LAUNCH_URL', url: `/trip/${params.code}` })
-          }
-        })
-      })
-    }).catch(() => {})
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
   }, [params.code])
 
   function saveMembre(m: Membre) {
