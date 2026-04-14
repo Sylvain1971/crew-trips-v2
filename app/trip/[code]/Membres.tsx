@@ -269,7 +269,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
               dest: trip.destination||'',
               participants: participants.join(','),
             })
-            router.push(/?+params.toString())
+            router.push('/' + '?' + params.toString())
           }}
             style={{width:'100%',padding:'12px',borderRadius:10,border:'1.5px solid var(--forest)',
               background:'transparent',color:'var(--forest)',fontWeight:600,fontSize:14,cursor:'pointer',
