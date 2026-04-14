@@ -62,6 +62,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
     code: trip.lodge_code||'', arrivee: trip.lodge_arrivee||''
   })
   const [savingLodge, setSavingLodge] = useState(false)
+  const [lodgeOpen, setLodgeOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
   useEffect(()=>{
@@ -201,24 +202,51 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
 
       {/* Section Lodge */}
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:haslodge||editLodge?12:0}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}}
+          onClick={()=>setLodgeOpen(o=>!o)}>
           <div style={{fontWeight:700,fontSize:14}}>🏕 Le Lodge</div>
-          <button onClick={()=>setEditLodge(!editLodge)}
-            style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-            {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
-          </button>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            {isCreateur && !lodgeOpen && (
+              <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
+                style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
+                  fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
+                {haslodge?'Modifier':'+ Ajouter'}
+              </button>
+            )}
+            <span style={{fontSize:18,color:'var(--text-3)',transition:'transform .2s',
+              display:'inline-block',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}>
+              ⌄
+            </span>
+          </div>
         </div>
-        {!editLodge && haslodge && (
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        {lodgeOpen && !editLodge && haslodge && (
+          <div style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
             {lodge.nom && <LodgeItem icon="🏠" label="Nom" val={lodge.nom} />}
             {lodge.adresse && <LodgeItem icon="📍" label="Adresse" val={lodge.adresse} />}
             {lodge.tel && <LodgeItem icon="📞" label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
             {lodge.wifi && <LodgeItem icon="📶" label="WiFi" val={lodge.wifi} />}
             {lodge.arrivee && <LodgeItem icon="🛬" label="Arrivée" val={lodge.arrivee} />}
             {lodge.code && <LodgeItem icon="🛫" label="Départ" val={lodge.code} />}
+            {isCreateur && (
+              <button onClick={()=>setEditLodge(true)}
+                style={{gridColumn:'1/-1',marginTop:4,padding:'8px',borderRadius:8,
+                  border:'1px solid var(--border)',background:'transparent',
+                  color:'var(--text-2)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+                ✏️ Modifier
+              </button>
+            )}
           </div>
         )}
-        {editLodge && (
+        {lodgeOpen && !editLodge && !haslodge && isCreateur && (
+          <div style={{marginTop:12}}>
+            <button onClick={()=>setEditLodge(true)}
+              style={{width:'100%',padding:'10px',borderRadius:8,border:'1.5px dashed var(--border)',
+                background:'transparent',color:'var(--text-3)',fontSize:13,cursor:'pointer'}}>
+              + Ajouter les infos du lodge
+            </button>
+          </div>
+        )}
+        {lodgeOpen && editLodge && (
           <div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
               {[
