@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 
@@ -8,15 +8,26 @@ export default function InstallBanner() {
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const pathname = usePathname()
 
+  // Détecter si on est sur une page trip — iOS lira le bon manifest avec le nom du trip
+  const isTripPage = pathname.startsWith('/trip/')
+  const tripNom = (() => {
+    if (!isTripPage || typeof window === 'undefined') return null
+    try {
+      const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+      return appleTitle?.getAttribute('content') || null
+    } catch { return null }
+  })()
+
   useEffect(() => {
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
-    if (isIOS && !isStandalone && !wasDismissed) {
+    // Afficher seulement sur les pages trip pour que l'icône ait le bon nom
+    if (isIOS && !isStandalone && !wasDismissed && isTripPage) {
       const t = setTimeout(() => setShow(true), 4000)
       return () => clearTimeout(t)
     }
-  }, [pathname])
+  }, [pathname, isTripPage])
 
   useEffect(() => {
     function onFocus() {
@@ -40,9 +51,8 @@ export default function InstallBanner() {
 
   if (!show || dismissed) return null
 
-  // Quand clavier ouvert: coller au bas de l'écran visible (au-dessus du clavier)
-  // Quand clavier fermé: position normale au-dessus de la nav
   const bottomPos = keyboardOpen ? 8 : 90
+  const titre = tripNom ? `Installer « ${tripNom} »` : 'Installer Crew Trips'
 
   return (
     <div style={{
@@ -57,7 +67,7 @@ export default function InstallBanner() {
       <img src="/apple-touch-icon.png" alt="" width={36} height={36}
         style={{borderRadius:8,flexShrink:0,marginTop:2}} />
       <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>Installer Crew Trips</div>
+        <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>{titre}</div>
         <div style={{fontSize:11,color:'#666',lineHeight:1.7}}>
           <span>1. Appuyez sur <strong>Partager</strong> ⬆ en bas</span><br/>
           <span>2. Faites défiler → <strong>Ajouter à l'écran d'accueil</strong></span><br/>

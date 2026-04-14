@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS } from '@/lib/utils'
+import { COULEURS_MEMBRES } from '@/lib/types'
 
 function genCode() {
   return Array.from({length:6},()=>'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random()*32)]).join('')
@@ -80,6 +81,27 @@ function HomeInner() {
       // Récupérer le nouvel ID du trip
       const { data: newTrip, error: fetchErr } = await supabase.from('trips').select('id').eq('code', code).single()
       if (fetchErr || !newTrip) throw new Error(fetchErr?.message || 'Trip introuvable après création')
+      // Créer le membre créateur immédiatement pour bypasser JoinScreen
+      const prenomCreateur = (() => {
+        try {
+          // Récupérer le prénom depuis n'importe quel trip existant en localStorage
+          const keys = Object.keys(localStorage).filter(k => k.startsWith('crew2-'))
+          for (const k of keys) {
+            const m = JSON.parse(localStorage.getItem(k) || '{}')
+            if (m?.prenom) return m.prenom as string
+          }
+        } catch {}
+        return null
+      })()
+      if (prenomCreateur) {
+        const couleur = COULEURS_MEMBRES[Math.floor(Math.random() * COULEURS_MEMBRES.length)]
+        const { data: newMembre } = await supabase.from('membres')
+          .insert({ trip_id: newTrip.id, prenom: prenomCreateur, couleur, is_createur: true })
+          .select().single()
+        if (newMembre) {
+          try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
+        }
+      }
       // Participants autorisés
       if (participants.length > 0) {
         const { error: partErr } = await supabase.from('participants_autorises').insert(
