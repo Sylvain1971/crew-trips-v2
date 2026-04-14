@@ -63,7 +63,11 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
   })
   const [savingLodge, setSavingLodge] = useState(false)
   const [copied, setCopied] = useState(false)
-  const cd = countdown(trip.date_debut)
+  const [cd, setCd] = useState(()=>countdown(trip.date_debut))
+  useEffect(()=>{
+    const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
+    return ()=>clearInterval(t)
+  },[trip.date_debut])
 
   useEffect(() => {
     supabase.from('infos').select('*').eq('trip_id', trip.id)

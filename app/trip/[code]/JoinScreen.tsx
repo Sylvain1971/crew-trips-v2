@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
@@ -28,7 +28,11 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const [suggestion, setSuggestion] = useState<string|null>(null)
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
-  const cd = countdown(trip.date_debut)
+  const [cd, setCd] = useState(()=>countdown(trip.date_debut))
+  useEffect(()=>{
+    const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
+    return ()=>clearInterval(t)
+  },[trip.date_debut])
   const listeActive = autorises.length > 0
 
   function valider(nom: string) {
