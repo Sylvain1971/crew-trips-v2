@@ -248,7 +248,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
         <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
         {CATEGORIES.map(c=>(
           <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
-            {c.icon} {c.label.split(' ')[0]}
+            {c.icon} {c.id==='transport'?'Vols':c.id==='lodge'?'Lodge':c.id==='permis'?'Permis':c.id==='equipement'?'Équip.':'Liens'}
           </FilterBtn>
         ))}
       </div>
@@ -349,10 +349,10 @@ function LodgeItem({icon,label,val,link}:{icon:string,label:string,val:string,li
 function FilterBtn({active,onClick,color,children}:{active:boolean,onClick:()=>void,color?:string,children:React.ReactNode}) {
   return (
     <button onClick={onClick} style={{
-      flexShrink:0,padding:'6px 13px',borderRadius:20,
+      flexShrink:0,padding:'6px 10px',borderRadius:20,
       border:`1.5px solid ${active?(color||'var(--forest)'):'var(--border)'}`,
       background:active?(color||'var(--forest)'):'transparent',
-      color:active?'#fff':'var(--text-2)',fontSize:12,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'
+      color:active?'#fff':'var(--text-2)',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'
     }}>{children}</button>
   )
 }
