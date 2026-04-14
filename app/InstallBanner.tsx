@@ -12,10 +12,7 @@ export default function InstallBanner() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
     if (isIOS && !isStandalone && !wasDismissed) {
-      // Sur les pages trip, attendre 30s (le temps que l'utilisateur se connecte et explore)
-      // Sur la page d'accueil, 4s
-      const delay = 4000
-      const t = setTimeout(() => setShow(true), delay)
+      const t = setTimeout(() => setShow(true), 4000)
       return () => clearTimeout(t)
     }
   }, [pathname])
@@ -30,35 +27,27 @@ export default function InstallBanner() {
 
   return (
     <div style={{
-      position: 'fixed', top: 12, left: 12, right: 12, zIndex: 200,
-      background: '#fff', borderRadius: 16, padding: '14px 16px',
-      boxShadow: '0 8px 40px rgba(0,0,0,.22)', border: '1px solid rgba(0,0,0,.08)',
-      display: 'flex', flexDirection: 'column', gap: 10,
+      position: 'fixed', bottom: 90, left: 12, right: 12, zIndex: 200,
+      background: '#fff', borderRadius: 12, padding: '10px 12px',
+      boxShadow: '0 4px 24px rgba(0,0,0,.18)', border: '1px solid rgba(0,0,0,.08)',
+      display: 'flex', alignItems: 'flex-start', gap: 10,
       animation: 'slideUp .3s ease'
     }}>
-      <style>{`@keyframes slideUp { from { transform: translateY(20px); opacity:0 } to { transform: translateY(0); opacity:1 } }`}</style>
-      <div style={{display:'flex',alignItems:'center',gap:12}}>
-        <img src="/apple-touch-icon.png" alt="" width={44} height={44}
-          style={{borderRadius:10,flexShrink:0}} />
-        <div style={{flex:1}}>
-          <div style={{fontWeight:700,fontSize:14,color:'#111'}}>Installer Crew Trips</div>
-          <div style={{fontSize:12,color:'#888',marginTop:2,lineHeight:1.4}}>
-            Accédez à vos trips depuis l'écran d'accueil
-          </div>
+      <style>{`@keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform: translateY(0); opacity:1 } }`}</style>
+      <img src="/apple-touch-icon.png" alt="" width={36} height={36}
+        style={{borderRadius:8,flexShrink:0,marginTop:2}} />
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>Installer Crew Trips</div>
+        <div style={{fontSize:11,color:'#666',lineHeight:1.7}}>
+          <span>1. <strong>···</strong> en bas à gauche</span><br/>
+          <span>2. <strong>Partager</strong> ⬆ → <strong>En afficher plus</strong> ↑</span><br/>
+          <span>3. <strong>Ajouter sur l'écran d'accueil</strong> → <strong>Ajouter</strong></span>
         </div>
-        <button onClick={dismiss}
-          style={{background:'none',border:'none',fontSize:22,color:'#aaa',cursor:'pointer',padding:4,lineHeight:1}}>
-          ×
-        </button>
       </div>
-      <div style={{background:'#f5f5f0',borderRadius:10,padding:'10px 12px',fontSize:13,
-        color:'#555',lineHeight:2}}>
-        <div>1. Appuyez sur <strong style={{color:'#111'}}>···</strong> en bas à gauche</div>
-        <div>2. Appuyez sur <strong style={{color:'#111'}}>Partager</strong> <span style={{fontSize:15}}>⬆</span></div>
-        <div>3. Appuyez sur <strong style={{color:'#111'}}>En afficher plus</strong> <span style={{fontSize:15}}>↑</span></div>
-        <div>4. Choisissez <strong style={{color:'#111'}}>Ajouter sur l'écran d'accueil</strong></div>
-        <div>5. Appuyez sur <strong style={{color:'#111'}}>Ajouter</strong></div>
-      </div>
+      <button onClick={dismiss}
+        style={{background:'none',border:'none',fontSize:20,color:'#bbb',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0}}>
+        ×
+      </button>
     </div>
   )
 }
