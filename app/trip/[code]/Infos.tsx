@@ -210,7 +210,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
             {lodge.adresse && <LodgeItem icon="📍" label="Adresse" val={lodge.adresse} />}
             {lodge.tel && <LodgeItem icon="📞" label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
             {lodge.wifi && <LodgeItem icon="📶" label="WiFi" val={lodge.wifi} />}
-            {lodge.code && <LodgeItem icon="🔑" label="Code d'accès" val={lodge.code} />}
+            {lodge.code && <LodgeItem icon="🕐" label="Départ" val={lodge.code} />}
             {lodge.arrivee && <LodgeItem icon="🕐" label="Arrivée" val={lodge.arrivee} />}
           </div>
         )}
@@ -222,7 +222,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
                 {k:'adresse',label:'Adresse',ph:'Ex: Smithers, BC'},
                 {k:'tel',label:'Téléphone',ph:'+1 250 000 0000'},
                 {k:'wifi',label:'Mot de passe WiFi',ph:'Ex: fishing2025'},
-                {k:'code',label:"Code d'accès",ph:'Ex: 4521#'},
+                {k:'code',label:'Heure de départ',ph:'Ex: 10h00 le 25 avril'},
                 {k:'arrivee',label:"Heure d'arrivée",ph:'Ex: 14h00 le 8 juin'},
               ].map(f=>(
                 <div key={f.k}>
@@ -253,7 +253,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       <div style={{padding:'14px 14px 100px',display:'flex',flexDirection:'column',gap:10}}>
         {filtered.length === 0 ? (
           <div className="empty">
-            <span className="empty-icon">📋</span>
+            {filtre==='all' ? <span className="empty-icon">📋</span> : <span className="empty-icon">{getCat(filtre).icon}</span>}
             Aucune info ici pour l'instant.<br/>Appuyez sur <strong>+</strong> pour ajouter.
           </div>
         ) : filtered.map(card => (
