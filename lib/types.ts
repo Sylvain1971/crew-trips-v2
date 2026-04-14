@@ -27,13 +27,14 @@ export const CATEGORIES = [
   { id: 'lodge',      label: 'Lodge & Séjour',      icon: '🏠', color: '#16A34A', bg: '#F0FDF4' },
   { id: 'permis',     label: 'Permis & Règlements', icon: '🪪', color: '#B45309', bg: '#FFFBEB' },
   { id: 'equipement', label: 'Équipement',           icon: '⚙️', color: '#6B7280', bg: '#F9FAFB' },
+  { id: 'infos',      label: 'Informations',         icon: 'ℹ️', color: '#0EA5E9', bg: '#F0F9FF' },
   { id: 'liens',      label: 'Liens & Ressources',  icon: '🔗', color: '#7C3AED', bg: '#F5F3FF' },
 ]
 export const COULEURS_MEMBRES = [
   '#1D4ED8','#15803D','#B45309','#DC2626','#7C3AED','#0891B2','#C2410C','#4338CA'
 ]
 export function getCat(id: string) {
-  return CATEGORIES.find(c => c.id === id) || CATEGORIES[4]
+  return CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1]
 }
 export function levenshtein(a: string, b: string): number {
   const m = a.length, n = b.length
