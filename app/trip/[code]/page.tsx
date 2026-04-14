@@ -9,7 +9,7 @@ import Membres from './Membres'
 
 type Tab = 'infos'|'chat'|'membres'
 const ICONS: Record<string,string> = { 
-  peche:'🎣', ski:'⛷', motoneige:'🛻', 
+  peche:'🎣', ski:'⛷', motoneige:'🗻', 
   hike:'🥾', velo:'🚵', chasse:'🫎', yoga:'🧘', autre:'🏕' 
 }
 

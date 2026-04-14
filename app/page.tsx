@@ -54,7 +54,7 @@ export default function Home() {
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}>
               <option value="peche" style={{background:'#1a3a1a',color:'#fff'}}>🎣 Pêche à la mouche</option>
               <option value="ski" style={{background:'#1a3a1a',color:'#fff'}}>⛷ Ski alpin</option>
-              <option value="motoneige" style={{background:'#1a3a1a',color:'#fff'}}>🛻 Motoneige</option>
+              <option value="motoneige" style={{background:'#1a3a1a',color:'#fff'}}>🗻 Motoneige</option>
               <option value="hike" style={{background:'#1a3a1a',color:'#fff'}}>🥾 Randonnée / Hike</option>
               <option value="velo" style={{background:'#1a3a1a',color:'#fff'}}>🚵 Vélo / Mountain Bike</option>
               <option value="chasse" style={{background:'#1a3a1a',color:'#fff'}}>🫎 Chasse</option>
