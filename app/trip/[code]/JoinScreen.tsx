@@ -130,7 +130,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
           </button>
         </div>
         <p style={{fontSize:12,color:'rgba(255,255,255,.25)',marginTop:18,textAlign:'center'}}>
-          Pas de compte requis.{listeActive?' Liste de participants restreinte.':' Entrez votre prénom.'}
+          Pas de compte requis.{listeActive?' Liste de participants restreinte.':' Entrez votre prénom et nom.'}
         </p>
       </div>
     </main>
