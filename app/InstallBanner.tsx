@@ -22,12 +22,11 @@ export default function InstallBanner() {
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
-    // Afficher seulement sur les pages trip pour que l'icône ait le bon nom
-    if (isIOS && !isStandalone && !wasDismissed && isTripPage) {
+    if (isIOS && !isStandalone && !wasDismissed) {
       const t = setTimeout(() => setShow(true), 4000)
       return () => clearTimeout(t)
     }
-  }, [pathname, isTripPage])
+  }, [pathname])
 
   useEffect(() => {
     function onFocus() {
