@@ -167,7 +167,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
       <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editSms||trip.sms_lien?10:0}}>
           <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-            💬 Groupe de discussion
+            💬 Groupe Messenger
           </div>
           {isCreateur && (
             <button onClick={()=>setEditSms(!editSms)}
@@ -179,22 +179,22 @@ export default function Membres({trip, membre, onTripUpdate}: {
         </div>
         {!editSms && trip.sms_lien && (
           <a href={trip.sms_lien} target="_blank" rel="noreferrer"
-            style={{display:'flex',alignItems:'center',gap:10,background:'#F0F9FF',
-              borderRadius:10,padding:'10px 14px',textDecoration:'none',border:'1px solid #BAE6FD'}}>
-            <span style={{fontSize:24}}>📱</span>
+            style={{display:'flex',alignItems:'center',gap:10,background:'#EFF6FF',
+              borderRadius:10,padding:'10px 14px',textDecoration:'none',border:'1px solid #BFDBFE'}}>
+            <span style={{fontSize:24}}>🔵</span>
             <div>
-              <div style={{fontSize:13,fontWeight:700,color:'#0369A1'}}>Rejoindre le groupe</div>
-              <div style={{fontSize:11,color:'#075985',marginTop:1}}>Messenger / Telegram / autre ↗</div>
+              <div style={{fontSize:13,fontWeight:700,color:'#1D4ED8'}}>Rejoindre le groupe</div>
+              <div style={{fontSize:11,color:'#1E40AF',marginTop:1}}>Messenger ↗</div>
             </div>
           </a>
         )}
         {editSms && (
           <div>
             <div style={{fontSize:12,color:'var(--text-3)',marginBottom:6}}>
-              Collez le lien d'invitation du groupe (Messenger, Telegram, Discord…)
+              Collez le lien d'invitation Messenger (m.me/... ou lien de groupe)
             </div>
             <div style={{display:'flex',gap:8}}>
-              <input className="input" type="url" placeholder="https://..."
+              <input className="input" type="url" placeholder="https://m.me/..."
                 value={sms} onChange={e=>setSms(e.target.value)}
                 onKeyDown={e=>e.key==='Enter'&&saveSms()}
                 style={{flex:1,fontSize:13}} />
