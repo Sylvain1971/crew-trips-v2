@@ -65,7 +65,7 @@ export default function InstallBanner() {
         </div>
       </div>
       <button onClick={dismiss}
-        style={{background:'none',border:'none',fontSize:20,color:'#bbb',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0}}>
+        style={{background:'none',border:'none',fontSize:26,color:'#e53e3e',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0,fontWeight:700}}>
         ×
       </button>
     </div>
