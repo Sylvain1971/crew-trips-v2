@@ -19,6 +19,7 @@ interface SavedTrip {
   destination?: string
   participants?: string[]
   savedAt: number
+  sourceCode?: string
 }
 
 function HomeInner() {
@@ -68,19 +69,38 @@ function HomeInner() {
       date_debut: d1||null, date_fin: d2||null,
     })
     if (!error) {
-      // Récupérer les participants pré-remplis si duplication
       const participants = searchParams.get('participants')?.split(',').filter(Boolean) || []
+      const sourceCode = searchParams.get('sourceCode') || null
       saveTripLocal({ code, nom: nom.trim(), type, destination: dest.trim()||undefined, participants, savedAt: Date.now() })
-      // Re-créer les participants autorisés si duplication
-      if (participants.length > 0) {
-        const { data: tripData } = await supabase.from('trips').select('id').eq('code', code).single()
-        if (tripData) {
+      // Récupérer le nouvel ID du trip
+      const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
+      if (newTrip) {
+        // Participants autorisés
+        if (participants.length > 0) {
           await supabase.from('participants_autorises').insert(
-            participants.map(p => ({ trip_id: tripData.id, prenom: p }))
+            participants.map(p => ({ trip_id: newTrip.id, prenom: p }))
           )
         }
+        // Copier lodge + infos du trip source
+        if (sourceCode) {
+          const { data: src } = await supabase.from('trips').select('*').eq('code', sourceCode).single()
+          if (src) {
+            await supabase.from('trips').update({
+              lodge_nom: src.lodge_nom, lodge_adresse: src.lodge_adresse,
+              lodge_tel: src.lodge_tel, lodge_wifi: src.lodge_wifi,
+              lodge_code: src.lodge_code, lodge_arrivee: src.lodge_arrivee,
+              whatsapp_lien: src.whatsapp_lien,
+            }).eq('id', newTrip.id)
+            const { data: srcInfos } = await supabase.from('infos').select('*').eq('trip_id', src.id)
+            if (srcInfos && srcInfos.length > 0) {
+              await supabase.from('infos').insert(
+                srcInfos.map(({id, trip_id, created_at, ...rest}: any) => ({...rest, trip_id: newTrip.id}))
+              )
+            }
+          }
+        }
       }
-      router.push(`/trip/${code}`)
+      router.push('/trip/' + code)
     } else {
       alert('Erreur: ' + error.message)
       setLoading(false)
@@ -93,6 +113,7 @@ function HomeInner() {
       type: trip.type,
       dest: trip.destination || '',
       participants: (trip.participants||[]).join(','),
+      sourceCode: trip.code,
     })
     router.push(`/?${params.toString()}`)
     setShowMesTrips(false)

@@ -277,7 +277,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
         ))}
       </div>
 
-      <button className="fab" onClick={()=>setSheetOpen(true)}>+</button>
+      <button className="fab" onClick={()=>{if(filtre!=='all')setCat(filtre);setSheetOpen(true)}}>+</button>
 
       {/* Sheet ajouter */}
       <div className={`overlay ${sheetOpen?'open':''}`} onClick={()=>setSheetOpen(false)} />
