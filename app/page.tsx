@@ -263,15 +263,31 @@ function HomeInner() {
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>DATES</label>
             <div style={{display:'flex',gap:8}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:10,color:'rgba(255,255,255,.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:4}}>Début</div>
-                <input className="input" type="date" value={d1} onChange={e=>setD1(e.target.value)}
-                  style={{background:'rgba(255,255,255,.15)',border:'1.5px solid rgba(255,255,255,.25)',color:'#fff',colorScheme:'dark'}}/>
+              <div style={{flex:1,position:'relative'}}>
+                <input
+                  readOnly
+                  placeholder="Début"
+                  value={d1 ? new Date(d1+'T00:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'short',year:'numeric'}) : ''}
+                  onClick={()=>document.getElementById('d1-picker')?.showPicker?.() || document.getElementById('d1-picker')?.click()}
+                  style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
+                    background:'rgba(255,255,255,.15)',color: d1?'#fff':'rgba(255,255,255,.45)',
+                    fontSize:14,fontFamily:'inherit',cursor:'pointer',outline:'none'}}
+                />
+                <input id="d1-picker" type="date" value={d1} onChange={e=>setD1(e.target.value)}
+                  style={{position:'absolute',inset:0,opacity:0,width:'100%',height:'100%',cursor:'pointer'}}/>
               </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:10,color:'rgba(255,255,255,.4)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:4}}>Fin</div>
-                <input className="input" type="date" value={d2} onChange={e=>setD2(e.target.value)}
-                  style={{background:'rgba(255,255,255,.15)',border:'1.5px solid rgba(255,255,255,.25)',color:'#fff',colorScheme:'dark'}}/>
+              <div style={{flex:1,position:'relative'}}>
+                <input
+                  readOnly
+                  placeholder="Fin"
+                  value={d2 ? new Date(d2+'T00:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'short',year:'numeric'}) : ''}
+                  onClick={()=>document.getElementById('d2-picker')?.showPicker?.() || document.getElementById('d2-picker')?.click()}
+                  style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
+                    background:'rgba(255,255,255,.15)',color: d2?'#fff':'rgba(255,255,255,.45)',
+                    fontSize:14,fontFamily:'inherit',cursor:'pointer',outline:'none'}}
+                />
+                <input id="d2-picker" type="date" value={d2} onChange={e=>setD2(e.target.value)}
+                  style={{position:'absolute',inset:0,opacity:0,width:'100%',height:'100%',cursor:'pointer'}}/>
               </div>
             </div>
           </div>
