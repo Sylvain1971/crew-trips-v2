@@ -3,10 +3,11 @@ import { getCat } from '@/lib/types'
 import { getYoutubeId, isPdf, ago } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
 
-export default function InfoCardView({card, canDelete, canEdit, onDelete, onEdit, onOpenPdf}: {
+export default function InfoCardView({card, canDelete, canEdit, isCreateur, onDelete, onEdit, onOpenPdf}: {
   card: InfoCard
   canDelete: boolean
   canEdit: boolean
+  isCreateur: boolean
   onDelete: () => void
   onEdit: () => void
   onOpenPdf: (url: string, nom: string) => void
@@ -97,9 +98,11 @@ export default function InfoCardView({card, canDelete, canEdit, onDelete, onEdit
             </button>
           )}
 
-          <div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>
-            {card.membre_prenom} · {ago(card.created_at)}
-          </div>
+          {!isCreateur && (
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>
+              {card.membre_prenom} · {ago(card.created_at)}
+            </div>
+          )}
         </div>
 
         <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>

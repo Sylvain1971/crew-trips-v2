@@ -323,6 +323,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
           <InfoCardView key={card.id} card={card}
             canDelete={canDelete}
             canEdit={canEdit}
+            isCreateur={isCreateur}
             onDelete={()=>removeCard(card.id)}
             onEdit={()=>openEdit(card)}
             onOpenPdf={(url,nom)=>setPdfViewer({url,nom})} />
