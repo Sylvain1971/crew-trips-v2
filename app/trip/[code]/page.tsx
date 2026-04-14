@@ -47,21 +47,45 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
     setTrip(data)
     const {data:auth} = await supabase.from('participants_autorises').select('*').eq('trip_id',data.id)
     setAutorises(auth||[])
+
+    // 1. Essayer localStorage
     const stored = localStorage.getItem(`crew2-${params.code}`)
     if (stored) {
       try {
         const m = JSON.parse(stored)
-        const {data:dbM, error:dbErr} = await supabase.from('membres')
-          .select('*').eq('id', m.id).maybeSingle()
-        if (dbM) {
-          // Normaliser is_createur (peut être null sur anciens membres)
-          setMembre({...dbM, is_createur: dbM.is_createur ?? false})
-        } else {
-          // Membre supprimé ou retiré — effacer localStorage
-          localStorage.removeItem(`crew2-${params.code}`)
-        }
+        const {data:dbM} = await supabase.from('membres').select('*').eq('id', m.id).maybeSingle()
+        if (dbM) { setMembre({...dbM, is_createur: dbM.is_createur ?? false}); setLoading(false); return }
+        localStorage.removeItem(`crew2-${params.code}`)
       } catch {}
     }
+
+    // 2. localStorage vide (PWA standalone) — essayer le Service Worker cache
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      const membreFromSW = await new Promise<string|null>(resolve => {
+        const handler = (event: MessageEvent) => {
+          if (event.data?.type === 'MEMBRE_DATA' && event.data.code === params.code) {
+            navigator.serviceWorker.removeEventListener('message', handler)
+            resolve(event.data.data)
+          }
+        }
+        navigator.serviceWorker.addEventListener('message', handler)
+        navigator.serviceWorker.controller!.postMessage({ type: 'GET_MEMBRE', code: params.code })
+        setTimeout(() => { navigator.serviceWorker.removeEventListener('message', handler); resolve(null) }, 2000)
+      })
+      if (membreFromSW) {
+        try {
+          const m = JSON.parse(membreFromSW)
+          const {data:dbM} = await supabase.from('membres').select('*').eq('id', m.id).maybeSingle()
+          if (dbM) {
+            const membre = {...dbM, is_createur: dbM.is_createur ?? false}
+            setMembre(membre)
+            try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(membre)) } catch {}
+            setLoading(false); return
+          }
+        } catch {}
+      }
+    }
+
     setLoading(false)
   },[params.code])
 
@@ -89,10 +113,10 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
 
   function saveMembre(m: Membre) {
     setMembre(m)
-    try {
-      localStorage.setItem(`crew2-${params.code}`, JSON.stringify(m))
-    } catch {
-      // localStorage plein ou indisponible
+    try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(m)) } catch {}
+    // Sauvegarder aussi dans le SW cache pour la PWA standalone
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SET_MEMBRE', code: params.code, membre: m })
     }
   }
 
