@@ -92,9 +92,9 @@ export default function JoinScreen({trip,autorises,onJoin}:{
         </div>
         <div style={{width:'100%',maxWidth:360,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:'1px solid rgba(255,255,255,.1)'}}>
           <p style={{fontSize:14,color:'rgba(255,255,255,.6)',textAlign:'center',marginBottom:16,lineHeight:1.5}}>
-            Entrez votre prénom pour accéder au trip
+            Entrez votre prénom et nom pour accéder au trip
           </p>
-          <input className="input" placeholder="Votre prénom" value={prenom}
+          <input className="input" placeholder="Prénom et nom" value={prenom}
             onChange={e=>onChangePrenom(e.target.value)}
             onKeyDown={e=>e.key==='Enter'&&rejoindre()}
             autoFocus

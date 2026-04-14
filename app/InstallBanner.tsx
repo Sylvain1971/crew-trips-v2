@@ -8,13 +8,14 @@ export default function InstallBanner() {
   const pathname = usePathname()
 
   useEffect(() => {
-    // Ne pas afficher sur les pages trip
-    if (pathname.startsWith('/trip/')) return
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
     if (isIOS && !isStandalone && !wasDismissed) {
-      setTimeout(() => setShow(true), 3000)
+      // Délai plus long sur les pages trip pour laisser le temps de se connecter
+      const delay = pathname.startsWith('/trip/') ? 8000 : 3000
+      const t = setTimeout(() => setShow(true), delay)
+      return () => clearTimeout(t)
     }
   }, [pathname])
 
