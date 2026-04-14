@@ -60,7 +60,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     }
     const { data: existing } = await supabase.from('membres')
       .select('*').eq('trip_id',trip.id).ilike('prenom',nom).maybeSingle()
-    if (existing) { onJoin({...existing, is_createur: existing.is_createur ?? false}); return }
+    if (existing) { setLoading(false); onJoin({...existing, is_createur: existing.is_createur ?? false}); return }
     const { count } = await supabase.from('membres')
       .select('id', {count:'exact',head:true}).eq('trip_id',trip.id)
     const isFirst = (count ?? 0) === 0
@@ -69,7 +69,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst})
       .select().single()
     if (!error && data) onJoin(data)
-    else { setErreur('Erreur de connexion. Réessayez.'); setLoading(false) }
+    else { setErreur('Erreur de connexion. Réessayez.' + (error ? ' (' + error.message + ')' : '')); setLoading(false) }
   }
 
   return (
