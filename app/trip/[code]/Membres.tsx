@@ -15,6 +15,8 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [newPrenom, setNewPrenom] = useState('')
   const [whatsapp, setWhatsapp] = useState(trip.whatsapp_lien||'')
   const [editWhatsapp, setEditWhatsapp] = useState(false)
+  const [sms, setSms] = useState(trip.sms_lien||'')
+  const [editSms, setEditSms] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -76,6 +78,16 @@ export default function Membres({trip, membre, onTripUpdate}: {
     await supabase.from('trips').update({whatsapp_lien:whatsapp||null}).eq('id',trip.id)
     onTripUpdate({whatsapp_lien:whatsapp||undefined})
     setEditWhatsapp(false)
+  }
+
+  async function saveSms() {
+    const val = sms.trim()
+    // Accepte un numéro brut (ex: 4185551234) ou un lien sms: complet
+    const lien = val ? (val.startsWith('sms:') ? val : `sms:${val.replace(/\D/g,'')}`) : null
+    await supabase.from('trips').update({sms_lien: lien}).eq('id', trip.id)
+    onTripUpdate({sms_lien: lien||undefined})
+    setSms(lien||'')
+    setEditSms(false)
   }
 
   async function supprimerTrip() {
@@ -148,6 +160,50 @@ export default function Membres({trip, membre, onTripUpdate}: {
                 color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>
               OK
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* SMS / iMessage */}
+      <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editSms||trip.sms_lien?10:0}}>
+          <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
+            💬 Groupe Texto
+          </div>
+          {isCreateur && (
+            <button onClick={()=>setEditSms(!editSms)}
+              style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
+                fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
+              {editSms?'Fermer':trip.sms_lien?'Modifier':'+ Ajouter'}
+            </button>
+          )}
+        </div>
+        {!editSms && trip.sms_lien && (
+          <a href={trip.sms_lien} style={{display:'flex',alignItems:'center',gap:10,background:'#F0F9FF',
+            borderRadius:10,padding:'10px 14px',textDecoration:'none',border:'1px solid #BAE6FD'}}>
+            <span style={{fontSize:24}}>📱</span>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:'#0369A1'}}>Envoyer un texto</div>
+              <div style={{fontSize:11,color:'#075985',marginTop:1}}>SMS / iMessage ↗</div>
+            </div>
+          </a>
+        )}
+        {editSms && (
+          <div>
+            <div style={{fontSize:12,color:'var(--text-3)',marginBottom:6}}>
+              Entrez un numéro (ex: 4185551234) ou un lien sms: complet
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <input className="input" placeholder="4185551234"
+                value={sms} onChange={e=>setSms(e.target.value)}
+                onKeyDown={e=>e.key==='Enter'&&saveSms()}
+                style={{flex:1,fontSize:13}} />
+              <button onClick={saveSms}
+                style={{padding:'0 14px',borderRadius:10,border:'none',background:'var(--forest)',
+                  color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>
+                OK
+              </button>
+            </div>
           </div>
         )}
       </div>
