@@ -92,7 +92,21 @@ export default function Membres({trip, membre, onTripUpdate}: {
   async function supprimerTrip() {
     if (deleteConfirm !== trip.nom) return
     setDeleting(true)
-    await supabase.from('trips').delete().eq('id',trip.id)
+    // Supprimer les tables liées avant le trip (au cas où CASCADE manquant en DB)
+    await supabase.from('messages').delete().eq('trip_id', trip.id)
+    await supabase.from('infos').delete().eq('trip_id', trip.id)
+    await supabase.from('participants_autorises').delete().eq('trip_id', trip.id)
+    await supabase.from('membres').delete().eq('trip_id', trip.id)
+    await supabase.from('trips').delete().eq('id', trip.id)
+    // Nettoyer localStorage
+    try {
+      localStorage.removeItem(`crew2-${trip.code}`)
+      const raw = localStorage.getItem('crew-mes-trips')
+      if (raw) {
+        const saved = JSON.parse(raw).filter((t: {code:string}) => t.code !== trip.code)
+        localStorage.setItem('crew-mes-trips', JSON.stringify(saved))
+      }
+    } catch {}
     window.location.href = '/'
   }
 

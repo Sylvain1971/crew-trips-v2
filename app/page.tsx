@@ -82,13 +82,17 @@ function HomeInner() {
       const { data: newTrip, error: fetchErr } = await supabase.from('trips').select('id').eq('code', code).single()
       if (fetchErr || !newTrip) throw new Error(fetchErr?.message || 'Trip introuvable après création')
       // Créer le membre créateur immédiatement pour bypasser JoinScreen
+      // On cherche uniquement parmi les trips où on était créateur
       const prenomCreateur = (() => {
         try {
-          // Récupérer le prénom depuis n'importe quel trip existant en localStorage
-          const keys = Object.keys(localStorage).filter(k => k.startsWith('crew2-'))
-          for (const k of keys) {
-            const m = JSON.parse(localStorage.getItem(k) || '{}')
-            if (m?.prenom) return m.prenom as string
+          const raw = localStorage.getItem('crew-mes-trips')
+          if (!raw) return null
+          const saved: SavedTrip[] = JSON.parse(raw)
+          for (const t of saved) {
+            const stored = localStorage.getItem(`crew2-${t.code}`)
+            if (!stored) continue
+            const m = JSON.parse(stored)
+            if (m?.prenom && m?.is_createur === true) return m.prenom as string
           }
         } catch {}
         return null
