@@ -3,11 +3,12 @@ import { getCat } from '@/lib/types'
 import { getYoutubeId, isPdf, ago } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
 
-export default function InfoCardView({card, canDelete, canEdit, isCreateur, onDelete, onEdit, onOpenPdf}: {
+export default function InfoCardView({card, canDelete, canEdit, isCreateur, collapsed, onDelete, onEdit, onOpenPdf}: {
   card: InfoCard
   canDelete: boolean
   canEdit: boolean
   isCreateur: boolean
+  collapsed: boolean
   onDelete: () => void
   onEdit: () => void
   onOpenPdf: (url: string, nom: string) => void
@@ -31,7 +32,8 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, onDe
           <div style={{fontWeight:700,fontSize:15,letterSpacing:'-.01em',
             marginBottom:card.contenu?5:0}}>{card.titre}</div>
           {card.contenu && (
-            <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap'}}>
+            <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap',
+              ...(collapsed ? {display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',whiteSpace:'normal'} : {})}}>
               {card.contenu}
             </div>
           )}
@@ -105,18 +107,18 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, onDe
           )}
         </div>
 
-        <div style={{display:'flex',flexDirection:'column',gap:4,flexShrink:0}}>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'space-between',flexShrink:0,alignSelf:'stretch'}}>
           {canEdit && (
             <button onClick={onEdit}
               style={{background:'none',border:'none',color:'var(--text-3)',
-                fontSize:16,cursor:'pointer',padding:2,lineHeight:1}}>
+                fontSize:13,cursor:'pointer',padding:2,lineHeight:1}}>
               ✏️
             </button>
           )}
           {canDelete && (
             <button onClick={onDelete}
               style={{background:'none',border:'none',color:'var(--border)',
-                fontSize:20,cursor:'pointer',padding:2,lineHeight:1}}>
+                fontSize:18,cursor:'pointer',padding:2,lineHeight:1,marginTop:'auto'}}>
               ×
             </button>
           )}

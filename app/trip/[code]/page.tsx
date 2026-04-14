@@ -129,7 +129,7 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
       )}
 
       <div style={{flex:1,overflow:tab==='chat'?'hidden':'auto',display:'flex',flexDirection:'column'}}>
-        {tab==='infos' && <Infos trip={trip} membre={membre} />}
+        {tab==='infos' && <Infos trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
         {tab==='chat' && <Chat tripId={trip.id} membre={membre} />}
         {tab==='membres' && <Membres trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
       </div>

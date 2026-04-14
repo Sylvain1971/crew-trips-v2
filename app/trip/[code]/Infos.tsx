@@ -15,7 +15,7 @@ function formatSize(b: number) {
   return `${(b/1048576).toFixed(1)} MB`
 }
 
-export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) {
+export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, membre: Membre, onTripUpdate?: (u: Partial<Trip>) => void }) {
   const isCreateur = membre.is_createur
   const canDelete = isCreateur || trip.can_delete
   const canEdit = isCreateur || trip.can_edit
@@ -50,6 +50,12 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
   const [savingLodge, setSavingLodge] = useState(false)
   const [lodgeOpen, setLodgeOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [editTrip, setEditTrip] = useState(false)
+  const [editNom, setEditNom] = useState(trip.nom)
+  const [editDest, setEditDest] = useState(trip.destination||'')
+  const [editD1, setEditD1] = useState(trip.date_debut?.slice(0,10)||'')
+  const [editD2, setEditD2] = useState(trip.date_fin?.slice(0,10)||'')
+  const [savingTrip, setSavingTrip] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
   useEffect(()=>{
     const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
@@ -168,6 +174,26 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
     setTimeout(() => setCopied(false), 2500)
   }
 
+  async function saveTrip() {
+    if (!editNom.trim()) return
+    setSavingTrip(true)
+    const updates: Partial<Trip> = {
+      nom: editNom.trim(),
+      destination: editDest.trim()||undefined,
+      date_debut: editD1||undefined,
+      date_fin: editD2||undefined,
+    }
+    await supabase.from('trips').update({
+      nom: editNom.trim(),
+      destination: editDest.trim()||null,
+      date_debut: editD1||null,
+      date_fin: editD2||null,
+    }).eq('id', trip.id)
+    onTripUpdate?.(updates)
+    setSavingTrip(false)
+    setEditTrip(false)
+  }
+
   const haslodge = lodge.nom || lodge.adresse || lodge.tel || lodge.wifi || lodge.code || lodge.arrivee
   const tripDate = trip.date_debut ? new Date(trip.date_debut).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}) : ''
   const tripDateFin = trip.date_fin ? new Date(trip.date_fin).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}) : ''
@@ -210,10 +236,18 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
               </div>
             )}
           </div>
-          <button onClick={copyLink}
-            style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',flexShrink:0,marginLeft:12,transition:'background .2s'}}>
-            {copied ? '✓ Copié !' : '🔗 Inviter'}
-          </button>
+          <div style={{display:'flex',gap:8,flexShrink:0,marginLeft:12}}>
+            {isCreateur && (
+              <button onClick={()=>setEditTrip(true)}
+                style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 12px',color:'#fff',fontSize:13,cursor:'pointer'}}>
+                ✏️
+              </button>
+            )}
+            <button onClick={copyLink}
+              style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'background .2s'}}>
+              {copied ? '✓ Copié !' : '🔗 Inviter'}
+            </button>
+          </div>
         </div>
         {cd && (
           <div style={{background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
@@ -324,6 +358,7 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
             canDelete={canDelete}
             canEdit={canEdit}
             isCreateur={isCreateur}
+            collapsed={filtre==='all'}
             onDelete={()=>removeCard(card.id)}
             onEdit={()=>openEdit(card)}
             onOpenPdf={(url,nom)=>setPdfViewer({url,nom})} />
@@ -331,6 +366,29 @@ export default function Infos({ trip, membre }: { trip: Trip, membre: Membre }) 
       </div>
 
       <button className="fab" onClick={()=>{if(filtre!=='all')setCat(filtre);setSheetOpen(true)}}>+</button>
+
+      {/* Sheet modifier trip */}
+      <div className={`overlay ${editTrip?'open':''}`} onClick={()=>setEditTrip(false)} />
+      <div className={`sheet ${editTrip?'open':''}`}>
+        <div className="sheet-handle" />
+        <div className="sheet-title">Modifier le trip</div>
+        <div className="field"><label>Nom du trip</label>
+          <input className="input" value={editNom} onChange={e=>setEditNom(e.target.value)} />
+        </div>
+        <div className="field"><label>Destination</label>
+          <input className="input" placeholder="Ex: Rivière Babine, BC" value={editDest} onChange={e=>setEditDest(e.target.value)} />
+        </div>
+        <div className="field"><label>Dates</label>
+          <div style={{display:'flex',gap:8}}>
+            <input className="input" type="date" value={editD1} onChange={e=>setEditD1(e.target.value)} style={{flex:1}} />
+            <input className="input" type="date" value={editD2} onChange={e=>setEditD2(e.target.value)} style={{flex:1}} />
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={saveTrip} disabled={savingTrip||!editNom.trim()}>
+          {savingTrip?'Sauvegarde…':'Sauvegarder'}
+        </button>
+        <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>setEditTrip(false)}>Annuler</button>
+      </div>
 
       {/* Sheet modifier card */}
       <div className={`overlay ${editCard?'open':''}`} onClick={()=>setEditCard(null)} />
