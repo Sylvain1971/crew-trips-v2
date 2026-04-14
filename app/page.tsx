@@ -263,29 +263,20 @@ function HomeInner() {
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>DATES</label>
             <div style={{display:'flex',gap:8}}>
-              {[
-                {id:'d1', label:'DÉBUT', val:d1, set:setD1},
-                {id:'d2', label:'FIN',   val:d2, set:setD2},
-              ].map(({id,label,val,set})=>(
-                <label key={id} style={{flex:1,cursor:'pointer'}}>
-                  <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,
-                    textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>
-                    {label}
-                  </div>
-                  <div style={{padding:'13px 15px',borderRadius:10,
-                    border:'1.5px solid rgba(255,255,255,.25)',
-                    background:'rgba(255,255,255,.15)',
-                    color: val ? '#fff' : 'rgba(255,255,255,.4)',
-                    fontSize:13,minHeight:46,display:'flex',alignItems:'center',
-                    position:'relative'}}>
-                    {val
-                      ? new Date(val+'T00:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'short',year:'numeric'})
-                      : '——'}
-                    <input type="date" value={val} onChange={e=>set(e.target.value)}
-                      style={{position:'absolute',inset:0,opacity:0,width:'100%',height:'100%',cursor:'pointer'}}/>
-                  </div>
-                </label>
-              ))}
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>DÉBUT</div>
+                <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
+                  style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
+                    background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
+                    fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>FIN</div>
+                <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
+                  style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
+                    background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
+                    fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
+              </div>
             </div>
           </div>
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()}
