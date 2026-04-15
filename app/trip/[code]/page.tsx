@@ -40,6 +40,7 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [tab, setTab] = useState<Tab>('infos')
+  const [showWelcome, setShowWelcome] = useState(false)
 
   const load = useCallback(async()=>{
     try {
@@ -147,7 +148,16 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
   function saveMembre(m: Membre) {
     setMembre(m)
     try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(m)) } catch {}
-    // Sauvegarder aussi dans le SW cache pour la PWA standalone
+    // Montrer le banner de bienvenue seulement aux nouveaux participants (pas créateur)
+    if (!m.is_createur) {
+      try {
+        const key = `crew-welcome-${params.code}`
+        if (!localStorage.getItem(key)) {
+          setShowWelcome(true)
+          localStorage.setItem(key, '1')
+        }
+      } catch {}
+    }
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'SET_MEMBRE', code: params.code, membre: m })
     }
@@ -208,6 +218,49 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
         {tab==='chat' && <Chat tripId={trip.id} membre={membre} />}
         {tab==='membres' && <Membres trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
       </div>
+
+      {/* Banner bienvenue — affiché une seule fois aux nouveaux participants */}
+      {showWelcome && (
+        <div style={{position:'fixed',inset:0,zIndex:50,background:'rgba(0,0,0,.6)',display:'flex',alignItems:'flex-end',padding:16}}>
+          <div style={{width:'100%',background:'#fff',borderRadius:20,padding:24,boxShadow:'0 -4px 40px rgba(0,0,0,.2)'}}>
+            <div style={{textAlign:'center',marginBottom:16}}>
+              <div style={{fontSize:36,marginBottom:8}}>🏕</div>
+              <div style={{fontWeight:800,fontSize:18,color:'var(--forest)',marginBottom:6}}>Bienvenue dans Crew Trips !</div>
+              <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.6}}>
+                Pour revenir facilement à vos trips, ouvrez <strong>crew-trips-v2.vercel.app</strong> dans Safari et ajoutez-le à votre écran d'accueil.
+              </div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:10}}>
+              <div style={{background:'var(--sand)',borderRadius:12,padding:'12px 14px'}}>
+                <div style={{fontSize:12,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:8}}>
+                  📱 Installer l'app (optionnel)
+                </div>
+                <div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.8}}>
+                  1. Appuyez sur <strong>Partager ⬆</strong> en bas de Safari<br/>
+                  2. <strong>Ajouter à l'écran d'accueil</strong><br/>
+                  3. <strong>Ajouter</strong> en haut à droite
+                </div>
+              </div>
+              <div style={{background:'var(--sand)',borderRadius:12,padding:'12px 14px',display:'flex',alignItems:'center',gap:10}}>
+                <div style={{fontSize:20}}>🔗</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:2}}>Ou sauvegardez ce lien</div>
+                  <div style={{fontSize:12,color:'var(--forest)',fontFamily:'monospace',fontWeight:600}}>{typeof window !== 'undefined' ? window.location.href : ''}</div>
+                </div>
+                <button onClick={()=>{ if(typeof window !== 'undefined') navigator.clipboard?.writeText(window.location.href) }}
+                  style={{padding:'6px 10px',borderRadius:8,border:'1px solid var(--border)',background:'#fff',fontSize:11,fontWeight:600,color:'var(--text-2)',cursor:'pointer',flexShrink:0}}>
+                  Copier
+                </button>
+              </div>
+            </div>
+            <button onClick={()=>setShowWelcome(false)}
+              style={{width:'100%',marginTop:14,padding:'13px',borderRadius:12,border:'none',
+                background:'var(--forest)',color:'#fff',fontWeight:700,fontSize:15,cursor:'pointer'}}>
+              Compris, accéder au trip →
+            </button>
+          </div>
+        </div>
+      )}
 
       <nav className="bottom-nav">
         {(['infos','chat','membres'] as Tab[]).map(t=>(
