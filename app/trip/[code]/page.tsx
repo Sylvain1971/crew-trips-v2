@@ -42,51 +42,57 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
   const [tab, setTab] = useState<Tab>('infos')
 
   const load = useCallback(async()=>{
-    const {data} = await supabase.from('trips').select('*').eq('code',params.code).single()
-    if (!data) { setError(true); setLoading(false); return }
-    setTrip(data)
-    const {data:auth} = await supabase.from('participants_autorises').select('*').eq('trip_id',data.id)
-    setAutorises(auth||[])
+    try {
+      const {data} = await supabase.from('trips').select('*').eq('code',params.code).single()
+      if (!data) { setError(true); return }
+      setTrip(data)
+      // Mémoriser le dernier trip visité pour la PWA standalone
+      try { localStorage.setItem('crew-last-trip', params.code) } catch {}
+      const {data:auth} = await supabase.from('participants_autorises').select('*').eq('trip_id',data.id)
+      setAutorises(auth||[])
 
-    // 1. Essayer localStorage
-    const stored = localStorage.getItem(`crew2-${params.code}`)
-    if (stored) {
-      try {
-        const m = JSON.parse(stored)
-        const {data:dbM} = await supabase.from('membres').select('*').eq('id', m.id).maybeSingle()
-        if (dbM) { setMembre({...dbM, is_createur: dbM.is_createur ?? false}); setLoading(false); return }
-        localStorage.removeItem(`crew2-${params.code}`)
-      } catch {}
-    }
-
-    // 2. localStorage vide (PWA standalone) — essayer le Service Worker cache
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      const membreFromSW = await new Promise<string|null>(resolve => {
-        const handler = (event: MessageEvent) => {
-          if (event.data?.type === 'MEMBRE_DATA' && event.data.code === params.code) {
-            navigator.serviceWorker.removeEventListener('message', handler)
-            resolve(event.data.data)
-          }
-        }
-        navigator.serviceWorker.addEventListener('message', handler)
-        navigator.serviceWorker.controller!.postMessage({ type: 'GET_MEMBRE', code: params.code })
-        setTimeout(() => { navigator.serviceWorker.removeEventListener('message', handler); resolve(null) }, 2000)
-      })
-      if (membreFromSW) {
+      // 1. Essayer localStorage
+      const stored = localStorage.getItem(`crew2-${params.code}`)
+      if (stored) {
         try {
-          const m = JSON.parse(membreFromSW)
+          const m = JSON.parse(stored)
           const {data:dbM} = await supabase.from('membres').select('*').eq('id', m.id).maybeSingle()
-          if (dbM) {
-            const membre = {...dbM, is_createur: dbM.is_createur ?? false}
-            setMembre(membre)
-            try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(membre)) } catch {}
-            setLoading(false); return
-          }
+          if (dbM) { setMembre({...dbM, is_createur: dbM.is_createur ?? false}); return }
+          localStorage.removeItem(`crew2-${params.code}`)
         } catch {}
       }
-    }
 
-    setLoading(false)
+      // 2. localStorage vide (PWA standalone) — essayer le Service Worker cache
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        const membreFromSW = await new Promise<string|null>(resolve => {
+          const handler = (event: MessageEvent) => {
+            if (event.data?.type === 'MEMBRE_DATA' && event.data.code === params.code) {
+              navigator.serviceWorker.removeEventListener('message', handler)
+              resolve(event.data.data)
+            }
+          }
+          navigator.serviceWorker.addEventListener('message', handler)
+          navigator.serviceWorker.controller!.postMessage({ type: 'GET_MEMBRE', code: params.code })
+          setTimeout(() => { navigator.serviceWorker.removeEventListener('message', handler); resolve(null) }, 2000)
+        })
+        if (membreFromSW) {
+          try {
+            const m = JSON.parse(membreFromSW)
+            const {data:dbM} = await supabase.from('membres').select('*').eq('id', m.id).maybeSingle()
+            if (dbM) {
+              const membre = {...dbM, is_createur: dbM.is_createur ?? false}
+              setMembre(membre)
+              try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(membre)) } catch {}
+              return
+            }
+          } catch {}
+        }
+      }
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
   },[params.code])
 
   useEffect(()=>{ load() },[load])
