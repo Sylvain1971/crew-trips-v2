@@ -181,48 +181,6 @@ function HomeInner() {
           </p>
         </div>
 
-        {/* Mes trips depuis le numéro */}
-        {telComplet && mesTrips.length > 0 && (
-          <div style={{width:'100%',maxWidth:420,marginBottom:16}}>
-            <button onClick={()=>setShowMesTrips(!showMesTrips)}
-              style={{width:'100%',background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',
-                borderRadius:12,padding:'10px 16px',color:'rgba(255,255,255,.85)',fontSize:13,
-                fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <span>📋 Mes trips ({mesTrips.length})</span>
-              <span style={{fontSize:16}}>{showMesTrips ? '▲' : '▼'}</span>
-            </button>
-            {showMesTrips && (
-              <div style={{background:'rgba(255,255,255,.06)',borderRadius:12,border:'1px solid rgba(255,255,255,.1)',
-                overflow:'hidden',marginTop:6}}>
-                {mesTrips.map(t => (
-                  <div key={t.code} style={{padding:'12px 14px',borderBottom:'1px solid rgba(255,255,255,.06)',
-                    display:'flex',alignItems:'center',gap:10}}>
-                    <div style={{fontSize:24,flexShrink:0}}>{TRIP_ICONS[t.type]||'🏕'}</div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontWeight:700,fontSize:14,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
-                      {t.destination && <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:1}}>{t.destination}</div>}
-                      {t.date_debut && <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:1}}>{fmtDate(t.date_debut)}{t.date_fin ? ` → ${fmtDate(t.date_fin)}` : ''}</div>}
-                    </div>
-                    <div style={{display:'flex',flexDirection:'column',gap:5,flexShrink:0}}>
-                      <button onClick={()=>router.push(`/trip/${t.code}`)}
-                        style={{padding:'5px 10px',borderRadius:8,border:'1px solid rgba(255,255,255,.2)',
-                          background:'transparent',color:'rgba(255,255,255,.7)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-                        Ouvrir
-                      </button>
-                      <button onClick={()=>dupliquer(t)}
-                        style={{padding:'5px 10px',borderRadius:8,border:'none',
-                          background:'rgba(255,255,255,.9)',color:'var(--forest)',fontSize:12,fontWeight:700,cursor:'pointer'}}>
-                        Dupliquer
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {loadingTrips && <div style={{color:'rgba(255,255,255,.4)',fontSize:13,marginBottom:16}}>Chargement de vos trips…</div>}
-
         {/* Formulaire */}
         <div style={{width:'100%',maxWidth:420,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:`1px solid ${isDuplicate?'rgba(255,255,255,.3)':'rgba(255,255,255,.1)'}`}}>
           {isDuplicate && (
@@ -242,10 +200,46 @@ function HomeInner() {
               onChange={e=>onTelChange(e.target.value)}
               style={{background:'rgba(255,255,255,.08)',border:`1.5px solid ${tel && !telComplet ? '#f87171' : telComplet ? '#4ade80' : 'rgba(255,255,255,.15)'}`,color:'#fff',letterSpacing:1}}
             />
-            <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
-              {telComplet ? '✓ Numéro reconnu — vos trips sont chargés' : 'Identifie votre compte et regroupe tous vos trips'}
+            <div style={{fontSize:11,color: telComplet ? '#4ade80' : 'rgba(255,255,255,.35)',marginTop:5}}>
+              {telComplet ? '✓ Numéro reconnu' : 'Identifie votre compte et regroupe tous vos trips'}
             </div>
           </div>
+
+          {/* Mes trips — intégré dans le formulaire */}
+          {loadingTrips && (
+            <div style={{marginBottom:16,fontSize:12,color:'rgba(255,255,255,.4)',textAlign:'center'}}>
+              Chargement de vos trips…
+            </div>
+          )}
+          {telComplet && mesTrips.length > 0 && (
+            <div className="field">
+              <label style={{color:'rgba(255,255,255,.5)'}}>MES TRIPS ({mesTrips.length})</label>
+              <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',overflow:'hidden'}}>
+                {mesTrips.map((t, i) => (
+                  <div key={t.code} style={{padding:'10px 14px',display:'flex',alignItems:'center',gap:10,
+                    borderBottom: i < mesTrips.length - 1 ? '1px solid rgba(255,255,255,.08)' : 'none'}}>
+                    <div style={{fontSize:20,flexShrink:0}}>{TRIP_ICONS[t.type]||'🏕'}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontWeight:700,fontSize:13,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
+                      {t.date_debut && <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:1}}>{fmtDate(t.date_debut)}{t.date_fin ? ` → ${fmtDate(t.date_fin)}` : ''}</div>}
+                    </div>
+                    <div style={{display:'flex',gap:6,flexShrink:0}}>
+                      <button onClick={()=>router.push(`/trip/${t.code}`)}
+                        style={{padding:'4px 10px',borderRadius:7,border:'1px solid rgba(255,255,255,.2)',
+                          background:'transparent',color:'rgba(255,255,255,.7)',fontSize:11,fontWeight:600,cursor:'pointer'}}>
+                        Ouvrir
+                      </button>
+                      <button onClick={()=>dupliquer(t)}
+                        style={{padding:'4px 10px',borderRadius:7,border:'none',
+                          background:'rgba(255,255,255,.85)',color:'var(--forest)',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+                        Dupliquer
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
@@ -287,20 +281,22 @@ function HomeInner() {
                 <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>DÉBUT</div>
                 <div style={{position:'relative'}}>
                   <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
-                    style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
-                      background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
+                    style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',
+                      background:'rgba(255,255,255,.08)',color: d1 ? '#fff' : 'transparent',fontSize:15,
+                      fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'}}/>
                   {!d1 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
-                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:3}}>- -</span>}
+                    fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
                 </div>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>FIN</div>
                 <div style={{position:'relative'}}>
                   <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
-                    style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
-                      background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
+                    style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',
+                      background:'rgba(255,255,255,.08)',color: d2 ? '#fff' : 'transparent',fontSize:15,
+                      fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'}}/>
                   {!d2 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
-                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:3}}>- -</span>}
+                    fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
                 </div>
               </div>
             </div>
