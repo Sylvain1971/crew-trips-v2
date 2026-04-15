@@ -146,10 +146,11 @@ function HomeInner() {
           }
         }
       }
+      try { localStorage.setItem('crew-last-trip', code) } catch {}
       router.push('/trip/' + code)
     } catch (err) {
       console.error('Erreur post-création:', err)
-      // Le trip est créé — on redirige quand même
+      try { localStorage.setItem('crew-last-trip', code) } catch {}
       router.push('/trip/' + code)
     }
   }
