@@ -31,17 +31,6 @@ function HomeInner() {
   const [mesTrips, setMesTrips] = useState<SavedTrip[]>([])
   const [showMesTrips, setShowMesTrips] = useState(false)
 
-  // PWA : rediriger vers le dernier trip visité
-  useEffect(() => {
-    const lastTrip = localStorage.getItem('crew-last-trip')
-    if (!lastTrip) return
-    // Vérifier que le trip existe encore en DB avant de rediriger
-    supabase.from('trips').select('code').eq('code', lastTrip).maybeSingle().then(({data}) => {
-      if (data) router.replace('/trip/' + lastTrip)
-      else localStorage.removeItem('crew-last-trip')
-    })
-  }, [])
-
   useEffect(() => {
     const raw = localStorage.getItem('crew-mes-trips')
     if (!raw) return

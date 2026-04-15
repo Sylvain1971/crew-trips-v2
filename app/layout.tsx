@@ -39,9 +39,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           (function() {
             try {
               var p = window.location.pathname;
-              if (p === '/' || p === '') {
+              if (p === '/' || p === '' || p === '/index.html') {
                 var last = localStorage.getItem('crew-last-trip');
-                if (last) window.location.replace('/trip/' + last);
+                if (last) {
+                  window.location.replace('/trip/' + last);
+                }
               }
             } catch(e) {}
           })();
