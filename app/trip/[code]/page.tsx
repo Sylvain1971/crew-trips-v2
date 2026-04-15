@@ -48,6 +48,9 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
       setTrip(data)
       // Mémoriser le dernier trip visité pour la PWA standalone
       try { localStorage.setItem('crew-last-trip', params.code) } catch {}
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SET_LAST_TRIP', code: params.code })
+      }
       const {data:auth} = await supabase.from('participants_autorises').select('*').eq('trip_id',data.id)
       setAutorises(auth||[])
 

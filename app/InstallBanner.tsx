@@ -47,16 +47,19 @@ export default function InstallBanner() {
   }
 
   // Cacher si clavier ouvert
-  if (!show || dismissed || keyboardOpen) return null
+  if (!show || dismissed) return null
 
   const tripCode = pathname.split('/trip/')[1]?.split('/')[0]
 
+  const bottomPos = keyboardOpen ? -300 : 90
+
   return (
     <div style={{
-      position: 'fixed', bottom: 90, left: 12, right: 12, zIndex: 200,
+      position: 'fixed', bottom: bottomPos, left: 12, right: 12, zIndex: 200,
       background: '#fff', borderRadius: 12, padding: '10px 12px',
       boxShadow: '0 4px 24px rgba(0,0,0,.18)', border: '1px solid rgba(0,0,0,.08)',
       display: 'flex', alignItems: 'flex-start', gap: 10,
+      transition: 'bottom .3s ease',
       animation: 'slideUp .3s ease'
     }}>
       <style>{`@keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform: translateY(0); opacity:1 } }`}</style>
