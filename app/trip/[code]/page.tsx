@@ -100,10 +100,19 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
 
   useEffect(()=>{ load() },[load])
 
-  // Enregistrer le Service Worker pour le cache membre (PWA standalone iOS)
+  // Enregistrer le Service Worker + fix manifest PWA
   useEffect(()=>{
     if (!('serviceWorker' in navigator)) return
     navigator.serviceWorker.register('/sw.js').catch(() => {})
+    // Pointer le manifest vers ce trip pour que l'installation iOS mémorise /trip/[code]
+    const existing = document.querySelector('link[rel="manifest"]')
+    if (existing) existing.setAttribute('href', `/trip/${params.code}/manifest`)
+    else {
+      const link = document.createElement('link')
+      link.rel = 'manifest'
+      link.href = `/trip/${params.code}/manifest`
+      document.head.appendChild(link)
+    }
   }, [params.code])
 
   function saveMembre(m: Membre) {
