@@ -1,6 +1,7 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useLayoutEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { ago } from '@/lib/utils'
 import type { Message, Membre } from '@/lib/types'
 
 export default function Chat({ tripId, membre }: { tripId: string, membre: Membre }) {
@@ -40,7 +41,11 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
     return () => { supabase.removeChannel(ch) }
   }, [tripId])
 
-  function scroll() { setTimeout(() => { feedRef.current?.scrollTo({top:feedRef.current.scrollHeight,behavior:'smooth'}) }, 60) }
+  useLayoutEffect(() => {
+    if (msgs.length > 0) feedRef.current?.scrollTo({top:feedRef.current.scrollHeight,behavior:'smooth'})
+  }, [msgs.length])
+
+  function scroll() { feedRef.current?.scrollTo({top:feedRef.current.scrollHeight,behavior:'smooth'}) }
 
   async function send() {
     const t = txt.trim(); if (!t) return
@@ -61,16 +66,6 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
 
   function onKey(e: React.KeyboardEvent) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send() } }
   function grow(el: HTMLTextAreaElement) { el.style.height='42px'; el.style.height=Math.min(el.scrollHeight,120)+'px' }
-
-  function ago(ts: string) {
-    const d = Date.now() - new Date(ts).getTime()
-    if (d < 60000) return "À l'instant"
-    if (d < 3600000) return `${Math.floor(d/60000)}min`
-    const dt = new Date(ts)
-    if (d < 86400000) return dt.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'})
-    return dt.toLocaleDateString('fr-CA',{day:'numeric',month:'short'})
-  }
-
   const isMine = (m: Message) => m.membre_id === membre.id
 
   return (

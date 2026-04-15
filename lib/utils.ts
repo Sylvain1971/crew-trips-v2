@@ -12,6 +12,7 @@ export function isPdf(url?: string | null): boolean {
 
 export function ago(ts: string): string {
   const d = Date.now() - new Date(ts).getTime()
+  if (d < 60000) return "À l'instant"
   if (d < 3600000) return `${Math.floor(d / 60000)}min`
   if (d < 86400000) return `${Math.floor(d / 3600000)}h`
   return new Date(ts).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' })
@@ -19,7 +20,7 @@ export function ago(ts: string): string {
 
 export function countdown(d?: string): string | null {
   if (!d) return null
-  const diff = Math.ceil((new Date(d).getTime() - Date.now()) / 86400000)
+  const diff = Math.ceil((new Date(d + 'T00:00:00').getTime() - Date.now()) / 86400000)
   if (diff < 0) return null
   if (diff === 0) return "C'est aujourd'hui !"
   return `${diff} jour${diff > 1 ? 's' : ''} avant le départ`

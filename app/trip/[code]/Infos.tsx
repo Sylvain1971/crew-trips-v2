@@ -113,6 +113,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       setCards(p => [...p, data])
       setTitre(''); setContenu(''); setLien(''); setPdfFile(null)
       setSheetOpen(false)
+    } else if (error) {
+      alert('Erreur lors de l\'ajout. Réessayez.')
     }
     setSaving(false)
   }
