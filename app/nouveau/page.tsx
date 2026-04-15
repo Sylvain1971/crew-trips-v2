@@ -18,6 +18,9 @@ function formatTel(val: string): string {
 function NouveauInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [codeAcces, setCodeAcces] = useState('')
+  const [codeValide, setCodeValide] = useState(false)
+  const [codeErreur, setCodeErreur] = useState(false)
   const [tel, setTel] = useState('')
   const [nom, setNom] = useState(searchParams.get('nom')||'')
   const [type, setType] = useState(searchParams.get('type')||'peche')
@@ -33,8 +36,24 @@ function NouveauInner() {
     try {
       const saved = localStorage.getItem('crew-tel')
       if (saved) setTel(saved)
+      // Vérifier si le code créateur est déjà validé en session
+      const sessionCode = sessionStorage.getItem('crew-creator-validated')
+      if (sessionCode === '1') setCodeValide(true)
     } catch {}
   }, [])
+
+  function validerCode() {
+    try {
+      const creatorCode = localStorage.getItem('crew-creator-code') || ''
+      if (codeAcces.trim() === creatorCode && creatorCode !== '') {
+        setCodeValide(true)
+        setCodeErreur(false)
+        try { sessionStorage.setItem('crew-creator-validated', '1') } catch {}
+      } else {
+        setCodeErreur(true)
+      }
+    } catch { setCodeErreur(true) }
+  }
 
   function onTelChange(val: string) {
     const f = formatTel(val)
@@ -117,7 +136,33 @@ function NouveauInner() {
         </div>
       </div>
 
-      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',padding:'8px 20px 40px'}}>
+      {/* Écran code secret */}
+      {!codeValide ? (
+        <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}>
+          <div style={{width:'100%',maxWidth:340}}>
+            <div style={{textAlign:'center',marginBottom:24}}>
+              <div style={{fontSize:36,marginBottom:8}}>🔑</div>
+              <div style={{fontWeight:700,fontSize:18,color:'#fff',marginBottom:6}}>Code de création requis</div>
+              <div style={{fontSize:13,color:'rgba(255,255,255,.45)',lineHeight:1.5}}>
+                Contactez l'administrateur pour obtenir le code.
+              </div>
+            </div>
+            <input className="input" type="password" placeholder="Code secret"
+              value={codeAcces} onChange={e=>{setCodeAcces(e.target.value);setCodeErreur(false)}}
+              onKeyDown={e=>e.key==='Enter'&&validerCode()}
+              style={{background:'rgba(255,255,255,.08)',
+                border:`1.5px solid ${codeErreur?'#f87171':'rgba(255,255,255,.15)'}`,
+                color:'#fff',textAlign:'center',fontSize:16,marginBottom:8,letterSpacing:2}}/>
+            {codeErreur && <div style={{color:'#fca5a5',fontSize:13,textAlign:'center',marginBottom:8}}>Code incorrect</div>}
+            <button className="btn" onClick={validerCode} disabled={!codeAcces.trim()}
+              style={{background:codeAcces.trim()?'#fff':'rgba(255,255,255,.15)',
+                color:codeAcces.trim()?'var(--forest)':'rgba(255,255,255,.4)',fontWeight:700}}>
+              Continuer →
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',padding:'8px 20px 40px'}}>
         <div style={{width:'100%',maxWidth:420}}>
           {isDuplicate && (
             <div style={{background:'rgba(255,255,255,.1)',borderRadius:10,padding:'10px 14px',
@@ -206,6 +251,7 @@ function NouveauInner() {
           </button>
         </div>
       </div>
+      )}
     </main>
   )
 }

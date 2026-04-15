@@ -19,7 +19,7 @@ export default function InstallBanner() {
       const t = setTimeout(() => setShow(true), 5000)
       return () => clearTimeout(t)
     }
-  }, [pathname, isTripPage])
+  }, [pathname, showOnPage])
 
   useEffect(() => {
     function onFocus() {

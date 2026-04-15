@@ -4,18 +4,12 @@ import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS } from '@/lib/utils'
 
 const ADMIN_CODE = 'CT2026admin'
+const CREATOR_CODE_KEY = 'crew-creator-code'
 
 interface TripAdmin {
-  id: string
-  code: string
-  nom: string
-  type: string
-  destination?: string
-  date_debut?: string
-  date_fin?: string
-  created_at: string
-  createur_tel?: string
-  membres_count?: number
+  id: string; code: string; nom: string; type: string
+  destination?: string; date_debut?: string; date_fin?: string
+  created_at: string; createur_tel?: string; membres_count?: number
 }
 
 export default function AdminPage() {
@@ -25,6 +19,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [erreur, setErreur] = useState('')
+  const [creatorCode, setCreatorCode] = useState('')
+  const [newCreatorCode, setNewCreatorCode] = useState('')
+  const [savingCode, setSavingCode] = useState(false)
+  const [codeSaved, setCodeSaved] = useState(false)
 
   function login() {
     if (code === ADMIN_CODE) { setAuth(true); setErreur('') }
@@ -33,11 +31,17 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!auth) return
+    // Charger le code créateur depuis localStorage
+    try {
+      const saved = localStorage.getItem(CREATOR_CODE_KEY) || ''
+      setCreatorCode(saved)
+      setNewCreatorCode(saved)
+    } catch {}
+    // Charger les trips
     setLoading(true)
     supabase.from('trips').select('*').order('created_at', { ascending: false })
       .then(async ({ data }) => {
         if (!data) { setLoading(false); return }
-        // Charger le nb de membres pour chaque trip
         const enriched = await Promise.all(data.map(async (t) => {
           const { count } = await supabase.from('membres').select('*', { count: 'exact', head: true }).eq('trip_id', t.id)
           return { ...t, membres_count: count || 0 }
@@ -47,8 +51,20 @@ export default function AdminPage() {
       })
   }, [auth])
 
+  function saveCreatorCode() {
+    if (!newCreatorCode.trim()) return
+    setSavingCode(true)
+    try {
+      localStorage.setItem(CREATOR_CODE_KEY, newCreatorCode.trim())
+      setCreatorCode(newCreatorCode.trim())
+      setCodeSaved(true)
+      setTimeout(() => setCodeSaved(false), 2000)
+    } catch {}
+    setSavingCode(false)
+  }
+
   async function supprimerTrip(trip: TripAdmin) {
-    if (!confirm(`Supprimer "${trip.nom}" ? Cette action est irréversible.`)) return
+    if (!confirm(`Supprimer "${trip.nom}" ?`)) return
     setDeleting(trip.id)
     await supabase.from('messages').delete().eq('trip_id', trip.id)
     await supabase.from('infos').delete().eq('trip_id', trip.id)
@@ -71,19 +87,12 @@ export default function AdminPage() {
           <div style={{ fontWeight: 800, fontSize: 20, color: '#fff' }}>Admin Crew Trips</div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,.4)', marginTop: 6 }}>Accès restreint</div>
         </div>
-        <input
-          className="input"
-          type="password"
-          placeholder="Code d'accès"
-          value={code}
-          onChange={e => setCode(e.target.value)}
+        <input className="input" type="password" placeholder="Code d'accès admin"
+          value={code} onChange={e => setCode(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && login()}
-          style={{ background: 'rgba(255,255,255,.08)', border: `1.5px solid ${erreur ? '#f87171' : 'rgba(255,255,255,.15)'}`, color: '#fff', marginBottom: 10, textAlign: 'center' }}
-        />
+          style={{ background: 'rgba(255,255,255,.08)', border: `1.5px solid ${erreur ? '#f87171' : 'rgba(255,255,255,.15)'}`, color: '#fff', marginBottom: 10, textAlign: 'center' }} />
         {erreur && <div style={{ color: '#fca5a5', fontSize: 13, textAlign: 'center', marginBottom: 10 }}>{erreur}</div>}
-        <button className="btn" onClick={login} style={{ background: '#fff', color: 'var(--forest)', fontWeight: 700 }}>
-          Entrer →
-        </button>
+        <button className="btn" onClick={login} style={{ background: '#fff', color: 'var(--forest)', fontWeight: 700 }}>Entrer →</button>
       </div>
     </main>
   )
@@ -91,18 +100,43 @@ export default function AdminPage() {
   return (
     <main style={{ minHeight: '100dvh', background: '#f5f0e8', padding: '20px 16px 60px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
+
+        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--forest)', margin: 0 }}>Admin Crew Trips</h1>
-            <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length > 1 ? 's' : ''} actif{trips.length > 1 ? 's' : ''}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length !== 1 ? 's' : ''} actif{trips.length !== 1 ? 's' : ''}</div>
           </div>
           <button onClick={() => setAuth(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>
             Déconnexion
           </button>
         </div>
 
-        {loading && <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>Chargement…</div>}
+        {/* Code créateur */}
+        <div className="card" style={{ padding: '16px', marginBottom: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>🔑 Code de création de trip</div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.5 }}>
+            Ce code est requis pour créer un nouveau trip. Partagez-le uniquement avec les organisateurs autorisés.
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input className="input" type="text" placeholder="Définir un code secret…"
+              value={newCreatorCode} onChange={e => setNewCreatorCode(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && saveCreatorCode()}
+              style={{ flex: 1, fontSize: 14 }} />
+            <button onClick={saveCreatorCode} disabled={savingCode || !newCreatorCode.trim()}
+              style={{ padding: '0 16px', borderRadius: 10, border: 'none', background: 'var(--forest)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', flexShrink: 0 }}>
+              {codeSaved ? '✓ Sauvegardé' : 'Sauvegarder'}
+            </button>
+          </div>
+          {creatorCode && (
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'var(--sand)', borderRadius: 8, fontSize: 13, color: 'var(--text-2)' }}>
+              Code actuel : <strong style={{ color: 'var(--forest)', letterSpacing: 1 }}>{creatorCode}</strong>
+            </div>
+          )}
+        </div>
 
+        {/* Liste des trips */}
+        {loading && <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>Chargement…</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {trips.map(t => (
             <div key={t.id} className="card" style={{ padding: '14px 16px' }}>
@@ -112,17 +146,17 @@ export default function AdminPage() {
                   <div style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.nom}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
                     {t.destination && <span>📍 {t.destination} · </span>}
-                    <span>👥 {t.membres_count} membre{(t.membres_count || 0) > 1 ? 's' : ''}</span>
+                    <span>👥 {t.membres_count} membre{(t.membres_count || 0) !== 1 ? 's' : ''}</span>
                     {t.date_debut && <span> · 📅 {fmt(t.date_debut)}</span>}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                    Créé le {fmt(t.created_at)} · code: <code style={{ background: 'var(--sand)', padding: '1px 5px', borderRadius: 4 }}>{t.code}</code>
+                    {fmt(t.created_at)} · <code style={{ background: 'var(--sand)', padding: '1px 5px', borderRadius: 4 }}>{t.code}</code>
                     {t.createur_tel && <span> · 📱 {t.createur_tel.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
                   <a href={`/trip/${t.code}`} target="_blank" rel="noreferrer"
-                    style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', textDecoration: 'none', textAlign: 'center' }}>
+                    style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-2)', fontSize: 12, fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
                     Ouvrir ↗
                   </a>
                   <button onClick={() => supprimerTrip(t)} disabled={deleting === t.id}
@@ -134,11 +168,10 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
-
         {!loading && trips.length === 0 && (
           <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-3)' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
-            Aucun trip actif en base de données.
+            Aucun trip actif.
           </div>
         )}
       </div>
