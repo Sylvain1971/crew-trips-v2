@@ -241,17 +241,15 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             )}
           </div>
           <div style={{display:'flex',gap:8,flexShrink:0,marginLeft:12}}>
-            {isCreateur && (
-              <a href="/mes-trips"
-                style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
-                  padding:'8px 10px',color:'rgba(255,255,255,.7)',fontSize:12,textDecoration:'none',
-                  display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 12H5M12 5l-7 7 7 7"/>
-                </svg>
-                Mes trips
-              </a>
-            )}
+            <a href={isCreateur ? '/mes-trips' : '/'}
+              style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
+                padding:'8px 10px',color:'rgba(255,255,255,.7)',fontSize:12,textDecoration:'none',
+                display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 5l-7 7 7 7"/>
+              </svg>
+              {isCreateur ? 'Mes trips' : 'Accueil'}
+            </a>
             {isCreateur && (
               <button onClick={()=>setEditTrip(true)}
                 style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 12px',color:'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center'}}>
