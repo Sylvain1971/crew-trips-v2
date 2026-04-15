@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
@@ -20,12 +20,13 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
+
   useEffect(()=>{
     const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
-    // Pré-remplir le tel depuis localStorage
     try { const saved = localStorage.getItem('crew-tel'); if (saved) setTel(saved) } catch {}
     return ()=>clearInterval(t)
   },[trip.date_debut])
+
   const listeActive = autorises.length > 0
 
   function formatTel(val: string): string {
@@ -63,11 +64,8 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     if (!nom) return
     setLoading(true); setErreur(null); setSuggestion(null)
 
-    // Charger tous les membres existants du trip
-    const { data: membresExistants } = await supabase.from('membres')
-      .select('*').eq('trip_id', trip.id)
+    const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
 
-    // 1. Validation liste autorisée EN PREMIER (sécurité)
     if (listeActive) {
       const valide = valider(nom)
       if (!valide) {
@@ -76,18 +74,14 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       }
     }
 
-    // 2. Fuzzy match sur les membres existants (reconnexion)
     if (membresExistants && membresExistants.length > 0) {
       const prenomsMembres = membresExistants.map((m: {prenom: string}) => m.prenom)
       const match = findClosestPrenom(nom, prenomsMembres)
       if (match) {
         const membreExistant = membresExistants.find((m: {prenom: string}) => m.prenom === match)
         if (membreExistant) {
-          // Mettre à jour le tel si fourni
           const digits = tel.replace(/\D/g,'')
-          if (digits.length === 10) {
-            await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
-          }
+          if (digits.length === 10) await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
           setLoading(false)
           onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
           return
@@ -95,7 +89,6 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       }
     }
 
-    // 3. Nouveau membre
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const digits = tel.replace(/\D/g,'')
@@ -103,15 +96,22 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst, tel: digits.length===10?digits:null})
       .select().single()
     if (!error && data) onJoin(data)
-    else { setErreur('Erreur de connexion. Réessayez.' + (error ? ' (' + error.message + ')' : '')); setLoading(false) }
+    else { setErreur('Erreur de connexion. Réessayez.'); setLoading(false) }
   }
 
   return (
     <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 20px'}}>
-        <div style={{textAlign:'center',marginBottom:32}}>
-          <div style={{fontSize:60,marginBottom:10}}>{TRIP_ICONS[trip.type]||'🏕'}</div>
-          <h1 style={{fontSize:26,fontWeight:800,color:'#fff',letterSpacing:'-.03em',lineHeight:1.15,marginBottom:6}}>{trip.nom}</h1>
+
+        {/* Branding */}
+        <div style={{fontSize:12,fontWeight:700,color:'rgba(255,255,255,.3)',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:20}}>
+          Crew Trips
+        </div>
+
+        {/* Info trip */}
+        <div style={{textAlign:'center',marginBottom:24}}>
+          <div style={{fontSize:52,marginBottom:10}}>{TRIP_ICONS[trip.type]||'🏕'}</div>
+          <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.03em',lineHeight:1.15,marginBottom:6}}>{trip.nom}</h1>
           {trip.destination && <p style={{fontSize:14,color:'rgba(255,255,255,.55)',marginBottom:4}}>📍 {trip.destination}</p>}
           {trip.date_debut && (
             <p style={{fontSize:13,color:'rgba(255,255,255,.45)'}}>
@@ -119,15 +119,27 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             </p>
           )}
           {cd && (
-            <div style={{marginTop:14,display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,.1)',borderRadius:20,padding:'7px 16px'}}>
-              <span style={{fontSize:14,color:'rgba(255,255,255,.85)',fontWeight:600}}>⏳ {cd}</span>
+            <div style={{marginTop:12,display:'inline-flex',alignItems:'center',gap:6,background:'rgba(255,255,255,.1)',borderRadius:20,padding:'6px 14px'}}>
+              <span style={{fontSize:13,color:'rgba(255,255,255,.85)',fontWeight:600}}>⏳ {cd}</span>
             </div>
           )}
         </div>
+
+        {/* Card */}
         <div style={{width:'100%',maxWidth:360,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:'1px solid rgba(255,255,255,.1)'}}>
-          <p style={{fontSize:14,color:'rgba(255,255,255,.6)',textAlign:'center',marginBottom:16,lineHeight:1.5}}>
-            Entrez votre Prénom et Nom pour accéder au trip
+
+          {/* Explication */}
+          <div style={{fontSize:13,color:'rgba(255,255,255,.5)',textAlign:'center',marginBottom:18,lineHeight:1.65,padding:'0 4px'}}>
+            Vous avez été invité à ce trip.<br/>
+            <strong style={{color:'rgba(255,255,255,.8)'}}>Crew Trips</strong> regroupe toutes les infos — vols, lodge, équipement, chat.
+          </div>
+
+          <div style={{height:1,background:'rgba(255,255,255,.08)',marginBottom:18}}/>
+
+          <p style={{fontSize:14,color:'rgba(255,255,255,.7)',textAlign:'center',marginBottom:12,fontWeight:600}}>
+            Entrez votre Prénom et Nom
           </p>
+
           <input className="input" placeholder="Prénom et Nom" value={prenom}
             onChange={e=>onChangePrenom(e.target.value)}
             onKeyDown={e=>e.key==='Enter'&&rejoindre()}
@@ -135,9 +147,11 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             style={{textAlign:'center',fontSize:18,fontWeight:600,marginBottom:10,
               background:'rgba(255,255,255,.08)',border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
           />
+
+          {/* Suggestion */}
           {suggestion && !suggestionConfirmee && (
             <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'10px 14px',marginBottom:10,border:'1px solid rgba(255,255,255,.15)'}}>
-              <p style={{fontSize:13,color:'rgba(255,255,255,.7)',marginBottom:8}}>
+              <p style={{fontSize:13,color:'rgba(255,255,255,.7)',marginBottom:8,textAlign:'center'}}>
                 Vouliez-vous dire <strong style={{color:'#fff'}}>{suggestion}</strong> ?
               </p>
               <div style={{display:'flex',gap:8}}>
@@ -152,28 +166,34 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               </div>
             </div>
           )}
+
           {/* Champ tel — visible quand pas de suggestion en attente */}
           {(!suggestion || suggestionConfirmee) && (
             <input className="input" type="tel" placeholder="ex : 418 000 0000 (optionnel)"
               value={tel} onChange={e=>onChangeTel(e.target.value)}
               style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
-                background:'rgba(255,255,255,.06)',border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
+                background:'rgba(255,255,255,.06)',
+                border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
                 color:'rgba(255,255,255,.8)'}}
             />
           )}
+
           {erreur && (
             <div style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.3)',borderRadius:10,padding:'10px 14px',marginBottom:10}}>
               <p style={{fontSize:13,color:'#fca5a5',textAlign:'center'}}>{erreur}</p>
             </div>
           )}
+
           <button className="btn" onClick={()=>rejoindre()} disabled={loading||!prenom.trim()}
             style={{background:loading||!prenom.trim()?'rgba(255,255,255,.15)':'#fff',
               color:loading||!prenom.trim()?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700}}>
             {loading?'Connexion…':'Entrer dans le trip →'}
           </button>
         </div>
-        <p style={{fontSize:12,color:'rgba(255,255,255,.25)',marginTop:18,textAlign:'center'}}>
-          Pas de compte requis.{listeActive?' Liste de participants restreinte.':' Entrez votre Prénom et Nom.'}
+
+        <p style={{fontSize:11,color:'rgba(255,255,255,.2)',marginTop:16,textAlign:'center',lineHeight:1.7}}>
+          Pas de compte requis · Aucune installation nécessaire
+          {listeActive && <><br/>Liste de participants restreinte</>}
         </p>
       </div>
     </main>
