@@ -8,32 +8,30 @@ export default function InstallBanner() {
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const pathname = usePathname()
 
-  // Détecter si on est sur une page trip — iOS lira le bon manifest avec le nom du trip
-  const isTripPage = pathname.startsWith('/trip/')
-  const tripNom = (() => {
-    if (!isTripPage || typeof window === 'undefined') return null
-    try {
-      const appleTitle = document.querySelector('meta[name="apple-mobile-web-app-title"]')
-      return appleTitle?.getAttribute('content') || null
-    } catch { return null }
-  })()
+  const isTripPage = pathname.startsWith('/trip/') && !pathname.includes('/print')
 
   useEffect(() => {
+    // Ne montrer que sur les pages trip, jamais sur la page d'accueil
+    if (!isTripPage) { setShow(false); return }
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
     if (isIOS && !isStandalone && !wasDismissed) {
-      const t = setTimeout(() => setShow(true), 4000)
+      // Délai plus long pour laisser le temps à l'utilisateur de voir la page
+      const t = setTimeout(() => setShow(true), 8000)
       return () => clearTimeout(t)
     }
-  }, [pathname])
+  }, [pathname, isTripPage])
 
   useEffect(() => {
     function onFocus() {
       const tag = document.activeElement?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') setKeyboardOpen(true)
     }
-    function onBlur() { setKeyboardOpen(false) }
+    function onBlur() {
+      // Délai pour éviter le flash pendant la transition clavier
+      setTimeout(() => setKeyboardOpen(false), 400)
+    }
     document.addEventListener('focusin', onFocus)
     document.addEventListener('focusout', onBlur)
     return () => {
@@ -48,25 +46,24 @@ export default function InstallBanner() {
     localStorage.setItem('crew-install-dismissed', '1')
   }
 
-  if (!show || dismissed) return null
+  // Cacher si clavier ouvert
+  if (!show || dismissed || keyboardOpen) return null
 
-  const bottomPos = keyboardOpen ? 8 : 90
-  const titre = tripNom ? `Installer « ${tripNom} »` : 'Installer Crew Trips'
+  const tripCode = pathname.split('/trip/')[1]?.split('/')[0]
 
   return (
     <div style={{
-      position: 'fixed', bottom: bottomPos, left: 12, right: 12, zIndex: 200,
+      position: 'fixed', bottom: 90, left: 12, right: 12, zIndex: 200,
       background: '#fff', borderRadius: 12, padding: '10px 12px',
       boxShadow: '0 4px 24px rgba(0,0,0,.18)', border: '1px solid rgba(0,0,0,.08)',
       display: 'flex', alignItems: 'flex-start', gap: 10,
-      transition: 'bottom .2s ease',
       animation: 'slideUp .3s ease'
     }}>
       <style>{`@keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform: translateY(0); opacity:1 } }`}</style>
       <img src="/apple-touch-icon.png" alt="" width={36} height={36}
         style={{borderRadius:8,flexShrink:0,marginTop:2}} />
       <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>{titre}</div>
+        <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>Installer Crew Trips</div>
         <div style={{fontSize:11,color:'#666',lineHeight:1.7}}>
           <span>1. Appuyez sur <strong>Partager</strong> ⬆ en bas</span><br/>
           <span>2. Faites défiler → <strong>Ajouter à l'écran d'accueil</strong></span><br/>
