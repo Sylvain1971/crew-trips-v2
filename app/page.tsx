@@ -281,8 +281,8 @@ function HomeInner() {
                     style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
                       background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
                       fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
-                  {!d1 && <span style={{position:'absolute',top:'50%',left:10,transform:'translateY(-50%)',
-                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>-- / -- / ----</span>}
+                  {!d1 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:3}}>————</span>}
                 </div>
               </div>
               <div style={{flex:1}}>
@@ -292,8 +292,8 @@ function HomeInner() {
                     style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
                       background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
                       fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
-                  {!d2 && <span style={{position:'absolute',top:'50%',left:10,transform:'translateY(-50%)',
-                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>-- / -- / ----</span>}
+                  {!d2 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:3}}>————</span>}
                 </div>
               </div>
             </div>
