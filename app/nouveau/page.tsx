@@ -105,14 +105,19 @@ function NouveauInner() {
   return (
     <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
       {/* Header */}
-      <div style={{padding:'16px 20px',display:'flex',alignItems:'center',gap:12}}>
-        <button onClick={()=>router.push('/')}
-          style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
-          ← Retour
-        </button>
-        <div style={{fontWeight:700,fontSize:18,color:'#fff'}}>
-          {isDuplicate ? 'Dupliquer un trip' : 'Nouveau trip'}
+      <div style={{background:'var(--forest)',padding:'16px 20px 20px',borderBottom:'1px solid rgba(255,255,255,.08)',display:'flex',flexDirection:'column',alignItems:'center'}}>
+        <div style={{display:'flex',alignItems:'center',width:'100%',marginBottom:12}}>
+          <button onClick={()=>router.push('/')}
+            style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
+            ← Retour
+          </button>
+          <div style={{flex:1,textAlign:'center',fontWeight:700,fontSize:18,color:'#fff'}}>
+            {isDuplicate ? 'Dupliquer' : 'Nouveau trip'}
+          </div>
+          <div style={{width:72}}/>
         </div>
+        <div style={{fontSize:36,marginBottom:4}}>{TRIP_ICONS[type]||'🏕'}</div>
+        <div style={{fontWeight:800,fontSize:22,color:'#fff',letterSpacing:'-.03em'}}>Crew Trips</div>
       </div>
 
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',padding:'8px 20px 40px'}}>

@@ -65,6 +65,25 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
         } catch {}
       }
 
+      // 2. Reconnexion auto via numéro de téléphone (créateur)
+      const savedTel = (() => { try { return localStorage.getItem('crew-tel') } catch { return null } })()
+      if (savedTel) {
+        const digits = savedTel.replace(/\D/g, '')
+        if (digits.length === 10) {
+          const { data: tripData } = await supabase.from('trips').select('createur_tel').eq('code', params.code).single()
+          if (tripData?.createur_tel === digits) {
+            const { data: createurMembre } = await supabase.from('membres')
+              .select('*').eq('trip_id', data.id).eq('is_createur', true).maybeSingle()
+            if (createurMembre) {
+              const m = {...createurMembre, is_createur: true}
+              setMembre(m)
+              try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(m)) } catch {}
+              return
+            }
+          }
+        }
+      }
+
       // 2. localStorage vide (PWA standalone) — essayer le Service Worker cache
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         const membreFromSW = await new Promise<string|null>(resolve => {
