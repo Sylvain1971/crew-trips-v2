@@ -62,9 +62,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           a { color: inherit; }
           .wrap { padding: 0 0 40px; }
         }
-        .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: flex; align-items: center; gap: 6px; }
+        .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
-        @media (max-width: 768px) { .print-btn { display: flex; align-items: center; gap: 8px; } }
+        @media (max-width: 768px) {
+          .back-btn { display: flex; }
+          .print-btn { display: flex; align-items: center; gap: 8px; }
+        }
         .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 40px; }
         .header { background: #0F2D0F; color: #fff; padding: 24px 28px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
         .trip-title { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
