@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
 import type { Trip, InfoCard } from '@/lib/types'
 
-const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','liens']
+const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
 
 export default function PrintPage({ params: paramsPromise }: { params: Promise<{ code: string }> }) {
   const params = use(paramsPromise)

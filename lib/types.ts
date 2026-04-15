@@ -30,6 +30,7 @@ export const CATEGORIES = [
   { id: 'infos',      label: 'Informations',         icon: 'ℹ️', color: '#0EA5E9', bg: '#F0F9FF' },
   { id: 'itineraire', label: 'Itinéraire',            icon: '🗺️', color: '#0D9488', bg: '#F0FDFA' },
   { id: 'meteo',      label: 'Météo',                 icon: '🌤️', color: '#F59E0B', bg: '#FFFBEB' },
+  { id: 'resto',      label: 'Restos & Bars',        icon: '🍽️', color: '#E11D48', bg: '#FFF1F2' },
   { id: 'liens',      label: 'Liens & Ressources',  icon: '🔗', color: '#7C3AED', bg: '#F5F3FF' },
 ]
 export const COULEURS_MEMBRES = [

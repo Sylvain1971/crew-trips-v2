@@ -7,7 +7,7 @@ import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
 
 // Ordre fixe pour "Tout"
-const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','liens']
+const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
 
 function formatSize(b: number) {
   if (b < 1024) return `${b} B`
@@ -375,9 +375,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           )})}
         </div>
         <div style={{display:'flex',gap:6}}>
-          {['infos','itineraire','meteo','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
+          {['infos','itineraire','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
             <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
-              {c.icon} {id==='infos'?'Infos':id==='itineraire'?'Itinéraire':id==='meteo'?'Météo':'Liens'}
+              {c.icon} {id==='infos'?'Infos':id==='itineraire'?'Itinéraire':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
             </FilterBtn>
           )})}
         </div>
