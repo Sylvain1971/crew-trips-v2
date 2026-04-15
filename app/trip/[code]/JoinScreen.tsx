@@ -16,6 +16,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const [prenom, setPrenom] = useState('')
   const [tel, setTel] = useState('')
   const [suggestion, setSuggestion] = useState<string|null>(null)
+  const [suggestionConfirmee, setSuggestionConfirmee] = useState(false)
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
@@ -51,6 +52,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     setPrenom(val)
     setErreur(null)
     setSuggestion(null)
+    setSuggestionConfirmee(false)
     if (!listeActive || val.trim().length < 2) return
     const proche = findClosestPrenom(val, autorises.map(a=>a.prenom))
     if (proche && proche.toLowerCase() !== val.toLowerCase()) setSuggestion(proche)
@@ -133,31 +135,31 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             style={{textAlign:'center',fontSize:18,fontWeight:600,marginBottom:10,
               background:'rgba(255,255,255,.08)',border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
           />
-          {/* Champ tel — caché quand une suggestion est affichée */}
-          {!suggestion && (
+          {suggestion && !suggestionConfirmee && (
+            <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'10px 14px',marginBottom:10,border:'1px solid rgba(255,255,255,.15)'}}>
+              <p style={{fontSize:13,color:'rgba(255,255,255,.7)',marginBottom:8}}>
+                Vouliez-vous dire <strong style={{color:'#fff'}}>{suggestion}</strong> ?
+              </p>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={()=>{ setPrenom(suggestion); setSuggestionConfirmee(true) }}
+                  style={{flex:1,padding:'8px',borderRadius:8,border:'none',background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                  Oui, c'est moi
+                </button>
+                <button onClick={()=>{ setSuggestion(null); setSuggestionConfirmee(false) }}
+                  style={{padding:'8px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,.2)',background:'transparent',color:'rgba(255,255,255,.6)',fontSize:13,cursor:'pointer'}}>
+                  Non
+                </button>
+              </div>
+            </div>
+          )}
+          {/* Champ tel — visible quand pas de suggestion en attente */}
+          {(!suggestion || suggestionConfirmee) && (
             <input className="input" type="tel" placeholder="ex : 418 000 0000 (optionnel)"
               value={tel} onChange={e=>onChangeTel(e.target.value)}
               style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
                 background:'rgba(255,255,255,.06)',border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
                 color:'rgba(255,255,255,.8)'}}
             />
-          )}
-          {suggestion && (
-            <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'10px 14px',marginBottom:10,border:'1px solid rgba(255,255,255,.15)'}}>
-              <p style={{fontSize:13,color:'rgba(255,255,255,.7)',marginBottom:8}}>
-                Vouliez-vous dire <strong style={{color:'#fff'}}>{suggestion}</strong> ?
-              </p>
-              <div style={{display:'flex',gap:8}}>
-                <button onClick={()=>rejoindre(suggestion)}
-                  style={{flex:1,padding:'8px',borderRadius:8,border:'none',background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:13,cursor:'pointer'}}>
-                  Oui, c'est moi
-                </button>
-                <button onClick={()=>setSuggestion(null)}
-                  style={{padding:'8px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,.2)',background:'transparent',color:'rgba(255,255,255,.6)',fontSize:13,cursor:'pointer'}}>
-                  Non
-                </button>
-              </div>
-            </div>
           )}
           {erreur && (
             <div style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.3)',borderRadius:10,padding:'10px 14px',marginBottom:10}}>
