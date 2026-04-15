@@ -282,9 +282,7 @@ function HomeInner() {
                       background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
                       fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
                   {!d1 && <span style={{position:'absolute',top:'50%',left:10,transform:'translateY(-50%)',
-                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>
-                    -- / -- / ----
-                  </span>}
+                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>-- / -- / ----</span>}
                 </div>
               </div>
               <div style={{flex:1}}>
@@ -295,11 +293,8 @@ function HomeInner() {
                       background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
                       fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
                   {!d2 && <span style={{position:'absolute',top:'50%',left:10,transform:'translateY(-50%)',
-                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>
-                    -- / -- / ----
-                  </span>}
+                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>-- / -- / ----</span>}
                 </div>
-              </div>
               </div>
             </div>
           </div>
