@@ -308,7 +308,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
                 {m.is_createur && (
                   <span style={{fontSize:10,fontWeight:700,color:'#B45309',background:'#FFFBEB',
                     border:'1px solid #FDE68A',borderRadius:6,padding:'2px 6px',letterSpacing:'.04em'}}>
-                    CRÉATEUR
+                    ADMINISTRATEUR
                   </span>
                 )}
               </div>

@@ -140,7 +140,7 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
           <div style={{display:'flex',alignItems:'center',gap:6,background:'rgba(255,255,255,.1)',padding:'5px 10px',borderRadius:20,flexShrink:0}}>
             <div style={{width:8,height:8,borderRadius:'50%',background:membre.couleur}} />
             <span style={{fontSize:12,fontWeight:600,color:'rgba(255,255,255,.8)'}}>{membre.prenom}</span>
-            {membre.is_createur && <span style={{fontSize:10,color:'rgba(255,255,255,.5)'}}>✦</span>}
+            {membre.is_createur && <span style={{fontSize:10,color:'rgba(255,255,255,.5)'}}>★</span>}
           </div>
         </div>
       )}
