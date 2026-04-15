@@ -107,7 +107,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       contenu: contenu.trim()||null,
       lien: lien.trim()||null,
       fichier_url,
-      membre_prenom: membre.prenom,
+      membre_prenom: null,
     }).select().single()
     if (!error && data) {
       setCards(p => [...p, data])
@@ -160,6 +160,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       contenu: editContenu.trim()||null,
       lien: editLien.trim()||null,
       fichier_url,
+      membre_prenom: isCreateur ? null : membre.prenom,
     }).eq('id', editCard.id).select().single()
     if (!error && data) {
       setCards(p => p.map(c => c.id === editCard.id ? data : c))

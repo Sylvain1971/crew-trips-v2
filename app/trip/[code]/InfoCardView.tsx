@@ -108,9 +108,9 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
             </button>
           )}
 
-          {!isCreateur && (
+          {card.membre_prenom && (
             <div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>
-              {card.membre_prenom} · {ago(card.created_at)}
+              ✏️ {card.membre_prenom}
             </div>
           )}
         </div>
