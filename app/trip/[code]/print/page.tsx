@@ -32,7 +32,10 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
   }, [params.code])
 
   useEffect(() => {
-    if (ready) setTimeout(() => window.print(), 800)
+    if (ready) {
+      const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
+      if (!isMobile) setTimeout(() => window.print(), 800)
+    }
   }, [ready])
 
   if (!trip) return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>Chargement…</div>
@@ -57,9 +60,15 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           .no-print { display: none !important; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           a { color: inherit; }
+          .wrap { padding: 0 0 40px; }
         }
+        @media (max-width: 768px) {
+          .print-btn { display: none !important; }
+          .wrap { padding: 70px 0 40px; }
+        }
+        .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: flex; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
-        .wrap { max-width: 680px; margin: 0 auto; padding: 0 0 40px; }
+        .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 40px; }
         .header { background: #0F2D0F; color: #fff; padding: 24px 28px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
         .trip-title { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
         .trip-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 10px; }
@@ -80,6 +89,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .empty { text-align: center; color: #9ca3af; padding: 40px 0; font-size: 14px; }
       `}</style>
 
+      <button className="no-print back-btn" onClick={() => history.back()}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Retour
+      </button>
       <button className="no-print print-btn" onClick={() => window.print()}>🖨 Imprimer / PDF</button>
 
       <div className="wrap">
