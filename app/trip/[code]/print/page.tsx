@@ -32,10 +32,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
   }, [params.code])
 
   useEffect(() => {
-    if (ready) {
-      const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
-      if (!isMobile) setTimeout(() => window.print(), 800)
-    }
+    if (ready) setTimeout(() => window.print(), 800)
   }, [ready])
 
   if (!trip) return <div style={{ padding: 40, fontFamily: 'sans-serif' }}>Chargement…</div>
