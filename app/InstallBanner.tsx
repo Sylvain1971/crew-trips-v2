@@ -8,10 +8,10 @@ export default function InstallBanner() {
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const pathname = usePathname()
 
-  const isTripPage = pathname.startsWith('/trip/') && !pathname.includes('/print')
+  const showOnPage = pathname === '/' || (pathname.startsWith('/trip/') && !pathname.includes('/print'))
 
   useEffect(() => {
-    if (!isTripPage) { setShow(false); return }
+    if (!showOnPage) { setShow(false); return }
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')

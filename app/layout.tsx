@@ -34,21 +34,6 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr">
-      <head>
-        <script dangerouslySetInnerHTML={{__html: `
-          (function() {
-            try {
-              var p = window.location.pathname;
-              if (p === '/' || p === '' || p === '/index.html') {
-                var last = localStorage.getItem('crew-last-trip');
-                if (last) {
-                  window.location.replace('/trip/' + last);
-                }
-              }
-            } catch(e) {}
-          })();
-        `}} />
-      </head>
       <body>{children}<InstallBanner /></body>
     </html>
   )
