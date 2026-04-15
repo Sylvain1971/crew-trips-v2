@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS } from '@/lib/utils'
 
 const ADMIN_CODE = 'CT2026admin'
-const CREATOR_CODE_KEY = 'crew-creator-code'
 
 interface TripAdmin {
   id: string; code: string; nom: string; type: string
@@ -31,12 +30,13 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!auth) return
-    // Charger le code créateur depuis localStorage
-    try {
-      const saved = localStorage.getItem(CREATOR_CODE_KEY) || ''
-      setCreatorCode(saved)
-      setNewCreatorCode(saved)
-    } catch {}
+    // Charger le code créateur depuis Supabase
+    supabase.from('config').select('value').eq('key', 'creator_code').single()
+      .then(({ data }) => {
+        const val = data?.value || ''
+        setCreatorCode(val)
+        setNewCreatorCode(val)
+      })
     // Charger les trips
     setLoading(true)
     supabase.from('trips').select('*').order('created_at', { ascending: false })
@@ -51,15 +51,13 @@ export default function AdminPage() {
       })
   }, [auth])
 
-  function saveCreatorCode() {
+  async function saveCreatorCode() {
     if (!newCreatorCode.trim()) return
     setSavingCode(true)
-    try {
-      localStorage.setItem(CREATOR_CODE_KEY, newCreatorCode.trim())
-      setCreatorCode(newCreatorCode.trim())
-      setCodeSaved(true)
-      setTimeout(() => setCodeSaved(false), 2000)
-    } catch {}
+    await supabase.from('config').upsert({ key: 'creator_code', value: newCreatorCode.trim() })
+    setCreatorCode(newCreatorCode.trim())
+    setCodeSaved(true)
+    setTimeout(() => setCodeSaved(false), 2000)
     setSavingCode(false)
   }
 
@@ -79,8 +77,13 @@ export default function AdminPage() {
     return new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
+  // Écran login
   if (!auth) return (
-    <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
+      {/* Bouton retour */}
+      <a href="/" style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 10, padding: '8px 14px', color: 'rgba(255,255,255,.7)', fontSize: 14, textDecoration: 'none', fontWeight: 600 }}>
+        ← Accueil
+      </a>
       <div style={{ width: '100%', maxWidth: 340, background: 'rgba(255,255,255,.06)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🔐</div>
@@ -97,6 +100,7 @@ export default function AdminPage() {
     </main>
   )
 
+  // Page admin
   return (
     <main style={{ minHeight: '100dvh', background: '#f5f0e8', padding: '20px 16px 60px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>

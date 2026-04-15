@@ -43,16 +43,17 @@ function NouveauInner() {
   }, [])
 
   function validerCode() {
-    try {
-      const creatorCode = localStorage.getItem('crew-creator-code') || ''
-      if (codeAcces.trim() === creatorCode && creatorCode !== '') {
-        setCodeValide(true)
-        setCodeErreur(false)
-        try { sessionStorage.setItem('crew-creator-validated', '1') } catch {}
-      } else {
-        setCodeErreur(true)
-      }
-    } catch { setCodeErreur(true) }
+    supabase.from('config').select('value').eq('key', 'creator_code').single()
+      .then(({ data }) => {
+        const creatorCode = data?.value || ''
+        if (codeAcces.trim() === creatorCode && creatorCode !== '') {
+          setCodeValide(true)
+          setCodeErreur(false)
+          try { sessionStorage.setItem('crew-creator-validated', '1') } catch {}
+        } else {
+          setCodeErreur(true)
+        }
+      })
   }
 
   function onTelChange(val: string) {
