@@ -79,7 +79,7 @@ export default function MesTripsPage() {
         <div className="field" style={{maxWidth:420,margin:'0 auto 24px'}}>
           <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
           <input className="input"
-            type="tel" placeholder="ex : 514 000 0000"
+            type="tel" placeholder="ex : 418 000 0000"
             value={tel} onChange={e=>onTelChange(e.target.value)}
             autoFocus
             style={{background:'rgba(255,255,255,.08)',
