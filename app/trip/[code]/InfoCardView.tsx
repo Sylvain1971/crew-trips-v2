@@ -109,8 +109,9 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
           )}
 
           {card.membre_prenom && (
-            <div style={{fontSize:11,color:'var(--text-3)',marginTop:8}}>
-              ✏️ {card.membre_prenom}
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:8,display:'flex',alignItems:'center',gap:4}}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              {card.membre_prenom}
             </div>
           )}
         </div>
