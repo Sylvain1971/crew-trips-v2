@@ -172,22 +172,24 @@ function NouveauInner() {
             <div style={{display:'flex',gap:8}}>
               <div style={{flex:1}}>
                 <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>DÉBUT</div>
-                <div style={{position:'relative'}}>
+                <div style={{position:'relative',height:50}}>
                   <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
-                    style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',
-                      background:'rgba(255,255,255,.08)',color:d1?'#fff':'transparent',fontSize:15,
-                      fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'}}/>
+                    style={{position:'absolute',inset:0,width:'100%',height:'100%',padding:'0 15px',borderRadius:10,
+                      border:'1.5px solid rgba(255,255,255,.15)',background:'rgba(255,255,255,.08)',
+                      color:d1?'#fff':'transparent',fontSize:15,fontFamily:'inherit',outline:'none',
+                      colorScheme:'dark',boxSizing:'border-box'}}/>
                   {!d1 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
                     fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
                 </div>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>FIN</div>
-                <div style={{position:'relative'}}>
+                <div style={{position:'relative',height:50}}>
                   <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
-                    style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',
-                      background:'rgba(255,255,255,.08)',color:d2?'#fff':'transparent',fontSize:15,
-                      fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'}}/>
+                    style={{position:'absolute',inset:0,width:'100%',height:'100%',padding:'0 15px',borderRadius:10,
+                      border:'1.5px solid rgba(255,255,255,.15)',background:'rgba(255,255,255,.08)',
+                      color:d2?'#fff':'transparent',fontSize:15,fontFamily:'inherit',outline:'none',
+                      colorScheme:'dark',boxSizing:'border-box'}}/>
                   {!d2 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
                     fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
                 </div>
