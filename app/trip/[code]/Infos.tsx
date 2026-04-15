@@ -250,6 +250,10 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
               style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'background .2s'}}>
               {copied ? '✓ Copié !' : '🔗 Inviter'}
             </button>
+            <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')}
+              style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 12px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+              🖨
+            </button>
           </div>
         </div>
         {cd && (
