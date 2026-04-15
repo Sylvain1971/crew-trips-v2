@@ -225,34 +225,24 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       )}
 
       {/* Header trip */}
-      <div style={{background:'var(--forest)',padding:'18px 16px 16px',color:'#fff'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:13,color:'rgba(255,255,255,.5)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3}}>
-              {trip.destination || 'Crew Trip'}
-            </div>
-            <div style={{fontSize:20,fontWeight:800,letterSpacing:'-.02em',lineHeight:1.2,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-              {trip.nom}
-            </div>
-            {tripDate && (
-              <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:4}}>
-                {tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}
-              </div>
-            )}
-          </div>
-          <div style={{display:'flex',gap:8,flexShrink:0,marginLeft:12}}>
-            <a href={isCreateur ? '/mes-trips' : '/'}
-              style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
-                padding:'8px 10px',color:'rgba(255,255,255,.7)',fontSize:12,textDecoration:'none',
-                display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 5l-7 7 7 7"/>
-              </svg>
-              {isCreateur ? 'Mes trips' : 'Accueil'}
-            </a>
+      <div style={{background:'var(--forest)',padding:'12px 16px 16px',color:'#fff'}}>
+
+        {/* Ligne 1 : navigation + actions */}
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+          <a href={isCreateur ? '/mes-trips' : '/'}
+            style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
+              padding:'7px 12px',color:'rgba(255,255,255,.75)',fontSize:12,textDecoration:'none',
+              display:'flex',alignItems:'center',gap:4,cursor:'pointer',fontWeight:600}}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+            {isCreateur ? 'Mes trips' : 'Accueil'}
+          </a>
+          <div style={{display:'flex',gap:8}}>
             {isCreateur && (
               <button onClick={()=>setEditTrip(true)}
-                style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 12px',color:'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center'}}>
+                style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
+                  padding:'7px 11px',color:'#fff',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -260,11 +250,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
               </button>
             )}
             <button onClick={copyLink}
-              style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'background .2s'}}>
-              {copied ? '✓ Copié !' : '🔗 Inviter'}
+              style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',
+                borderRadius:10,padding:'7px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+              {copied ? '✓' : '🔗 Inviter'}
             </button>
             <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')}
-              style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 12px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
+                padding:'7px 11px',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
                 <rect x="2" y="9" width="20" height="9" rx="2"/>
@@ -273,8 +265,25 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </button>
           </div>
         </div>
+
+        {/* Ligne 2 : titre complet */}
+        <div>
+          <div style={{fontSize:12,color:'rgba(255,255,255,.5)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>
+            {trip.destination || 'Crew Trip'}
+          </div>
+          <div style={{fontSize:22,fontWeight:800,letterSpacing:'-.02em',lineHeight:1.2,color:'#fff'}}>
+            {trip.nom}
+          </div>
+          {tripDate && (
+            <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:5}}>
+              {tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}
+            </div>
+          )}
+        </div>
+
         {cd && (
-          <div style={{background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
+          <div style={{marginTop:10,background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',
+            fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
             ⏳ {cd}
           </div>
         )}
