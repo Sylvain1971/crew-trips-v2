@@ -100,7 +100,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
           <rect x="2" y="9" width="20" height="9" rx="2"/>
         </svg>
-        Imprimer
+        Imprimer / PDF
       </button>
 
       <div className="wrap">
