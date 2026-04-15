@@ -14,6 +14,7 @@ interface TripAdmin {
   date_debut?: string
   date_fin?: string
   created_at: string
+  createur_tel?: string
   membres_count?: number
 }
 
@@ -116,6 +117,7 @@ export default function AdminPage() {
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
                     Créé le {fmt(t.created_at)} · code: <code style={{ background: 'var(--sand)', padding: '1px 5px', borderRadius: 4 }}>{t.code}</code>
+                    {t.createur_tel && <span> · 📱 {t.createur_tel.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>

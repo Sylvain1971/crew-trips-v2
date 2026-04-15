@@ -4,6 +4,7 @@
   lodge_nom?: string; lodge_adresse?: string; lodge_tel?: string
   lodge_wifi?: string; lodge_code?: string; lodge_arrivee?: string
   can_delete: boolean; can_edit: boolean; whatsapp_lien?: string; sms_lien?: string
+  createur_tel?: string
   created_at: string
 }
 export interface Membre {
