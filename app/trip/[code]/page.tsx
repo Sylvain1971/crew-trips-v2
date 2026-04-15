@@ -65,11 +65,21 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
         } catch {}
       }
 
-      // 2. Reconnexion auto via numéro de téléphone (créateur)
+      // 2. Reconnexion auto via numéro de téléphone
       const savedTel = (() => { try { return localStorage.getItem('crew-tel') } catch { return null } })()
       if (savedTel) {
         const digits = savedTel.replace(/\D/g, '')
         if (digits.length === 10) {
+          // Chercher dans membres par tel (créateur ou participant)
+          const { data: membreTel } = await supabase.from('membres')
+            .select('*').eq('trip_id', data.id).eq('tel', digits).maybeSingle()
+          if (membreTel) {
+            const m = {...membreTel, is_createur: membreTel.is_createur ?? false}
+            setMembre(m)
+            try { localStorage.setItem(`crew2-${params.code}`, JSON.stringify(m)) } catch {}
+            return
+          }
+          // Fallback: vérifier si créateur par createur_tel
           const { data: tripData } = await supabase.from('trips').select('createur_tel').eq('code', params.code).single()
           if (tripData?.createur_tel === digits) {
             const { data: createurMembre } = await supabase.from('membres')

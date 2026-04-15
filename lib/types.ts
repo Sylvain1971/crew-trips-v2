@@ -9,7 +9,7 @@
 }
 export interface Membre {
   id: string; trip_id: string; prenom: string; couleur: string
-  is_createur: boolean; created_at: string
+  is_createur: boolean; tel?: string; created_at: string
 }
 export interface InfoCard {
   id: string; trip_id: string; categorie: string; titre: string

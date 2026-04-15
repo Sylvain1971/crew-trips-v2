@@ -14,6 +14,7 @@ function formatTel(val: string): string {
 interface TripDB {
   code: string; nom: string; type: string
   destination?: string; date_debut?: string; date_fin?: string
+  role: 'createur' | 'participant'
 }
 
 export default function MesTripsPage() {
@@ -36,11 +37,35 @@ export default function MesTripsPage() {
     const digits = numero.replace(/\D/g, '')
     if (digits.length < 10) return
     setLoading(true); setCherche(true)
-    const { data } = await supabase.from('trips')
+
+    // 1. Trips créés (createur_tel)
+    const { data: tripsCreateur } = await supabase.from('trips')
       .select('code,nom,type,destination,date_debut,date_fin')
       .eq('createur_tel', digits)
       .order('created_at', { ascending: false })
-    setTrips(data || [])
+
+    // 2. Trips rejoints comme participant (membres.tel)
+    const { data: membresParticipant } = await supabase.from('membres')
+      .select('trip_id, is_createur')
+      .eq('tel', digits)
+      .eq('is_createur', false)
+
+    let tripsParticipant: TripDB[] = []
+    if (membresParticipant && membresParticipant.length > 0) {
+      const tripIds = membresParticipant.map((m: any) => m.trip_id)
+      const { data: tripsData } = await supabase.from('trips')
+        .select('code,nom,type,destination,date_debut,date_fin')
+        .in('id', tripIds)
+        .order('created_at', { ascending: false })
+      tripsParticipant = (tripsData || []).map((t: any) => ({ ...t, role: 'participant' as const }))
+    }
+
+    // Fusionner — créateurs en premier, sans doublons
+    const codesCreateur = new Set((tripsCreateur || []).map((t: any) => t.code))
+    const creeateurs: TripDB[] = (tripsCreateur || []).map((t: any) => ({ ...t, role: 'createur' as const }))
+    const participants: TripDB[] = tripsParticipant.filter(t => !codesCreateur.has(t.code))
+
+    setTrips([...creeateurs, ...participants])
     setLoading(false)
   }
 
@@ -74,7 +99,7 @@ export default function MesTripsPage() {
         <div style={{fontWeight:600,fontSize:15,color:'rgba(255,255,255,.6)',marginTop:4}}>Mes trips</div>
       </div>
 
-      <div style={{flex:1,padding:'8px 20px 40px'}}>
+      <div style={{flex:1,padding:'16px 20px 40px'}}>
         {/* Champ téléphone */}
         <div className="field" style={{maxWidth:420,margin:'0 auto 24px'}}>
           <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
@@ -109,11 +134,18 @@ export default function MesTripsPage() {
             </div>
           )}
 
-          {trips.map((t, i) => (
+          {trips.map((t) => (
             <div key={t.code} className="card" style={{marginBottom:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
               <div style={{fontSize:28,flexShrink:0}}>{TRIP_ICONS[t.type]||'🏕'}</div>
               <div style={{flex:1,minWidth:0}}>
-                <div style={{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
+                <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+                  <div style={{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
+                  <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:20,flexShrink:0,
+                    background: t.role==='createur' ? 'var(--forest)' : 'rgba(0,0,0,.08)',
+                    color: t.role==='createur' ? '#fff' : 'var(--text-3)'}}>
+                    {t.role==='createur' ? '★ Créateur' : 'Participant'}
+                  </span>
+                </div>
                 {t.destination && <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>📍 {t.destination}</div>}
                 {t.date_debut && <div style={{fontSize:12,color:'var(--text-3)',marginTop:1}}>📅 {fmtDate(t.date_debut)}{t.date_fin ? ` → ${fmtDate(t.date_fin)}` : ''}</div>}
               </div>
@@ -128,8 +160,8 @@ export default function MesTripsPage() {
           {trips.length > 0 && (
             <button onClick={()=>router.push('/nouveau')}
               style={{width:'100%',marginTop:8,padding:'12px',borderRadius:12,
-                border:'1.5px solid var(--border)',background:'transparent',
-                color:'var(--text-2)',fontWeight:600,fontSize:14,cursor:'pointer'}}>
+                border:'1.5px solid rgba(255,255,255,.15)',background:'transparent',
+                color:'rgba(255,255,255,.6)',fontWeight:600,fontSize:14,cursor:'pointer'}}>
               + Créer un nouveau trip
             </button>
           )}

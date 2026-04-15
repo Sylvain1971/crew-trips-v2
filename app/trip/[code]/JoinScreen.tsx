@@ -14,15 +14,31 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   trip:Trip, autorises:ParticipantAutorise[], onJoin:(m:Membre)=>void
 }) {
   const [prenom, setPrenom] = useState('')
+  const [tel, setTel] = useState('')
   const [suggestion, setSuggestion] = useState<string|null>(null)
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
   useEffect(()=>{
     const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
+    // Pré-remplir le tel depuis localStorage
+    try { const saved = localStorage.getItem('crew-tel'); if (saved) setTel(saved) } catch {}
     return ()=>clearInterval(t)
   },[trip.date_debut])
   const listeActive = autorises.length > 0
+
+  function formatTel(val: string): string {
+    const d = val.replace(/\D/g,'').slice(0,10)
+    if (d.length<=3) return d
+    if (d.length<=6) return `${d.slice(0,3)} ${d.slice(3)}`
+    return `${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6)}`
+  }
+
+  function onChangeTel(val: string) {
+    const f = formatTel(val)
+    setTel(f)
+    if (f.replace(/\D/g,'').length === 10) try { localStorage.setItem('crew-tel', f) } catch {}
+  }
 
   function valider(nom: string) {
     if (!listeActive) return nom
@@ -49,21 +65,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     const { data: membresExistants } = await supabase.from('membres')
       .select('*').eq('trip_id', trip.id)
 
-    // Fuzzy match sur les membres existants
-    if (membresExistants && membresExistants.length > 0) {
-      const prenomsMembres = membresExistants.map((m: {prenom: string}) => m.prenom)
-      const match = findClosestPrenom(nom, prenomsMembres)
-      if (match) {
-        const membreExistant = membresExistants.find((m: {prenom: string}) => m.prenom === match)
-        if (membreExistant) {
-          setLoading(false)
-          onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
-          return
-        }
-      }
-    }
-
-    // Validation liste autorisée
+    // 1. Validation liste autorisée EN PREMIER (sécurité)
     if (listeActive) {
       const valide = valider(nom)
       if (!valide) {
@@ -72,11 +74,31 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       }
     }
 
-    // Nouveau membre
+    // 2. Fuzzy match sur les membres existants (reconnexion)
+    if (membresExistants && membresExistants.length > 0) {
+      const prenomsMembres = membresExistants.map((m: {prenom: string}) => m.prenom)
+      const match = findClosestPrenom(nom, prenomsMembres)
+      if (match) {
+        const membreExistant = membresExistants.find((m: {prenom: string}) => m.prenom === match)
+        if (membreExistant) {
+          // Mettre à jour le tel si fourni
+          const digits = tel.replace(/\D/g,'')
+          if (digits.length === 10) {
+            await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
+          }
+          setLoading(false)
+          onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
+          return
+        }
+      }
+    }
+
+    // 3. Nouveau membre
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
+    const digits = tel.replace(/\D/g,'')
     const { data, error } = await supabase.from('membres')
-      .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst})
+      .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst, tel: digits.length===10?digits:null})
       .select().single()
     if (!error && data) onJoin(data)
     else { setErreur('Erreur de connexion. Réessayez.' + (error ? ' (' + error.message + ')' : '')); setLoading(false) }
@@ -110,6 +132,12 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             autoFocus
             style={{textAlign:'center',fontSize:18,fontWeight:600,marginBottom:10,
               background:'rgba(255,255,255,.08)',border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
+          />
+          <input className="input" type="tel" placeholder="ex : 418 000 0000 (optionnel)"
+            value={tel} onChange={e=>onChangeTel(e.target.value)}
+            style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
+              background:'rgba(255,255,255,.06)',border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
+              color:'rgba(255,255,255,.8)'}}
           />
           {suggestion && (
             <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'10px 14px',marginBottom:10,border:'1px solid rgba(255,255,255,.15)'}}>
