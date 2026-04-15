@@ -254,11 +254,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
               style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 14px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',transition:'background .2s'}}>
               {copied ? '✓ Copié !' : '🔗 Inviter'}
             </button>
-            <button onClick={()=>{
-                const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
-                if (isMobile) window.location.href = `/trip/${trip.code}/print`
-                else window.open(`/trip/${trip.code}/print`,'_blank')
-              }}
+            <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')}
               style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'8px 12px',color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
