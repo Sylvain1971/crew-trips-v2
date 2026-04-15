@@ -275,14 +275,14 @@ function HomeInner() {
                 <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>DÉBUT</div>
                 <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
                   style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
-                    background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
+                    background:'rgba(255,255,255,.9)',color:'#1A1A14',fontSize:13,
                     fontFamily:'inherit',outline:'none',colorScheme:'light'}}/>
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>FIN</div>
                 <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
                   style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
-                    background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
+                    background:'rgba(255,255,255,.9)',color:'#1A1A14',fontSize:13,
                     fontFamily:'inherit',outline:'none',colorScheme:'light'}}/>
               </div>
             </div>
