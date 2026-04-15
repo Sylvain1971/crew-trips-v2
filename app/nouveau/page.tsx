@@ -1,0 +1,215 @@
+'use client'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { TRIP_ICONS } from '@/lib/utils'
+import { COULEURS_MEMBRES } from '@/lib/types'
+
+function genCode() {
+  return Array.from({length:6},()=>'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random()*32)]).join('')
+}
+function formatTel(val: string): string {
+  const digits = val.replace(/\D/g,'').slice(0,10)
+  if (digits.length<=3) return digits
+  if (digits.length<=6) return `${digits.slice(0,3)} ${digits.slice(3)}`
+  return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`
+}
+
+function NouveauInner() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [tel, setTel] = useState('')
+  const [nom, setNom] = useState(searchParams.get('nom')||'')
+  const [type, setType] = useState(searchParams.get('type')||'peche')
+  const [dest, setDest] = useState(searchParams.get('dest')||'')
+  const [d1, setD1] = useState('')
+  const [d2, setD2] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const telComplet = tel.replace(/\D/g,'').length === 10
+  const isDuplicate = searchParams.get('nom') !== null
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('crew-tel')
+      if (saved) setTel(saved)
+    } catch {}
+  }, [])
+
+  function onTelChange(val: string) {
+    const f = formatTel(val)
+    setTel(f)
+    if (f.replace(/\D/g,'').length === 10) try { localStorage.setItem('crew-tel', f) } catch {}
+  }
+
+  async function creer() {
+    if (!nom.trim() || !telComplet) return
+    setLoading(true)
+    const digits = tel.replace(/\D/g,'')
+    const code = genCode()
+    const { error } = await supabase.from('trips').insert({
+      code, nom: nom.trim(), type,
+      destination: dest.trim()||null,
+      date_debut: d1||null, date_fin: d2||null,
+      createur_tel: digits,
+    })
+    if (error) { alert('Erreur : ' + error.message); setLoading(false); return }
+    try {
+      const sourceCode = searchParams.get('sourceCode') || null
+      const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
+      if (!newTrip) throw new Error('Trip introuvable')
+      // Créer membre créateur depuis prénom sauvegardé
+      const prenomCreateur = (() => {
+        try {
+          for (const k of Object.keys(localStorage)) {
+            if (!k.startsWith('crew2-')) continue
+            const m = JSON.parse(localStorage.getItem(k)||'')
+            if (m?.prenom && m?.is_createur === true) return m.prenom as string
+          }
+        } catch {} return null
+      })()
+      if (prenomCreateur) {
+        const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
+        const { data: newMembre } = await supabase.from('membres')
+          .insert({ trip_id: newTrip.id, prenom: prenomCreateur, couleur, is_createur: true })
+          .select().single()
+        if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
+      }
+      if (sourceCode) {
+        const { data: src } = await supabase.from('trips').select('*').eq('code', sourceCode).single()
+        if (src) {
+          await supabase.from('trips').update({
+            lodge_nom: src.lodge_nom, lodge_adresse: src.lodge_adresse,
+            lodge_tel: src.lodge_tel, lodge_wifi: src.lodge_wifi,
+            lodge_code: src.lodge_code, lodge_arrivee: src.lodge_arrivee,
+            whatsapp_lien: src.whatsapp_lien,
+          }).eq('id', newTrip.id)
+          const { data: srcInfos } = await supabase.from('infos').select('*').eq('trip_id', src.id)
+          if (srcInfos?.length) {
+            type II = Omit<typeof srcInfos[0],'id'|'trip_id'|'created_at'>
+            await supabase.from('infos').insert(
+              srcInfos.map(({id:_i,trip_id:_t,created_at:_c,...rest}:II&{id:string,trip_id:string,created_at:string})=>({...rest,trip_id:newTrip.id}))
+            )
+          }
+        }
+      }
+      try { localStorage.setItem('crew-last-trip', code) } catch {}
+      router.push('/trip/' + code + '/created')
+    } catch (err) {
+      console.error(err)
+      try { localStorage.setItem('crew-last-trip', code) } catch {}
+      router.push('/trip/' + code + '/created')
+    }
+  }
+
+  return (
+    <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
+      {/* Header */}
+      <div style={{padding:'16px 20px',display:'flex',alignItems:'center',gap:12}}>
+        <button onClick={()=>router.push('/')}
+          style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
+          ← Retour
+        </button>
+        <div style={{fontWeight:700,fontSize:18,color:'#fff'}}>
+          {isDuplicate ? 'Dupliquer un trip' : 'Nouveau trip'}
+        </div>
+      </div>
+
+      <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',padding:'8px 20px 40px'}}>
+        <div style={{width:'100%',maxWidth:420}}>
+          {isDuplicate && (
+            <div style={{background:'rgba(255,255,255,.1)',borderRadius:10,padding:'10px 14px',
+              marginBottom:16,fontSize:13,color:'rgba(255,255,255,.75)',textAlign:'center'}}>
+              📋 Duplication — ajustez les dates et créez
+            </div>
+          )}
+
+          <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
+            <input className="input" type="tel" placeholder="418 540 1111"
+              value={tel} onChange={e=>onTelChange(e.target.value)}
+              style={{background:'rgba(255,255,255,.08)',
+                border:`1.5px solid ${tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
+                color:'#fff',letterSpacing:1}}/>
+            <div style={{fontSize:11,color:telComplet?'#4ade80':'rgba(255,255,255,.35)',marginTop:5}}>
+              {telComplet ? '✓ Numéro reconnu' : 'Identifie votre compte créateur'}
+            </div>
+          </div>
+
+          <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
+            <input className="input" placeholder="Ex: Dean River — Septembre 2025"
+              value={nom} onChange={e=>setNom(e.target.value)}
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}
+              onFocus={e=>{e.target.style.border='1.5px solid rgba(255,255,255,.4)'}}
+              onBlur={e=>{e.target.style.border='1.5px solid rgba(255,255,255,.15)'}}/>
+          </div>
+
+          <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>ACTIVITÉ</label>
+            <select className="input" value={type} onChange={e=>setType(e.target.value)}
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}>
+              <option value="peche" style={{background:'#1a3a1a',color:'#fff'}}>🎣 Pêche à la mouche</option>
+              <option value="ski" style={{background:'#1a3a1a',color:'#fff'}}>⛷ Ski alpin</option>
+              <option value="motoneige" style={{background:'#1a3a1a',color:'#fff'}}>🗻 Motoneige</option>
+              <option value="hike" style={{background:'#1a3a1a',color:'#fff'}}>🥾 Randonnée / Hike</option>
+              <option value="velo" style={{background:'#1a3a1a',color:'#fff'}}>🚵 Vélo / Mountain Bike</option>
+              <option value="chasse" style={{background:'#1a3a1a',color:'#fff'}}>🫎 Chasse</option>
+              <option value="yoga" style={{background:'#1a3a1a',color:'#fff'}}>🧘 Yoga</option>
+              <option value="autre" style={{background:'#1a3a1a',color:'#fff'}}>🏕 Autre</option>
+            </select>
+          </div>
+
+          <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>DESTINATION</label>
+            <input className="input" placeholder="Ex: Dean River, Colombie-Britannique"
+              value={dest} onChange={e=>setDest(e.target.value)}
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+          </div>
+
+          <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>DATES</label>
+            <div style={{display:'flex',gap:8}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>DÉBUT</div>
+                <div style={{position:'relative'}}>
+                  <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
+                    style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',
+                      background:'rgba(255,255,255,.08)',color:d1?'#fff':'transparent',fontSize:15,
+                      fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'}}/>
+                  {!d1 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+                    fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
+                </div>
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>FIN</div>
+                <div style={{position:'relative'}}>
+                  <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
+                    style={{width:'100%',padding:'13px 15px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.15)',
+                      background:'rgba(255,255,255,.08)',color:d2?'#fff':'transparent',fontSize:15,
+                      fontFamily:'inherit',outline:'none',colorScheme:'dark',boxSizing:'border-box'}}/>
+                  {!d2 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
+                    fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet}
+            style={{background:loading||!nom.trim()||!telComplet?'rgba(255,255,255,.15)':'#fff',
+              color:loading||!nom.trim()||!telComplet?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
+            {loading?'Création en cours…':isDuplicate?'Créer ce nouveau trip →':'Créer le trip →'}
+          </button>
+        </div>
+      </div>
+    </main>
+  )
+}
+
+export default function NouveauPage() {
+  return (
+    <Suspense fallback={<div style={{minHeight:'100dvh',background:'var(--forest)'}}/>}>
+      <NouveauInner/>
+    </Suspense>
+  )
+}
