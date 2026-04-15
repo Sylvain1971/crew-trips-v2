@@ -1,45 +1,69 @@
-// Service Worker — Crew Trips
-// Stocke les membres par trip pour la PWA standalone iOS
+// Service Worker — Crew Trips v2
+// Stocke les membres par trip + le dernier trip visité (persisté en cache)
 
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()))
 
-// Sauvegarder le dernier trip visité
-let lastTripCode = null
+const META_CACHE = 'crew-trips-meta'
+const MEMBRES_CACHE = 'crew-trips-membres'
+
+// Helpers persistance
+async function getLastTrip() {
+  const cache = await caches.open(META_CACHE)
+  const res = await cache.match('last-trip-code')
+  return res ? await res.text() : null
+}
+
+async function setLastTrip(code) {
+  const cache = await caches.open(META_CACHE)
+  await cache.put('last-trip-code', new Response(code))
+}
 
 // Intercepter la navigation — rediriger vers le dernier trip au démarrage PWA
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url)
-  // Seulement les navigations (pas les assets)
   if (event.request.mode !== 'navigate') return
-  // Si on arrive sur / en mode standalone et qu'on a un trip sauvegardé
-  if (url.pathname === '/' && lastTripCode) {
-    event.respondWith(Response.redirect(`/trip/${lastTripCode}`, 302))
+
+  // Si on arrive sur / en mode standalone → rediriger vers le dernier trip
+  if (url.pathname === '/') {
+    event.respondWith(
+      getLastTrip().then(code => {
+        if (code) return Response.redirect(`/trip/${code}`, 302)
+        return fetch(event.request)
+      })
+    )
     return
   }
+
   // Mémoriser le code du trip visité
   const tripMatch = url.pathname.match(/^\/trip\/([^/]+)$/)
-  if (tripMatch) lastTripCode = tripMatch[1]
+  if (tripMatch) {
+    event.waitUntil(setLastTrip(tripMatch[1]))
+  }
 })
 
 self.addEventListener('message', event => {
-  if (event.data?.type === 'SET_LAST_TRIP') {
-    lastTripCode = event.data.code
+  const { type, code, membre } = event.data || {}
+
+  if (type === 'SET_LAST_TRIP') {
+    setLastTrip(code)
   }
-  if (event.data?.type === 'SET_MEMBRE') {
-    caches.open('crew-trips-membres').then(cache => {
-      cache.put(`membre-${event.data.code}`, new Response(JSON.stringify(event.data.membre)))
+
+  if (type === 'SET_MEMBRE') {
+    caches.open(MEMBRES_CACHE).then(cache => {
+      cache.put(`membre-${code}`, new Response(JSON.stringify(membre)))
     })
   }
-  if (event.data?.type === 'GET_MEMBRE') {
-    caches.open('crew-trips-membres').then(cache => {
-      cache.match(`membre-${event.data.code}`).then(response => {
+
+  if (type === 'GET_MEMBRE') {
+    caches.open(MEMBRES_CACHE).then(cache => {
+      cache.match(`membre-${code}`).then(response => {
         if (response) {
           response.text().then(data => {
-            event.source?.postMessage({ type: 'MEMBRE_DATA', code: event.data.code, data })
+            event.source?.postMessage({ type: 'MEMBRE_DATA', code, data })
           })
         } else {
-          event.source?.postMessage({ type: 'MEMBRE_DATA', code: event.data.code, data: null })
+          event.source?.postMessage({ type: 'MEMBRE_DATA', code, data: null })
         }
       })
     })

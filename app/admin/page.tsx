@@ -3,7 +3,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS } from '@/lib/utils'
 
-const ADMIN_CODE = 'CT2026admin'
+// Le code admin est défini dans .env.local :
+//   NEXT_PUBLIC_ADMIN_CODE=ton_code_secret
+// Ne jamais hardcoder cette valeur ici.
+const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE ?? ''
 
 interface TripAdmin {
   id: string; code: string; nom: string; type: string
@@ -25,27 +28,39 @@ export default function AdminPage() {
   const [showPwd, setShowPwd] = useState(false)
 
   function login() {
+    if (!ADMIN_CODE) {
+      setErreur('NEXT_PUBLIC_ADMIN_CODE non configuré dans .env.local')
+      return
+    }
     if (code === ADMIN_CODE) { setAuth(true); setErreur('') }
     else setErreur('Code incorrect')
   }
 
   useEffect(() => {
     if (!auth) return
-    // Charger le code créateur depuis Supabase
+
+    // Charger le code créateur
     supabase.from('config').select('value').eq('key', 'creator_code').single()
       .then(({ data }) => {
         const val = data?.value || ''
         setCreatorCode(val)
         setNewCreatorCode(val)
       })
-    // Charger les trips
+
+    // Charger les trips avec count membres en une seule requête (corrige N+1)
     setLoading(true)
-    supabase.from('trips').select('*').order('created_at', { ascending: false })
-      .then(async ({ data }) => {
+    supabase
+      .from('trips')
+      .select(`
+        id, code, nom, type, destination, date_debut, date_fin, created_at, createur_tel,
+        membres(count)
+      `)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
         if (!data) { setLoading(false); return }
-        const enriched = await Promise.all(data.map(async (t) => {
-          const { count } = await supabase.from('membres').select('*', { count: 'exact', head: true }).eq('trip_id', t.id)
-          return { ...t, membres_count: count || 0 }
+        const enriched = data.map((t: any) => ({
+          ...t,
+          membres_count: t.membres?.[0]?.count ?? 0,
         }))
         setTrips(enriched)
         setLoading(false)
@@ -65,10 +80,7 @@ export default function AdminPage() {
   async function supprimerTrip(trip: TripAdmin) {
     if (!confirm(`Supprimer "${trip.nom}" ?`)) return
     setDeleting(trip.id)
-    await supabase.from('messages').delete().eq('trip_id', trip.id)
-    await supabase.from('infos').delete().eq('trip_id', trip.id)
-    await supabase.from('participants_autorises').delete().eq('trip_id', trip.id)
-    await supabase.from('membres').delete().eq('trip_id', trip.id)
+    // ON DELETE CASCADE gère les tables enfants — une seule requête suffit
     await supabase.from('trips').delete().eq('id', trip.id)
     setTrips(p => p.filter(t => t.id !== trip.id))
     setDeleting(null)
@@ -78,10 +90,8 @@ export default function AdminPage() {
     return new Date(d).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
-  // Écran login
   if (!auth) return (
     <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
-      {/* Bouton retour */}
       <a href="/" style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 10, padding: '8px 14px', color: 'rgba(255,255,255,.7)', fontSize: 14, textDecoration: 'none', fontWeight: 600 }}>
         ← Accueil
       </a>
@@ -110,33 +120,23 @@ export default function AdminPage() {
     </main>
   )
 
-  // Page admin
   return (
     <main style={{ minHeight: '100dvh', background: '#f5f0e8', padding: '20px 16px 60px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-
-        {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--forest)', margin: 0 }}>Admin Crew Trips</h1>
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length !== 1 ? 's' : ''} actif{trips.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <a href="/" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>
-              ← Accueil
-            </a>
-            <button onClick={() => setAuth(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>
-              Déconnexion
-            </button>
+            <a href="/" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>← Accueil</a>
+            <button onClick={() => setAuth(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>Déconnexion</button>
           </div>
         </div>
 
-        {/* Code créateur */}
         <div className="card" style={{ padding: '16px', marginBottom: 20 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>🔑 Code de création de trip</div>
-          <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.5 }}>
-            Ce code est requis pour créer un nouveau trip. Partagez-le uniquement avec les organisateurs autorisés.
-          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.5 }}>Ce code est requis pour créer un nouveau trip.</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input className="input" type="text" placeholder="Définir un code secret…"
               value={newCreatorCode} onChange={e => setNewCreatorCode(e.target.value)}
@@ -154,7 +154,6 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Liste des trips */}
         {loading && <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>Chargement…</div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {trips.map(t => (
