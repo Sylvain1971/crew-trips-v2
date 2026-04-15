@@ -149,6 +149,17 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
     <div style={{display:'flex',flexDirection:'column',minHeight:'100dvh',background:'var(--sand)'}}>
       {tab!=='infos' && (
         <div style={{background:'var(--forest)',padding:'12px 16px 10px',display:'flex',alignItems:'center',gap:10,flexShrink:0}}>
+          {membre.is_createur && (
+            <a href="/mes-trips"
+              style={{background:'rgba(255,255,255,.1)',border:'none',borderRadius:8,padding:'6px 10px',
+                color:'rgba(255,255,255,.7)',fontSize:12,cursor:'pointer',textDecoration:'none',flexShrink:0,
+                display:'flex',alignItems:'center',gap:4}}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 5l-7 7 7 7"/>
+              </svg>
+              Mes trips
+            </a>
+          )}
           <span style={{fontSize:20}}>{TRIP_ICONS[trip.type]||'🏕'}</span>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontWeight:700,fontSize:15,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
