@@ -45,7 +45,7 @@ export default function InstallBanner() {
 
   if (!show || dismissed) return null
 
-  const bottomPos = keyboardOpen ? -300 : 90
+  const bottomPos = keyboardOpen ? -300 : 0
 
   return (
     <div style={{

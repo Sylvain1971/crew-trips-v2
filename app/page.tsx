@@ -30,21 +30,6 @@ export default function Home() {
           <div style={{marginLeft:'auto',fontSize:20,color:'var(--text-3)'}}>›</div>
         </button>
 
-        {/* Rejoindre un trip */}
-        <button onClick={()=>router.push('/rejoindre')}
-          style={{width:'100%',padding:'18px 24px',borderRadius:16,border:'none',
-            background:'#fff',color:'var(--forest)',fontSize:16,fontWeight:700,
-            cursor:'pointer',display:'flex',alignItems:'center',gap:14,textAlign:'left'}}>
-          <div style={{width:44,height:44,borderRadius:12,background:'var(--forest)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>
-            🔗
-          </div>
-          <div>
-            <div style={{fontSize:16,fontWeight:700}}>Rejoindre un trip</div>
-            <div style={{fontSize:12,color:'var(--text-2)',fontWeight:400,marginTop:2}}>Coller un lien ou un code</div>
-          </div>
-          <div style={{marginLeft:'auto',fontSize:20,color:'var(--text-3)'}}>›</div>
-        </button>
-
         {/* Nouveau trip */}
         <button onClick={()=>router.push('/nouveau')}
           style={{width:'100%',padding:'18px 24px',borderRadius:16,border:'1.5px solid rgba(255,255,255,.2)',
