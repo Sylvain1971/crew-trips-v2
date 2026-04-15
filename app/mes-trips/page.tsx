@@ -141,8 +141,7 @@ export default function MesTripsPage() {
                 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
                   <div style={{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
                   <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:20,flexShrink:0,
-                    background: t.role==='createur' ? 'var(--forest)' : 'rgba(0,0,0,.08)',
-                    color: t.role==='createur' ? '#fff' : 'var(--text-3)'}}>
+                    background:'rgba(0,0,0,.08)',color:'var(--text-3)'}}>
                     {t.role==='createur' ? '★ Créateur' : 'Participant'}
                   </span>
                 </div>

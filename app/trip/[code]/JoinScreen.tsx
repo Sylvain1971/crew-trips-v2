@@ -133,12 +133,15 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             style={{textAlign:'center',fontSize:18,fontWeight:600,marginBottom:10,
               background:'rgba(255,255,255,.08)',border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
           />
-          <input className="input" type="tel" placeholder="ex : 418 000 0000 (optionnel)"
-            value={tel} onChange={e=>onChangeTel(e.target.value)}
-            style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
-              background:'rgba(255,255,255,.06)',border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
-              color:'rgba(255,255,255,.8)'}}
-          />
+          {/* Champ tel — caché quand une suggestion est affichée */}
+          {!suggestion && (
+            <input className="input" type="tel" placeholder="ex : 418 000 0000 (optionnel)"
+              value={tel} onChange={e=>onChangeTel(e.target.value)}
+              style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
+                background:'rgba(255,255,255,.06)',border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
+                color:'rgba(255,255,255,.8)'}}
+            />
+          )}
           {suggestion && (
             <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'10px 14px',marginBottom:10,border:'1px solid rgba(255,255,255,.15)'}}>
               <p style={{fontSize:13,color:'rgba(255,255,255,.7)',marginBottom:8}}>
