@@ -229,14 +229,14 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
         {/* Ligne 1 : navigation + actions */}
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-          <a href={isCreateur ? '/mes-trips' : '/'}
+          <a href="/mes-trips"
             style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,
               padding:'7px 12px',color:'rgba(255,255,255,.75)',fontSize:12,textDecoration:'none',
               display:'flex',alignItems:'center',gap:4,cursor:'pointer',fontWeight:600}}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
-            {isCreateur ? 'Mes trips' : 'Accueil'}
+            Mes trips
           </a>
           <div style={{display:'flex',gap:8}}>
             {isCreateur && (
