@@ -11,14 +11,12 @@ export default function InstallBanner() {
   const isTripPage = pathname.startsWith('/trip/') && !pathname.includes('/print')
 
   useEffect(() => {
-    // Ne montrer que sur les pages trip, jamais sur la page d'accueil
     if (!isTripPage) { setShow(false); return }
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
     if (isIOS && !isStandalone && !wasDismissed) {
-      // Délai plus long pour laisser le temps à l'utilisateur de voir la page
-      const t = setTimeout(() => setShow(true), 8000)
+      const t = setTimeout(() => setShow(true), 5000)
       return () => clearTimeout(t)
     }
   }, [pathname, isTripPage])
@@ -29,8 +27,7 @@ export default function InstallBanner() {
       if (tag === 'INPUT' || tag === 'TEXTAREA') setKeyboardOpen(true)
     }
     function onBlur() {
-      // Délai pour éviter le flash pendant la transition clavier
-      setTimeout(() => setKeyboardOpen(false), 400)
+      setTimeout(() => setKeyboardOpen(false), 300)
     }
     document.addEventListener('focusin', onFocus)
     document.addEventListener('focusout', onBlur)
@@ -46,10 +43,7 @@ export default function InstallBanner() {
     localStorage.setItem('crew-install-dismissed', '1')
   }
 
-  // Cacher si clavier ouvert
   if (!show || dismissed) return null
-
-  const tripCode = pathname.split('/trip/')[1]?.split('/')[0]
 
   const bottomPos = keyboardOpen ? -300 : 90
 
@@ -74,7 +68,8 @@ export default function InstallBanner() {
         </div>
       </div>
       <button onClick={dismiss}
-        style={{background:'none',border:'none',fontSize:26,color:'#e53e3e',cursor:'pointer',padding:'0 2px',lineHeight:1,flexShrink:0,fontWeight:700}}>
+        style={{background:'none',border:'none',fontSize:26,color:'#e53e3e',cursor:'pointer',
+          padding:'0 2px',lineHeight:1,flexShrink:0,fontWeight:700}}>
         ×
       </button>
     </div>
