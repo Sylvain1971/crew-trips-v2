@@ -265,11 +265,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           onClick={()=>setLodgeOpen(o=>!o)}>
           <div style={{fontWeight:700,fontSize:14}}>🏕 Le Lodge</div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            {isCreateur && !lodgeOpen && (
+            {isCreateur && (
               <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
                 style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
                   fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-                {haslodge?'Modifier':'+ Ajouter'}
+                {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
               </button>
             )}
             <span style={{fontSize:18,color:'var(--text-3)',transition:'transform .2s',
@@ -311,22 +311,38 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           </div>
         )}
         {lodgeOpen && editLodge && (
-          <div>
+          <div style={{marginTop:12}}>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
-              {[
-                {k:'nom',label:'Nom du Lodge',ph:'Ex: Babine Norlakes'},
-                {k:'adresse',label:'Adresse',ph:'Ex: Smithers, BC'},
-                {k:'tel',label:'Téléphone',ph:'+1 250 000 0000'},
-                {k:'wifi',label:'Mot de passe WiFi',ph:'Ex: fishing2025'},
-                {k:'arrivee',label:"Heure d'arrivée",ph:'Ex: 14h00 le 8 juin'},
-                {k:'code',label:'Heure de départ',ph:'Ex: 10h00 le 25 avril'},
-              ].map(f=>(
-                <div key={f.k}>
-                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>{f.label}</div>
-                  <input className="input" placeholder={f.ph} value={lodge[f.k as keyof typeof lodge]}
-                    onChange={e=>setLodge(p=>({...p,[f.k]:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
-                </div>
-              ))}
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Nom du Lodge</div>
+                <input className="input" placeholder="Ex: Babine Norlakes" value={lodge.nom}
+                  onChange={e=>setLodge(p=>({...p,nom:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Adresse</div>
+                <input className="input" placeholder="Ex: Smithers, BC" value={lodge.adresse}
+                  onChange={e=>setLodge(p=>({...p,adresse:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Téléphone</div>
+                <input className="input" placeholder="+1 250 000 0000" value={lodge.tel}
+                  onChange={e=>setLodge(p=>({...p,tel:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Mot de passe WiFi</div>
+                <input className="input" placeholder="Ex: fishing2025" value={lodge.wifi}
+                  onChange={e=>setLodge(p=>({...p,wifi:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Heure d'arrivée</div>
+                <input className="input" placeholder="Ex: 14h00 le 8 juin" value={lodge.arrivee}
+                  onChange={e=>setLodge(p=>({...p,arrivee:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+              </div>
+              <div>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Heure de départ</div>
+                <input className="input" placeholder="Ex: 10h00 le 25 avril" value={lodge.code}
+                  onChange={e=>setLodge(p=>({...p,code:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+              </div>
             </div>
             <button className="btn btn-primary" onClick={saveLodge} disabled={savingLodge} style={{padding:'10px',fontSize:13}}>
               {savingLodge?'Sauvegarde…':'Sauvegarder'}
