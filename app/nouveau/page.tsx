@@ -21,6 +21,7 @@ function NouveauInner() {
   const [codeAcces, setCodeAcces] = useState('')
   const [codeValide, setCodeValide] = useState(false)
   const [codeErreur, setCodeErreur] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
   const [tel, setTel] = useState('')
   const [nom, setNom] = useState(searchParams.get('nom')||'')
   const [type, setType] = useState(searchParams.get('type')||'peche')
@@ -148,12 +149,21 @@ function NouveauInner() {
                 Contactez l'administrateur pour obtenir le code.
               </div>
             </div>
-            <input className="input" type="password" placeholder="Code secret"
-              value={codeAcces} onChange={e=>{setCodeAcces(e.target.value);setCodeErreur(false)}}
-              onKeyDown={e=>e.key==='Enter'&&validerCode()}
-              style={{background:'rgba(255,255,255,.08)',
-                border:`1.5px solid ${codeErreur?'#f87171':'rgba(255,255,255,.15)'}`,
-                color:'#fff',textAlign:'center',fontSize:16,marginBottom:8,letterSpacing:2}}/>
+            <div style={{position:'relative'}}>
+              <input className="input" type={showPwd ? 'text' : 'password'} placeholder="Code secret"
+                value={codeAcces} onChange={e=>{setCodeAcces(e.target.value);setCodeErreur(false)}}
+                onKeyDown={e=>e.key==='Enter'&&validerCode()}
+                style={{background:'rgba(255,255,255,.08)',
+                  border:`1.5px solid ${codeErreur?'#f87171':'rgba(255,255,255,.15)'}`,
+                  color:'#fff',textAlign:'center',fontSize:16,marginBottom:8,letterSpacing:2,paddingRight:44}}/>
+              <button onClick={()=>setShowPwd(p=>!p)}
+                style={{position:'absolute',right:12,top:13,background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.4)',padding:0,lineHeight:1}}>
+                {showPwd
+                  ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                }
+              </button>
+            </div>
             {codeErreur && <div style={{color:'#fca5a5',fontSize:13,textAlign:'center',marginBottom:8}}>Code incorrect</div>}
             <button className="btn" onClick={validerCode} disabled={!codeAcces.trim()}
               style={{background:codeAcces.trim()?'#fff':'rgba(255,255,255,.15)',

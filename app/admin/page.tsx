@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [newCreatorCode, setNewCreatorCode] = useState('')
   const [savingCode, setSavingCode] = useState(false)
   const [codeSaved, setCodeSaved] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
 
   function login() {
     if (code === ADMIN_CODE) { setAuth(true); setErreur('') }
@@ -90,10 +91,19 @@ export default function AdminPage() {
           <div style={{ fontWeight: 800, fontSize: 20, color: '#fff' }}>Admin Crew Trips</div>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,.4)', marginTop: 6 }}>Accès restreint</div>
         </div>
-        <input className="input" type="password" placeholder="Code d'accès admin"
-          value={code} onChange={e => setCode(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && login()}
-          style={{ background: 'rgba(255,255,255,.08)', border: `1.5px solid ${erreur ? '#f87171' : 'rgba(255,255,255,.15)'}`, color: '#fff', marginBottom: 10, textAlign: 'center' }} />
+        <div style={{ position: 'relative' }}>
+          <input className="input" type={showPwd ? 'text' : 'password'} placeholder="Code d'accès admin"
+            value={code} onChange={e => setCode(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && login()}
+            style={{ background: 'rgba(255,255,255,.08)', border: `1.5px solid ${erreur ? '#f87171' : 'rgba(255,255,255,.15)'}`, color: '#fff', marginBottom: 10, textAlign: 'center', paddingRight: 44 }} />
+          <button onClick={() => setShowPwd(p => !p)}
+            style={{ position: 'absolute', right: 12, top: 13, background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,.4)', padding: 0, lineHeight: 1 }}>
+            {showPwd
+              ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            }
+          </button>
+        </div>
         {erreur && <div style={{ color: '#fca5a5', fontSize: 13, textAlign: 'center', marginBottom: 10 }}>{erreur}</div>}
         <button className="btn" onClick={login} style={{ background: '#fff', color: 'var(--forest)', fontWeight: 700 }}>Entrer →</button>
       </div>
