@@ -31,12 +31,15 @@ function HomeInner() {
   const [mesTrips, setMesTrips] = useState<SavedTrip[]>([])
   const [showMesTrips, setShowMesTrips] = useState(false)
 
-  // PWA standalone : rediriger vers le dernier trip si on arrive sur /
+  // PWA : rediriger vers le dernier trip visité
   useEffect(() => {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    if (!isStandalone) return
     const lastTrip = localStorage.getItem('crew-last-trip')
-    if (lastTrip) router.replace('/trip/' + lastTrip)
+    if (!lastTrip) return
+    // Vérifier que le trip existe encore en DB avant de rediriger
+    supabase.from('trips').select('code').eq('code', lastTrip).maybeSingle().then(({data}) => {
+      if (data) router.replace('/trip/' + lastTrip)
+      else localStorage.removeItem('crew-last-trip')
+    })
   }, [])
 
   useEffect(() => {
@@ -276,12 +279,12 @@ function HomeInner() {
                 <div style={{position:'relative'}}>
                   <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
                     style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
-                      background:'rgba(255,255,255,.15)',color: d1 ? '#fff' : 'transparent',fontSize:13,
+                      background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
                       fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
-                  {!d1 && <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',
-                    paddingLeft:10,fontSize:13,color:'rgba(255,255,255,.4)',pointerEvents:'none',letterSpacing:'.1em'}}>
-                    --/--/----
-                  </div>}
+                  {!d1 && <span style={{position:'absolute',top:'50%',left:10,transform:'translateY(-50%)',
+                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>
+                    -- / -- / ----
+                  </span>}
                 </div>
               </div>
               <div style={{flex:1}}>
@@ -289,12 +292,12 @@ function HomeInner() {
                 <div style={{position:'relative'}}>
                   <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
                     style={{width:'100%',padding:'12px 10px',borderRadius:10,border:'1.5px solid rgba(255,255,255,.25)',
-                      background:'rgba(255,255,255,.15)',color: d2 ? '#fff' : 'transparent',fontSize:13,
+                      background:'rgba(255,255,255,.15)',color:'#fff',fontSize:13,
                       fontFamily:'inherit',outline:'none',colorScheme:'dark'}}/>
-                  {!d2 && <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',
-                    paddingLeft:10,fontSize:13,color:'rgba(255,255,255,.4)',pointerEvents:'none',letterSpacing:'.1em'}}>
-                    --/--/----
-                  </div>}
+                  {!d2 && <span style={{position:'absolute',top:'50%',left:10,transform:'translateY(-50%)',
+                    fontSize:13,color:'rgba(255,255,255,.45)',pointerEvents:'none',letterSpacing:2}}>
+                    -- / -- / ----
+                  </span>}
                 </div>
               </div>
               </div>
