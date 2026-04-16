@@ -52,7 +52,6 @@ export function getPermisLabel(type: string): string {
   }
 }
 
-// Exemples de placeholders pour la page Nouveau trip
 // Label catégorie adapté à l'activité (sheets ajouter/modifier)
 export function getCatLabel(catId: string, tripType: string): string {
   if (catId === 'lodge') return getLodgeLabel(tripType).label + ' & Séjour'
@@ -138,6 +137,8 @@ export function getCatPlaceholders(catId: string, tripType: string): { titre: st
       return { titre: "Ex: Titre de l'info", details: 'Détails, instructions, notes...' }
   }
 }
+
+// Exemples pour la page Nouveau trip
 export function getTripExamples(type: string): { nom: string; dest: string } {
   switch (type) {
     case 'peche':     return { nom: 'Rivière Babine — Septembre 2025', dest: 'Rivière Babine, BC' }
