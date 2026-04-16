@@ -57,20 +57,34 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
         @media print {
-          @page { margin: 10mm 12mm; size: auto; }
+          @page { 
+            margin: 8mm 10mm; 
+            size: auto;
+          }
+          html { height: auto !important; }
+          body { 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact;
+            height: auto !important;
+            overflow: visible !important;
+          }
           .no-print { display: none !important; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           a { color: inherit; }
-          .wrap { padding: 0 0 40px; }
-          .card { page-break-inside: avoid; break-inside: avoid; }
-          .section { page-break-inside: avoid; break-inside: avoid; }
-          .lodge-box { page-break-inside: avoid; break-inside: avoid; }
-          * { page-break-after: auto; }
+          .wrap { padding: 0 0 20px !important; }
+          .card { page-break-inside: avoid !important; break-inside: avoid !important; }
+          .section { page-break-inside: avoid !important; break-inside: avoid !important; }
+          .lodge-box { page-break-inside: avoid !important; break-inside: avoid !important; }
+          .header { page-break-inside: avoid !important; break-inside: avoid !important; }
         }
         .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
+        .share-tip { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #0F2D0F; color: #fff; border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600; text-align: center; max-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,.3); z-index: 100; line-height: 1.5; }
         @media (max-width: 768px) {
           .back-btn { display: flex; }
+          .print-btn { display: none; }
+          .share-tip { display: block; }
+        }
+        @media (min-width: 769px) {
           .print-btn { display: flex; align-items: center; gap: 8px; }
         }
         .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 40px; }
@@ -107,6 +121,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         </svg>
         Imprimer / PDF
       </button>
+
+      <div className="no-print share-tip">
+        📄 Pour sauvegarder en PDF :<br/>
+        Appuyez sur <strong>Partager ↗</strong> puis<br/>
+        <strong>«&nbsp;Enregistrer en PDF&nbsp;»</strong>
+      </div>
 
       <div className="wrap">
         <div className="header">
