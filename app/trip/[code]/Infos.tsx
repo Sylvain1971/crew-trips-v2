@@ -417,7 +417,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             tripType={trip.type}
             onDelete={()=>removeCard(card.id)}
             onEdit={()=>openEdit(card)}
-            onOpenPdf={(url,nom)=>setPdfViewer({url,nom})} />
+            onOpenPdf={(url,nom)=>setPdfViewer({url,nom})}
+            onCardClick={filtre==='all' ? ()=>{
+              setFiltre(card.categorie)
+              setTimeout(()=>{
+                document.getElementById(card.id)?.scrollIntoView({behavior:'smooth',block:'center'})
+              }, 80)
+            } : undefined} />
         ))}
       </div>
 

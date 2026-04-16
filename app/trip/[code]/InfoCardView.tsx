@@ -12,7 +12,7 @@ const badge = (extra?: React.CSSProperties): React.CSSProperties => ({
   fontFamily: 'inherit', ...extra
 })
 
-export default function InfoCardView({card, canDelete, canEdit, isCreateur, collapsed, tripType, onDelete, onEdit, onOpenPdf}: {
+export default function InfoCardView({card, canDelete, canEdit, isCreateur, collapsed, tripType, onDelete, onEdit, onOpenPdf, onCardClick}: {
   card: InfoCard
   canDelete: boolean
   canEdit: boolean
@@ -22,6 +22,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
   onDelete: () => void
   onEdit: () => void
   onOpenPdf: (url: string, nom: string) => void
+  onCardClick?: () => void
 }) {
   const c = getCat(card.categorie)
   const ytId = card.lien ? getYoutubeId(card.lien) : null
@@ -30,7 +31,9 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
   const isImage = card.fichier_url && !hasPdf && /\.(jpg|jpeg|png|gif|webp|heic)/i.test(card.fichier_url.split('?')[0])
 
   return (
-    <div className="card">
+    <div className="card" id={card.id}
+      onClick={collapsed && onCardClick ? onCardClick : undefined}
+      style={collapsed && onCardClick ? {cursor:'pointer'} : undefined}>
       <div style={{display:'flex',alignItems:'flex-start',gap:12,padding:'13px 14px'}}>
         <div style={{width:36,height:36,borderRadius:9,background:c.bg,display:'flex',
           alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>
