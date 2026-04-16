@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
-import { getYoutubeId, isPdf, ago, countdown } from '@/lib/utils'
+import { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel } from '@/lib/utils'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
 
@@ -293,7 +293,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}}
           onClick={()=>setLodgeOpen(o=>!o)}>
-          <div style={{fontWeight:700,fontSize:14}}>🏕 Le Lodge</div>
+          <div style={{fontWeight:700,fontSize:14}}>{getLodgeLabel(trip.type).icon} {getLodgeLabel(trip.type).label}</div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
             {isCreateur && (
               <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
@@ -336,7 +336,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             <button onClick={()=>setEditLodge(true)}
               style={{width:'100%',padding:'10px',borderRadius:8,border:'1.5px dashed var(--border)',
                 background:'transparent',color:'var(--text-3)',fontSize:13,cursor:'pointer'}}>
-              + Ajouter les infos du lodge
+              + Ajouter les infos du {getLodgeLabel(trip.type).label.toLowerCase()}
             </button>
           </div>
         )}
@@ -345,7 +345,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
               <div>
                 <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>Nom du Lodge</div>
-                <input className="input" placeholder="Ex: Babine Norlakes" value={lodge.nom}
+                <input className="input" placeholder={getLodgeLabel(trip.type).label === 'Lodge' ? 'Ex: Babine Norlakes' : `Ex: ${getLodgeLabel(trip.type).label} Mont-Blanc`} value={lodge.nom}
                   onChange={e=>setLodge(p=>({...p,nom:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
               </div>
               <div>
@@ -387,7 +387,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
           {['transport','lodge','permis','equipement'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!; return (
             <FilterBtn key={c.id} active={filtre===c.id} onClick={()=>setFiltre(c.id)} color={c.color}>
-              {c.icon} {id==='transport'?'Vols':id==='lodge'?'Lodge':id==='permis'?'Permis':'Équipement'}
+              {c.icon} {id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:id==='permis'?getPermisLabel(trip.type):'Équipement'}
             </FilterBtn>
           )})}
         </div>

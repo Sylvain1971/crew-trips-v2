@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { TRIP_ICONS } from '@/lib/utils'
+import { TRIP_ICONS, getTripExamples } from '@/lib/utils'
 import { COULEURS_MEMBRES } from '@/lib/types'
 
 function genCode() {
@@ -196,7 +196,7 @@ function NouveauInner() {
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
-            <input className="input" placeholder="Ex: Dean River — Septembre 2025"
+            <input className="input" placeholder={`Ex: ${getTripExamples(type).nom}`}
               value={nom} onChange={e=>setNom(e.target.value)}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}
               onFocus={e=>{e.target.style.border='1.5px solid rgba(255,255,255,.4)'}}
@@ -214,13 +214,14 @@ function NouveauInner() {
               <option value="velo" style={{background:'#1a3a1a',color:'#fff'}}>🚵 Vélo / Mountain Bike</option>
               <option value="chasse" style={{background:'#1a3a1a',color:'#fff'}}>🫎 Chasse</option>
               <option value="yoga" style={{background:'#1a3a1a',color:'#fff'}}>🧘 Yoga</option>
+              <option value="soleil" style={{background:'#1a3a1a',color:'#fff'}}>☀️ Soleil & Plage</option>
               <option value="autre" style={{background:'#1a3a1a',color:'#fff'}}>🏕 Autre</option>
             </select>
           </div>
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>DESTINATION</label>
-            <input className="input" placeholder="Ex: Dean River, Colombie-Britannique"
+            <input className="input" placeholder={`Ex: ${getTripExamples(type).dest}`}
               value={dest} onChange={e=>setDest(e.target.value)}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
           </div>
