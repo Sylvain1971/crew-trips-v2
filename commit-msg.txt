@@ -1,0 +1,1 @@
+fix: compact badges no preview collapsed excel table remove templates  

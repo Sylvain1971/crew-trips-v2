@@ -8,3 +8,426 @@
 - Environments: .env.local
 ✓ Ready in 862ms
 
+ GET / 200 in 2.3s (next.js: 1957ms, application-code: 305ms)
+ GET / 200 in 79ms (next.js: 10ms, application-code: 69ms)
+ GET /mes-trips 200 in 784ms (next.js: 731ms, application-code: 53ms)
+ GET /trip/5jv7wv 200 in 1379ms (next.js: 1102ms, application-code: 277ms)
+ GET /trip/5jv7wv/manifest 200 in 1258ms (next.js: 1088ms, application-code: 169ms)
+ GET /mes-trips 200 in 135ms (next.js: 9ms, application-code: 126ms)
+ GET /trip/6bncqg 200 in 265ms (next.js: 20ms, application-code: 245ms)
+ GET /trip/6bncqg/manifest 200 in 175ms (next.js: 17ms, application-code: 159ms)
+ GET /trip/6bncqg/manifest 200 in 93ms (next.js: 7ms, application-code: 86ms)
+ GET /trip/6bncqg/print 200 in 1012ms (next.js: 866ms, application-code: 146ms)
+ GET /trip/6bncqg/print?clean=1&autoprint=1 200 in 168ms (next.js: 21ms, application-code: 147ms)
+ GET /mes-trips 200 in 72ms (next.js: 7ms, application-code: 65ms)
+ GET /trip/ydkcs3 200 in 270ms (next.js: 22ms, application-code: 249ms)
+ GET /trip/ydkcs3/manifest 200 in 173ms (next.js: 15ms, application-code: 159ms)
+ GET /trip/ydkcs3/manifest 200 in 114ms (next.js: 4ms, application-code: 110ms)
+ GET /mes-trips 200 in 72ms (next.js: 4ms, application-code: 68ms)
+ GET /trip/6bncqg/manifest 200 in 175ms (next.js: 13ms, application-code: 162ms)
+ GET /trip/6bncqg 200 in 284ms (next.js: 18ms, application-code: 266ms)
+ GET /trip/6bncqg/manifest 200 in 101ms (next.js: 4ms, application-code: 97ms)
+ GET /mes-trips 200 in 79ms (next.js: 7ms, application-code: 72ms)
+ GET /trip/5jv7wv 200 in 256ms (next.js: 19ms, application-code: 237ms)
+ GET /trip/5jv7wv/manifest 200 in 166ms (next.js: 14ms, application-code: 152ms)
+ GET /trip/5jv7wv/manifest 200 in 101ms (next.js: 3ms, application-code: 98ms)
+ GET /mes-trips 200 in 66ms (next.js: 5ms, application-code: 61ms)
+ GET /trip/6bncqg 200 in 219ms (next.js: 17ms, application-code: 202ms)
+ GET /trip/6bncqg/manifest 200 in 247ms (next.js: 16ms, application-code: 231ms)
+ GET /trip/6bncqg/manifest 200 in 118ms (next.js: 4ms, application-code: 114ms)
+ GET /mes-trips 200 in 60ms (next.js: 5ms, application-code: 55ms)
+ GET /trip/ydkcs3 200 in 232ms (next.js: 19ms, application-code: 213ms)
+ GET /trip/ydkcs3/manifest 200 in 168ms (next.js: 14ms, application-code: 154ms)
+ GET /trip/ydkcs3/manifest 200 in 93ms (next.js: 3ms, application-code: 90ms)
+✓ Compiled in 57ms
+⨯ ./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+
+./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-ssr] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+ GET /trip/ydkcs3 500 in 1375ms (next.js: 1083ms, application-code: 292ms)
+⨯ ./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+
+./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-ssr] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+ GET /trip/ydkcs3 500 in 21ms (next.js: 12ms, application-code: 9ms)
+[browser] Uncaught Error: ./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+   4 | ...ort { CATEGORIES, getCat } from '@/lib/types'
+   5 | ...ort { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+>  6 | ...ort type { InfoCard, Membre, Trip } from '@/lib/types'
+     |                                                        ^
+>  7 | ...ort InfoCardView from './InfoCardView'
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   8 | ...
+   9 | ...Ordre fixe pour "Tout"
+  10 | ...st CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo',...
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./app/trip/[code]/Infos.tsx:6:56)
+    at <unknown> (Error: (./app/trip/[code]/Infos.tsx:6:56)
+⨯ ./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+
+./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-ssr] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+ GET /trip/ydkcs3 500 in 27ms (next.js: 16ms, application-code: 11ms)
+[browser] Uncaught Error: ./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+   4 | ...ort { CATEGORIES, getCat } from '@/lib/types'
+   5 | ...ort { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+>  6 | ...ort type { InfoCard, Membre, Trip } from '@/lib/types'
+     |                                                        ^
+>  7 | ...ort InfoCardView from './InfoCardView'
+     |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   8 | ...
+   9 | ...Ordre fixe pour "Tout"
+  10 | ...st CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo',...
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./app/trip/[code]/Infos.tsx:6:56)
+    at <unknown> (Error: (./app/trip/[code]/Infos.tsx:6:56)
+⨯ ./app/trip/[code]/InfoCardView.tsx:80:1
+Expected '</', got '<eof>'
+  [90m78 |[0m             </div>
+  [90m79 |[0m           )}
+[31m[1m>[0m [90m80 |[0m
+  [90m   |[0m [31m[1m^[0m
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component Browser]
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component SSR]
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+
+./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-client] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+
+./app/trip/[code]/Infos.tsx:6:56
+Export default doesn't exist in target module
+  [90m 4 |[0m ...[36mort[0m { [33mCATEGORIES[0m, getCat } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m 5 |[0m ...[36mort[0m { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, ...
+[31m[1m>[0m [90m 6 |[0m ...[36mort[0m [36mtype[0m { [33mInfoCard[0m, [33mMembre[0m, [33mTrip[0m } [36mfrom[0m [32m'@/lib/types'[0m
+  [90m   |[0m                                                        [31m[1m^[0m
+[31m[1m>[0m [90m 7 |[0m ...[36mort[0m [33mInfoCardView[0m [36mfrom[0m [32m'./InfoCardView'[0m
+  [90m   |[0m    [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m 8 |[0m ...
+  [90m 9 |[0m ...[90mOrdre fixe pour "Tout"[0m
+  [90m10 |[0m ...[36mst[0m [33mCAT_ORDER[0m = [[32m'transport'[0m,[32m'lodge'[0m,[32m'permis'[0m,[32m'equipement'[0m,[32m'infos'[0m,[32m'itineraire'[0m,[32m'meteo'[0m,[32m...[0m
+
+The export default was not found in module [project]/app/trip/[code]/InfoCardView.tsx [app-ssr] (ecmascript).
+The module has no exports at all.
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+ GET /trip/ydkcs3 500 in 25ms (next.js: 17ms, application-code: 8ms)
+[browser] Uncaught Error: ./app/trip/[code]/InfoCardView.tsx:80:1
+Expected '</', got '<eof>'
+  78 |             </div>
+  79 |           )}
+> 80 |
+     | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component Browser]
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component SSR]
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./app/trip/[code]/InfoCardView.tsx:80:1)
+    at <unknown> (Error: (./app/trip/[code]/InfoCardView.tsx:80:1)
+✓ Compiled in 21ms
+ GET /trip/ydkcs3 200 in 954ms (next.js: 346ms, application-code: 608ms)
+ GET /mes-trips 200 in 147ms (next.js: 65ms, application-code: 82ms)
+ GET /trip/5jv7wv/manifest 200 in 441ms (next.js: 269ms, application-code: 172ms)
+ GET /trip/5jv7wv 200 in 586ms (next.js: 21ms, application-code: 565ms)
+ GET /trip/5jv7wv/manifest 200 in 87ms (next.js: 3ms, application-code: 83ms)
+ GET /trip/6bncqg 200 in 959ms (next.js: 19ms, application-code: 940ms)
+ GET /trip/6bncqg/manifest 200 in 194ms (next.js: 17ms, application-code: 177ms)
+ GET /mes-trips 200 in 60ms (next.js: 6ms, application-code: 54ms)
+ GET /trip/5jv7wv 200 in 239ms (next.js: 15ms, application-code: 224ms)
+ GET /trip/5jv7wv/manifest 200 in 228ms (next.js: 15ms, application-code: 213ms)
+ GET /trip/5jv7wv/manifest 200 in 98ms (next.js: 4ms, application-code: 94ms)
+ GET /mes-trips 200 in 58ms (next.js: 4ms, application-code: 54ms)
+ GET / 200 in 113ms (next.js: 71ms, application-code: 42ms)
+✓ Compiled in 27ms
+ GET / 200 in 225ms (next.js: 89ms, application-code: 136ms)
+ GET / 200 in 87ms (next.js: 5ms, application-code: 82ms)
+ GET / 200 in 36ms (next.js: 5ms, application-code: 31ms)
+ GET /mes-trips 200 in 146ms (next.js: 106ms, application-code: 41ms)
+ GET /trip/6bncqg 200 in 473ms (next.js: 160ms, application-code: 313ms)
+ GET /trip/6bncqg/manifest 200 in 292ms (next.js: 93ms, application-code: 199ms)
+ GET /mes-trips 200 in 201ms (next.js: 5ms, application-code: 196ms)
+✓ Compiled in 33ms
+ GET /trip/ydkcs3 200 in 548ms (next.js: 19ms, application-code: 529ms)
+ GET /trip/ydkcs3 200 in 263ms (next.js: 166ms, application-code: 97ms)
+ GET /trip/ydkcs3/manifest 200 in 653ms (next.js: 98ms, application-code: 555ms)
+ GET /trip/ydkcs3 200 in 218ms (next.js: 127ms, application-code: 91ms)
+ GET /trip/ydkcs3/manifest 200 in 341ms (next.js: 95ms, application-code: 246ms)
+ GET /mes-trips 200 in 182ms (next.js: 21ms, application-code: 161ms)
+ GET /trip/6bncqg/manifest 200 in 201ms (next.js: 13ms, application-code: 188ms)
+ GET /trip/6bncqg 200 in 489ms (next.js: 21ms, application-code: 467ms)
+ GET /trip/6bncqg/manifest 200 in 184ms (next.js: 3ms, application-code: 180ms)
+ GET /mes-trips 200 in 58ms (next.js: 5ms, application-code: 53ms)
+ GET /trip/6bncqg 200 in 278ms (next.js: 20ms, application-code: 258ms)
+ GET /trip/6bncqg/manifest 200 in 199ms (next.js: 13ms, application-code: 186ms)
+ GET /trip/6bncqg/manifest 200 in 97ms (next.js: 3ms, application-code: 93ms)
+ GET /mes-trips 200 in 61ms (next.js: 4ms, application-code: 57ms)
+ GET /trip/ydkcs3 200 in 226ms (next.js: 15ms, application-code: 210ms)
+ GET /trip/ydkcs3/manifest 200 in 184ms (next.js: 14ms, application-code: 170ms)
+ GET /trip/ydkcs3/manifest 200 in 85ms (next.js: 4ms, application-code: 81ms)
+ GET /trip/ydkcs3/print 200 in 673ms (next.js: 189ms, application-code: 484ms)
+ GET /trip/ydkcs3/print?clean=1&autoprint=1 200 in 146ms (next.js: 17ms, application-code: 129ms)
+ GET /mes-trips 200 in 62ms (next.js: 4ms, application-code: 57ms)
+ GET /trip/ydkcs3 200 in 238ms (next.js: 19ms, application-code: 220ms)
+ GET /trip/ydkcs3/manifest 200 in 186ms (next.js: 14ms, application-code: 172ms)
+ GET /trip/ydkcs3/manifest 200 in 88ms (next.js: 5ms, application-code: 83ms)
+ GET /mes-trips 200 in 65ms (next.js: 5ms, application-code: 60ms)
+ GET /trip/6pdk 200 in 310ms (next.js: 18ms, application-code: 292ms)
+ GET /trip/6pdk/manifest 200 in 394ms (next.js: 17ms, application-code: 377ms)
+ GET /trip/6pdk/manifest 200 in 282ms (next.js: 18ms, application-code: 264ms)

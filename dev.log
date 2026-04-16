@@ -1,0 +1,89 @@
+
+> crew-trips-v2@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.20.10.5:3000
+- Environments: .env.local
+✓ Ready in 960ms
+
+ GET /trip/ydkcs3 200 in 2.5s (next.js: 1115ms, application-code: 1409ms)
+ GET /trip/6bncqg 200 in 214ms (next.js: 32ms, application-code: 182ms)
+ GET /trip/6bncqg 200 in 328ms (next.js: 35ms, application-code: 293ms)
+✓ Compiled in 44ms
+⨯ ./app/trip/[code]/InfoCardView.tsx:44:1
+Expected '</', got '<eof>'
+  [90m42 |[0m           <div style={{fontWeight:[35m700[0m,fontSize:[35m14[0m,letterSpacing:[32m'-.01em'[0m,
+  [90m43 |[0m             marginBottom:card.contenu?[35m4[0m:[35m0[0m}}>{card.titre}</div>
+[31m[1m>[0m [90m44 |[0m
+  [90m   |[0m [31m[1m^[0m
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component Browser]
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component SSR]
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+ GET /trip/6bncqg 500 in 293ms (next.js: 177ms, application-code: 116ms)
+⨯ ./app/trip/[code]/InfoCardView.tsx:44:1
+Expected '</', got '<eof>'
+  [90m42 |[0m           <div style={{fontWeight:[35m700[0m,fontSize:[35m14[0m,letterSpacing:[32m'-.01em'[0m,
+  [90m43 |[0m             marginBottom:card.contenu?[35m4[0m:[35m0[0m}}>{card.titre}</div>
+[31m[1m>[0m [90m44 |[0m
+  [90m   |[0m [31m[1m^[0m
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component Browser]
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component SSR]
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+ GET /trip/6bncqg 500 in 19ms (next.js: 8ms, application-code: 11ms)
+[browser] Uncaught Error: ./app/trip/[code]/InfoCardView.tsx:44:1
+Expected '</', got '<eof>'
+  42 |           <div style={{fontWeight:700,fontSize:14,letterSpacing:'-.01em',
+  43 |             marginBottom:card.contenu?4:0}}>{card.titre}</div>
+> 44 |
+     | ^
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component Browser]
+    ./app/trip/[code]/Infos.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Client Component Browser]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./app/trip/[code]/InfoCardView.tsx [Client Component SSR]
+    ./app/trip/[code]/Infos.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Client Component SSR]
+    ./app/trip/[code]/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./app/trip/[code]/InfoCardView.tsx:44:1)
+    at <unknown> (Error: (./app/trip/[code]/InfoCardView.tsx:44:1)
+✓ Compiled in 27ms
+ GET /trip/6bncqg 200 in 433ms (next.js: 65ms, application-code: 368ms)
