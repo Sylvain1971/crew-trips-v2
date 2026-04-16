@@ -56,11 +56,15 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
         @media print {
-          @page { margin: 15mm 12mm; size: A4 portrait; }
+          @page { margin: 10mm 12mm; size: auto; }
           .no-print { display: none !important; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           a { color: inherit; }
           .wrap { padding: 0 0 40px; }
+          .card { page-break-inside: avoid; break-inside: avoid; }
+          .section { page-break-inside: avoid; break-inside: avoid; }
+          .lodge-box { page-break-inside: avoid; break-inside: avoid; }
+          * { page-break-after: auto; }
         }
         .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
@@ -82,7 +86,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .lodge-val { font-size: 13px; font-weight: 600; color: #111; word-break: break-all; }
         .section { margin-bottom: 20px; }
         .section-title { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; }
-        .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; border-left-width: 3px; }
+        .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; border-left-width: 3px; page-break-inside: avoid; break-inside: avoid; }
         .card-title { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; }
         .card-content { font-size: 13px; color: #374151; line-height: 1.55; margin-bottom: 5px; white-space: pre-wrap; }
         .card-link { font-size: 15px; color: #2563eb; word-break: break-all; display: block; margin-top: 6px; padding: 4px 0; }
