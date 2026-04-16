@@ -8,9 +8,11 @@
     "start": "next start"
   },
   "dependencies": {
+    "@sparticuz/chromium": "^147.0.0",
     "@supabase/supabase-js": "^2.103.0",
     "browser-image-compression": "^2.0.2",
     "next": "16.2.3",
+    "puppeteer-core": "^24.41.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },

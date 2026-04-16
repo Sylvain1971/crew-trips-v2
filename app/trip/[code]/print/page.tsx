@@ -119,12 +119,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         </svg>
         Retour
       </button>}
-      <button className="no-print print-btn" onClick={() => window.open(window.location.href.split('?')[0] + '?clean=1', '_blank')}>
+      <button className="no-print print-btn" onClick={() => { const code = window.location.pathname.split('/')[2]; window.location.href = '/trip/' + code + '/pdf'; }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
           <rect x="2" y="9" width="20" height="9" rx="2"/>
         </svg>
-        Enregistrer en PDF
+        Télécharger le PDF
       </button>
 
       {!hideUI && <div className="no-print share-tip"
