@@ -5,7 +5,7 @@ import type { InfoCard } from '@/lib/types'
 
 // Style badge compact commun
 const badge = (extra?: React.CSSProperties): React.CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 7,
+  display: 'inline-flex', alignItems: 'center', gap: 5,
   fontSize: 12, fontWeight: 600, textDecoration: 'none', cursor: 'pointer',
   padding: '4px 10px', borderRadius: 6, border: '1px solid var(--border)',
   background: 'var(--sand)', color: 'var(--text-2)', lineHeight: 1.4,
@@ -72,32 +72,35 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
             )
           })()}
 
-          {/* Badges compacts — masqués en collapsed (onglet Tout) */}
-          {ytId && (
-            <a href={card.lien!} target="_blank" rel="noreferrer" style={badge({color:'var(--text-2)'})}>
-              ▶ Voir la vidéo
-            </a>
-          )}
-          {card.lien && !ytId && !hasPdf && (
-            <a href={card.lien} target="_blank" rel="noreferrer" style={badge()}>
-              🔗 Ouvrir le lien ↗
-            </a>
-          )}
-          {isImage && (
-            <a href={card.fichier_url!} target="_blank" rel="noreferrer" style={badge()}>
-              🖼 Voir la photo ↗
-            </a>
-          )}
-          {pdfUrl && (
-            <button onClick={()=>onOpenPdf(pdfUrl,card.titre)} style={badge()}>
-              📄 Voir le document
-            </button>
-          )}
-
-          {collapsed && card.contenu && onCardClick && (
-            <button onClick={onCardClick} style={badge({color:'var(--text-2)'})}>
-              📝 Voir le détail
-            </button>
+          {/* Badges compacts */}
+          {(ytId || (card.lien && !ytId && !hasPdf) || isImage || pdfUrl || (collapsed && card.contenu && onCardClick)) && (
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:7}}>
+              {ytId && (
+                <a href={card.lien!} target="_blank" rel="noreferrer" style={badge()}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg> Voir la vidéo
+                </a>
+              )}
+              {card.lien && !ytId && !hasPdf && (
+                <a href={card.lien} target="_blank" rel="noreferrer" style={badge()}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Ouvrir le lien
+                </a>
+              )}
+              {isImage && (
+                <a href={card.fichier_url!} target="_blank" rel="noreferrer" style={badge()}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Voir la photo
+                </a>
+              )}
+              {pdfUrl && (
+                <button onClick={()=>onOpenPdf(pdfUrl,card.titre)} style={badge()}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Voir le document
+                </button>
+              )}
+              {collapsed && card.contenu && onCardClick && (
+                <button onClick={onCardClick} style={badge()}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> Voir le détail
+                </button>
+              )}
+            </div>
           )}
 
           {card.membre_prenom && (

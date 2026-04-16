@@ -1,1 +1,1 @@
-voir detail badge in collapsed  
+pro svg badges spacing  
