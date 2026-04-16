@@ -359,7 +359,8 @@ export default function Membres({trip, membre, onTripUpdate}: {
               participants: participants.join(','),
               sourceCode: trip.code,
             })
-            router.push('/' + '?' + params.toString())
+            try { sessionStorage.setItem('crew-creator-validated', '1') } catch {}
+            router.push('/nouveau?' + params.toString())
           }}
             style={{width:'100%',padding:'12px',borderRadius:10,border:'1.5px solid var(--forest)',
               background:'transparent',color:'var(--forest)',fontWeight:600,fontSize:14,cursor:'pointer',

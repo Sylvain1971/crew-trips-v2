@@ -1,14 +1,15 @@
 ﻿'use client'
 import { getCat } from '@/lib/types'
-import { getYoutubeId, isPdf, ago } from '@/lib/utils'
+import { getYoutubeId, isPdf, ago, getCatLabel } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
 
-export default function InfoCardView({card, canDelete, canEdit, isCreateur, collapsed, onDelete, onEdit, onOpenPdf}: {
+export default function InfoCardView({card, canDelete, canEdit, isCreateur, collapsed, tripType, onDelete, onEdit, onOpenPdf}: {
   card: InfoCard
   canDelete: boolean
   canEdit: boolean
   isCreateur: boolean
   collapsed: boolean
+  tripType?: string
   onDelete: () => void
   onEdit: () => void
   onOpenPdf: (url: string, nom: string) => void
@@ -28,7 +29,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
         </div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:10,fontWeight:700,color:c.color,textTransform:'uppercase',
-            letterSpacing:'.06em',marginBottom:4}}>{c.label}</div>
+            letterSpacing:'.06em',marginBottom:4}}>{getCatLabel(card.categorie, tripType||'') || c.label}</div>
           <div style={{fontWeight:700,fontSize:15,letterSpacing:'-.01em',
             marginBottom:card.contenu?5:0}}>{card.titre}</div>
           {card.contenu && (

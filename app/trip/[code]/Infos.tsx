@@ -199,8 +199,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   }
 
   const haslodge = lodge.nom || lodge.adresse || lodge.tel || lodge.wifi || lodge.code || lodge.arrivee
-  const tripDate = trip.date_debut ? new Date(trip.date_debut).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}) : ''
-  const tripDateFin = trip.date_fin ? new Date(trip.date_fin).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}) : ''
+  const tripDate = trip.date_debut ? new Date(trip.date_debut + 'T00:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}) : ''
+  const tripDateFin = trip.date_fin ? new Date(trip.date_fin + 'T00:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'}) : ''
 
   return (
     <>
@@ -413,6 +413,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             canEdit={canEdit}
             isCreateur={isCreateur}
             collapsed={filtre==='all'}
+            tripType={trip.type}
             onDelete={()=>removeCard(card.id)}
             onEdit={()=>openEdit(card)}
             onOpenPdf={(url,nom)=>setPdfViewer({url,nom})} />

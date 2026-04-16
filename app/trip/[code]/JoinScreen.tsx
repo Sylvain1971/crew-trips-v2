@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
@@ -7,7 +7,7 @@ import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
 
 function fmt(d?: string) {
   if (!d) return ''
-  return new Date(d).toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'})
+  return new Date(d + 'T00:00:00').toLocaleDateString('fr-CA',{day:'numeric',month:'long',year:'numeric'})
 }
 
 export default function JoinScreen({trip,autorises,onJoin}:{
