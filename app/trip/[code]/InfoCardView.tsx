@@ -70,12 +70,12 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
           })()}
 
           {/* Badges compacts — masqués en collapsed (onglet Tout) */}
-          {!collapsed && ytId && (
+          {ytId && (
             <a href={card.lien!} target="_blank" rel="noreferrer" style={badge({color:'var(--text-2)'})}>
               ▶ Voir la vidéo
             </a>
           )}
-          {!collapsed && card.lien && !ytId && !hasPdf && (
+          {card.lien && !ytId && !hasPdf && (
             <a href={card.lien} target="_blank" rel="noreferrer" style={badge()}>
               🔗 Ouvrir le lien ↗
             </a>
@@ -85,7 +85,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
               🖼 Voir la photo ↗
             </a>
           )}
-          {!collapsed && pdfUrl && (
+          {pdfUrl && (
             <button onClick={()=>onOpenPdf(pdfUrl,card.titre)} style={badge()}>
               📄 Voir le document
             </button>
