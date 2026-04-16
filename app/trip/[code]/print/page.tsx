@@ -85,7 +85,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; border-left-width: 3px; }
         .card-title { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; }
         .card-content { font-size: 13px; color: #374151; line-height: 1.55; margin-bottom: 5px; white-space: pre-wrap; }
-        .card-link { font-size: 12px; color: #2563eb; word-break: break-all; }
+        .card-link { font-size: 15px; color: #2563eb; word-break: break-all; display: block; margin-top: 6px; padding: 4px 0; }
         .empty { text-align: center; color: #9ca3af; padding: 40px 0; font-size: 14px; }
       `}</style>
 
@@ -142,10 +142,24 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
                 <div key={card.id} className="card" style={{ borderLeftColor: def?.color || '#e5e7eb' }}>
                   <div className="card-title">{card.titre}</div>
                   {card.contenu && <div className="card-content">{card.contenu}</div>}
-                  {card.lien && <div className="card-link"><a href={card.lien}>{card.lien}</a></div>}
-                  {card.fichier_url && !card.lien && (
-                    <div className="card-link"><a href={card.fichier_url}>📎 Voir le document</a></div>
-                  )}
+                  {card.lien && <a href={card.lien} target="_blank" rel="noreferrer" className="card-link" style={{fontWeight:600}}>{card.lien}</a>}
+                  {card.fichier_url && !card.lien && (() => {
+                    const url = card.fichier_url!
+                    const isPdf = url.toLowerCase().includes('.pdf') || url.includes('application%2Fpdf')
+                    const isImg = /\.(jpg|jpeg|png|gif|webp|heic)/i.test(url.split('?')[0])
+                    if (isImg) return (
+                      <div style={{marginTop:8}}>
+                        <img src={url} alt={card.titre} style={{maxWidth:'100%',borderRadius:8,border:'1px solid #e5e7eb'}} />
+                      </div>
+                    )
+                    if (isPdf) return (
+                      <div style={{marginTop:8}}>
+                        <iframe src={url} title={card.titre} style={{width:'100%',height:500,border:'1px solid #e5e7eb',borderRadius:8}} />
+                        <a href={url} target='_blank' rel='noreferrer' className='card-link' style={{marginTop:6}}>📎 Ouvrir le PDF ↗</a>
+                      </div>
+                    )
+                    return <a href={url} target='_blank' rel='noreferrer' className='card-link'>📎 Ouvrir le document ↗</a>
+                  })()}
                 </div>
               ))}
             </div>
