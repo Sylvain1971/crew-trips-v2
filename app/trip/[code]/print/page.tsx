@@ -117,10 +117,10 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .trip-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 10px; }
         .trip-link { font-size: 12px; color: rgba(255,255,255,.45); word-break: break-all; }
         .trip-link a { color: rgba(255,255,255,.7); }
-        .lodge-box { border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 16px 18px; margin-bottom: 20px; background: #f9fafb; }
-        .lodge-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+        .lodge-box { margin-bottom: 20px; }
+        .lodge-title { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; line-height: 1; color: #16A34A; }
         .lodge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .lodge-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; }
+        .lodge-item { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px 12px; }
         .lodge-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
         .lodge-val { font-size: 13px; font-weight: 600; color: #111; word-break: break-all; }
         .section { margin-bottom: 20px; }
