@@ -83,7 +83,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
               🔗 Ouvrir le lien ↗
             </a>
           )}
-          {!collapsed && isImage && (
+          {isImage && (
             <a href={card.fichier_url!} target="_blank" rel="noreferrer" style={badge()}>
               🖼 Voir la photo ↗
             </a>
