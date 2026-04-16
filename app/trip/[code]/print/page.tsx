@@ -61,25 +61,25 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
         @media print {
-          @page { 
-            margin: 8mm 12mm;
-            size: auto;
-          }
-          html { height: auto !important; }
-          body { 
-            -webkit-print-color-adjust: exact; 
-            print-color-adjust: exact;
-            height: auto !important;
-            overflow: visible !important;
-          }
+          @page { size: 816px 100000px; margin: 10mm 12mm; }
+          html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
           a { color: inherit; }
-          .wrap { padding: 0 0 20px !important; }
-          .card { page-break-inside: avoid !important; break-inside: avoid !important; }
-          .section { page-break-inside: avoid !important; break-inside: avoid !important; }
-          .lodge-box { page-break-inside: avoid !important; break-inside: avoid !important; }
-          .header { page-break-inside: avoid !important; break-inside: avoid !important; }
+          .wrap { padding: 0 !important; }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
         .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
         .share-tip { display: none; }
