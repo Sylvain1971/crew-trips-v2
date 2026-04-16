@@ -20,6 +20,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [showDelete, setShowDelete] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [editingPrenom, setEditingPrenom] = useState(false)
+  const [newPrenomSelf, setNewPrenomSelf] = useState('')
+  const [savingPrenom, setSavingPrenom] = useState(false)
   const router = useRouter()
   const isCreateur = membre.is_createur
 
@@ -94,6 +97,24 @@ export default function Membres({trip, membre, onTripUpdate}: {
     onTripUpdate({sms_lien: lien||undefined})
     setSms(lien||'')
     setEditSms(false)
+  }
+
+  async function savePrenom() {
+    if (!newPrenomSelf.trim() || newPrenomSelf.trim() === membre.prenom) { setEditingPrenom(false); return }
+    setSavingPrenom(true)
+    await supabase.from('membres').update({ prenom: newPrenomSelf.trim() }).eq('id', membre.id)
+    // Mettre à jour le localStorage et la liste locale
+    try {
+      const stored = localStorage.getItem(`crew2-${trip.code}`)
+      if (stored) {
+        const m = JSON.parse(stored)
+        m.prenom = newPrenomSelf.trim()
+        localStorage.setItem(`crew2-${trip.code}`, JSON.stringify(m))
+      }
+    } catch {}
+    setMembres(p => p.map(m => m.id === membre.id ? { ...m, prenom: newPrenomSelf.trim() } : m))
+    setSavingPrenom(false)
+    setEditingPrenom(false)
   }
 
   async function supprimerTrip() {
@@ -334,6 +355,31 @@ export default function Membres({trip, membre, onTripUpdate}: {
               <div style={{fontSize:11,color:'var(--text-3)',marginTop:1}}>
                 {m.id===membre.id ? 'Vous · ' : ''}
                 Depuis {new Date(m.created_at).toLocaleDateString('fr-CA',{day:'numeric',month:'long'})}
+              {m.id===membre.id && !editingPrenom && (
+                <button onClick={()=>{setNewPrenomSelf(m.prenom);setEditingPrenom(true)}}
+                  style={{background:"none",border:"none",padding:0,fontSize:11,color:"var(--green)",
+                    cursor:"pointer",fontWeight:600,marginTop:2,textDecoration:"underline",textAlign:"left"}}>
+                  ✏️ Modifier mon prénom
+                </button>
+              )}
+              {m.id===membre.id && editingPrenom && (
+                <div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}>
+                  <input className="input" value={newPrenomSelf}
+                    onChange={e=>setNewPrenomSelf(e.target.value)}
+                    onKeyDown={e=>{if(e.key==="Enter") savePrenom(); if(e.key==="Escape") setEditingPrenom(false)}}
+                    autoFocus style={{flex:1,fontSize:13,padding:"6px 10px"}} />
+                  <button onClick={savePrenom} disabled={savingPrenom||!newPrenomSelf.trim()}
+                    style={{padding:"6px 12px",borderRadius:8,border:"none",background:"var(--forest)",
+                      color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>
+                    {savingPrenom?"…":"OK"}
+                  </button>
+                  <button onClick={()=>setEditingPrenom(false)}
+                    style={{padding:"6px 10px",borderRadius:8,border:"1px solid var(--border)",
+                      background:"transparent",color:"var(--text-2)",fontSize:12,cursor:"pointer",flexShrink:0}}>
+                    ✕
+                  </button>
+                </div>
+              )}
               </div>
             </div>
             {isCreateur && !m.is_createur && (
