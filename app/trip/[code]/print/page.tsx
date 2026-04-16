@@ -87,12 +87,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           .back-btn { display: flex; }
           .print-btn { display: none !important; }
           .share-tip { display: block; }
+        }
         @media screen and (min-width: 769px) {
+          .back-btn { display: flex; }
           .print-btn { display: flex; align-items: center; gap: 8px; }
         }
-        }
-        .wrap { max-width: 680px; margin: 0 auto; padding: 60px 16px 140px; }
-        .header { background: #0F2D0F; color: #fff; padding: 24px 16px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
+        .header { background: #0F2D0F; color: #fff; padding: 24px 16px 20px; border-radius: 12px; margin: 8px 0 24px; }
         .trip-title { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
         .trip-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 10px; }
         .trip-link { font-size: 12px; color: rgba(255,255,255,.45); word-break: break-all; }
