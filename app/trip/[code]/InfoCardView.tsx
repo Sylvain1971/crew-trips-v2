@@ -43,9 +43,9 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
             marginBottom:card.contenu?4:0}}>{card.titre}</div>
 
           {/* Contenu texte / tableau Excel */}
-          {card.contenu && (() => {
+          {card.contenu && !collapsed && (() => {
             const tbl = parseTableContent(card.contenu)
-            if (tbl && !collapsed) {
+            if (tbl) {
               return (
                 <div style={{marginTop:5,overflowX:'auto',borderRadius:5,border:'1px solid var(--border)'}}>
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,color:'var(--text-2)'}}>
@@ -63,8 +63,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
               )
             }
             return (
-              <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.5,whiteSpace:'pre-wrap',
-                ...(collapsed ? {display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',whiteSpace:'normal'} : {})}}>
+              <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.5,whiteSpace:'pre-wrap'}}>
                 {card.contenu}
               </div>
             )
