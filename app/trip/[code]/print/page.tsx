@@ -12,6 +12,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
   const [trip, setTrip] = useState<Trip | null>(null)
   const [cards, setCards] = useState<InfoCard[]>([])
   const [ready, setReady] = useState(false)
+  const [hideUI, setHideUI] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -28,6 +29,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         setCards(sorted)
       }
       setReady(true)
+      if (typeof window !== 'undefined' && window.location.search.includes('clean=1')) setHideUI(true)
     }
     load()
   }, [params.code])
@@ -109,12 +111,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .empty { text-align: center; color: #9ca3af; padding: 40px 0; font-size: 14px; }
       `}</style>
 
-      <button className="no-print back-btn" onClick={() => window.close()}>
+      {!hideUI && <button className="no-print back-btn" onClick={() => window.close()}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 5l-7 7 7 7"/>
         </svg>
         Retour
-      </button>
+      </button>}
       <button className="no-print print-btn" onClick={() => window.print()}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
@@ -123,14 +125,14 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         Imprimer / PDF
       </button>
 
-      <div className="no-print share-tip"
+      {!hideUI && <div className="no-print share-tip"
         style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',
           borderTop:'1px solid #e5e7eb',padding:'16px 20px',zIndex:100,
           display:'flex',flexDirection:'column',gap:10,alignItems:'stretch'}}>
         <button
           onClick={()=>{
             if(navigator.share){
-              navigator.share({title:document.title,url:window.location.href})
+              navigator.share({title:document.title,url:window.location.href.split('?')[0] + '?clean=1'})
             }
           }}
           style={{background:'#0F2D0F',color:'#fff',border:'none',borderRadius:12,
@@ -146,7 +148,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         <div style={{fontSize:12,color:'#9ca3af',textAlign:'center',lineHeight:1.4}}>
           Appuyez sur Partager puis <strong>«&nbsp;Enregistrer en PDF&nbsp;»</strong> pour un document continu
         </div>
-      </div>
+      </div>}
 
       <div className="wrap">
         <div className="header">
