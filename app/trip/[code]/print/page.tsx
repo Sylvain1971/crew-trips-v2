@@ -66,7 +66,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           .no-print { display: none !important; }
           a { color: inherit; }
           .wrap { padding: 0 !important; max-width: 100% !important; box-shadow: none !important; }
-          .card { break-inside: avoid; }
+        }
         }
 
 
@@ -106,7 +106,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .lodge-val { font-size: 13px; font-weight: 600; color: #111; word-break: break-all; }
         .section { margin-bottom: 20px; }
         .section-title { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; line-height: 1; }
-        .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; border-left-width: 3px; page-break-inside: avoid; break-inside: avoid; }
+        .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; border-left-width: 3px;   }
         .card-title { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; }
         .card-content { font-size: 13px; color: #374151; line-height: 1.55; margin-bottom: 5px; white-space: pre-wrap; }
         .card-link { font-size: 15px; color: #2563eb; word-break: break-all; display: block; margin-top: 6px; padding: 4px 0; }
