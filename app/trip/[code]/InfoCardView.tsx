@@ -65,6 +65,23 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
                 </div>
               )
             }
+            // Convertir les tabs en indentation visuelle (24px par tab)
+            const hasTabIndent = card.contenu.includes('\t')
+            if (hasTabIndent) {
+              return (
+                <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.7,marginTop:4}}>
+                  {card.contenu.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').map((line,i) => {
+                    const tabs = line.match(/^\t*/)?.[0].length ?? 0
+                    const text = line.replace(/^\t+/, '')
+                    return (
+                      <div key={i} style={{paddingLeft: tabs * 20, minHeight: text ? undefined : 6}}>
+                        {text || '\u00a0'}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            }
             return (
               <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.5,whiteSpace:'pre-wrap'}}>
                 {card.contenu}

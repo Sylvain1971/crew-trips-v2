@@ -153,22 +153,30 @@ export function getTripExamples(type: string): { nom: string; dest: string } {
   }
 }
 
-// Détection/parsing d'un collage Excel (colonnes séparées par \t, lignes par \n)
-// Renvoie null si le contenu ne ressemble pas à un tableau
-// Toutes les lignes sont égales (pas de header séparé) - fidélité Excel
+// Détection/parsing d'un collage Excel
+// Renvoie null si pas un vrai tableau de données (doc formaté avec indentation = null)
 export function parseTableContent(s: string | null | undefined): { rows: string[][] } | null {
   if (!s) return null
   const lines = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
-  // Retirer uniquement les lignes vides à la toute fin (trailing)
   while (lines.length && lines[lines.length - 1] === '') lines.pop()
-  // Besoin d'au moins 1 ligne et au moins une tabulation
-  if (lines.length < 1) return null
+  if (lines.length < 2) return null
   if (!lines.some(l => l.includes('\t'))) return null
+
   const cols = Math.max(...lines.map(l => l.split('\t').length))
+  if (cols < 2) return null
+
   const rows = lines.map(l => {
     const cells = l.split('\t')
     while (cells.length < cols) cells.push('')
     return cells
   })
+
+  // Calculer le ratio de cellules vides
+  // Si >70% des cellules sont vides, c'est un doc formate (indentation Excel) pas un vrai tableau
+  const totalCells = rows.length * cols
+  const emptyCells = rows.reduce((acc, r) => acc + r.filter(c => c.trim() === '').length, 0)
+  const emptyRatio = emptyCells / totalCells
+  if (emptyRatio > 0.70) return null
+
   return { rows }
 }
