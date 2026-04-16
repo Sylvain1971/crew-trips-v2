@@ -28,15 +28,19 @@ function NouveauInner() {
   const [dest, setDest] = useState(searchParams.get('dest')||'')
   const [d1, setD1] = useState('')
   const [d2, setD2] = useState('')
+  const [prenom, setPrenom] = useState('')
   const [loading, setLoading] = useState(false)
 
   const telComplet = tel.replace(/\D/g,'').length === 10
+  const prenomOk = prenom.trim().length >= 2
   const isDuplicate = searchParams.get('nom') !== null
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('crew-tel')
       if (saved) setTel(saved)
+      const savedPrenom = localStorage.getItem('crew-prenom')
+      if (savedPrenom) setPrenom(savedPrenom)
       // Vérifier si le code créateur est déjà validé en session
       const sessionCode = sessionStorage.getItem('crew-creator-validated')
       if (sessionCode === '1') setCodeValide(true)
@@ -66,6 +70,7 @@ function NouveauInner() {
   async function creer() {
     if (!nom.trim() || !telComplet) return
     setLoading(true)
+    try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {}
     const digits = tel.replace(/\D/g,'')
     const code = genCode()
     const { error } = await supabase.from('trips').insert({
@@ -79,20 +84,11 @@ function NouveauInner() {
       const sourceCode = searchParams.get('sourceCode') || null
       const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
       if (!newTrip) throw new Error('Trip introuvable')
-      // Créer membre créateur depuis prénom sauvegardé
-      const prenomCreateur = (() => {
-        try {
-          for (const k of Object.keys(localStorage)) {
-            if (!k.startsWith('crew2-')) continue
-            const m = JSON.parse(localStorage.getItem(k)||'')
-            if (m?.prenom && m?.is_createur === true) return m.prenom as string
-          }
-        } catch {} return null
-      })()
-      if (prenomCreateur) {
+      // Créer membre créateur avec le prénom saisi
+      if (prenom.trim()) {
         const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
         const { data: newMembre } = await supabase.from('membres')
-          .insert({ trip_id: newTrip.id, prenom: prenomCreateur, couleur, is_createur: true })
+          .insert({ trip_id: newTrip.id, prenom: prenom.trim(), couleur, is_createur: true })
           .select().single()
         if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
       }
@@ -195,6 +191,17 @@ function NouveauInner() {
           </div>
 
           <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM ET NOM</label>
+            <input className="input" placeholder="Ex: Sylvain Bergeron"
+              value={prenom} onChange={e=>setPrenom(e.target.value)}
+              onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+            <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
+              Deviendra votre nom d'administrateur dans ce trip
+            </div>
+          </div>
+
+          <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
             <input className="input" placeholder={`Ex: ${getTripExamples(type).nom}`}
               value={nom} onChange={e=>setNom(e.target.value)}
@@ -256,9 +263,9 @@ function NouveauInner() {
             </div>
           </div>
 
-          <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet}
-            style={{background:loading||!nom.trim()||!telComplet?'rgba(255,255,255,.15)':'#fff',
-              color:loading||!nom.trim()||!telComplet?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
+          <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet||!prenomOk}
+            style={{background:loading||!nom.trim()||!telComplet||!prenomOk?'rgba(255,255,255,.15)':'#fff',
+              color:loading||!nom.trim()||!telComplet||!prenomOk?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
             {loading?'Création en cours…':isDuplicate?'Créer ce nouveau trip →':'Créer le trip →'}
           </button>
         </div>
