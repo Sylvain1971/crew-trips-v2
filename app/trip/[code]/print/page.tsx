@@ -2,6 +2,7 @@
 import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
+import { getCatLabel, getLodgeLabel } from '@/lib/utils'
 import type { Trip, InfoCard } from '@/lib/types'
 
 const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
@@ -122,7 +123,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
 
         {(trip.lodge_nom || trip.lodge_adresse || trip.lodge_tel || trip.lodge_wifi || trip.lodge_arrivee || trip.lodge_code) && (
           <div className="lodge-box">
-            <div className="lodge-title">🏕 Le Lodge</div>
+            <div className="lodge-title">{getLodgeLabel(trip.type).icon} {getLodgeLabel(trip.type).label}</div>
             <div className="lodge-grid">
               {trip.lodge_nom && <div className="lodge-item"><div className="lodge-label">🏠 Nom</div><div className="lodge-val">{trip.lodge_nom}</div></div>}
               {trip.lodge_adresse && <div className="lodge-item"><div className="lodge-label">📍 Adresse</div><div className="lodge-val">{trip.lodge_adresse}</div></div>}
@@ -140,7 +141,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           return (
             <div key={catId} className="section">
               <div className="section-title" style={{ color: def?.color || '#6b7280' }}>
-                <span>{cat.icon}</span>{cat.label}
+                <span>{cat.icon}</span>{getCatLabel(catId, '') || cat.label}
               </div>
               {catCards.map(card => (
                 <div key={card.id} className="card" style={{ borderLeftColor: def?.color || '#e5e7eb' }}>
@@ -149,20 +150,22 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
                   {card.lien && <a href={card.lien} target="_blank" rel="noreferrer" className="card-link" style={{fontWeight:600}}>{card.lien}</a>}
                   {card.fichier_url && !card.lien && (() => {
                     const url = card.fichier_url!
-                    const isPdf = url.toLowerCase().includes('.pdf') || url.includes('application%2Fpdf')
                     const isImg = /\.(jpg|jpeg|png|gif|webp|heic)/i.test(url.split('?')[0])
                     if (isImg) return (
                       <div style={{marginTop:8}}>
                         <img src={url} alt={card.titre} style={{maxWidth:'100%',borderRadius:8,border:'1px solid #e5e7eb'}} />
                       </div>
                     )
-                    if (isPdf) return (
-                      <div style={{marginTop:8}}>
-                        <iframe src={url} title={card.titre} style={{width:'100%',height:500,border:'1px solid #e5e7eb',borderRadius:8}} />
-                        <a href={url} target='_blank' rel='noreferrer' className='card-link' style={{marginTop:6}}>📎 Ouvrir le PDF ↗</a>
-                      </div>
+                    // PDF ou autre document : lien cliquable prominent
+                    return (
+                      <a href={url} target='_blank' rel='noreferrer'
+                        style={{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'10px 14px',
+                          background:'#EFF6FF',borderRadius:8,border:'1px solid #BFDBFE',
+                          textDecoration:'none',color:'#1D4ED8',fontWeight:700,fontSize:14}}>
+                        <span style={{fontSize:20}}>📄</span>
+                        <span>Ouvrir le document ↗</span>
+                      </a>
                     )
-                    return <a href={url} target='_blank' rel='noreferrer' className='card-link'>📎 Ouvrir le document ↗</a>
                   })()}
                 </div>
               ))}
