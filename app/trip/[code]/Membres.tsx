@@ -115,8 +115,12 @@ export default function Membres({trip, membre, onTripUpdate}: {
           const saved = JSON.parse(raw).filter((t: {code:string}) => t.code !== trip.code)
           localStorage.setItem('crew-mes-trips', JSON.stringify(saved))
         }
+        // Effacer lastTripCode SW — evite redirect vers trip supprime
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_LAST_TRIP' })
+        }
       } catch {}
-      window.location.href = '/'
+      router.push('/mes-trips')
     } catch (err) {
       alert('Erreur lors de la suppression. Réessayez.')
       console.error('supprimerTrip:', err)

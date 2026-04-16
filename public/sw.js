@@ -1,4 +1,4 @@
-// Service Worker — Crew Trips v2
+﻿// Service Worker — Crew Trips v2
 // Stocke les membres par trip + le dernier trip visité (persisté en cache)
 
 self.addEventListener('install', () => self.skipWaiting())
@@ -44,6 +44,10 @@ self.addEventListener('fetch', event => {
 
 self.addEventListener('message', event => {
   const { type, code, membre } = event.data || {}
+
+  if (type === 'CLEAR_LAST_TRIP') {
+    caches.open(META_CACHE).then(cache => cache.delete('last-trip-code'))
+  }
 
   if (type === 'SET_LAST_TRIP') {
     setLastTrip(code)
