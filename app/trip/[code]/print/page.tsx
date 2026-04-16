@@ -36,10 +36,28 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
 
   useEffect(() => {
     if (ready) {
-      // Si mode clean (PDF propre sans UI) → auto-print sur desktop
       const isClean = typeof window !== 'undefined' && window.location.search.includes('clean=1')
       const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
-      if (isClean && !isMobile) setTimeout(() => window.print(), 600)
+      if (isClean && !isMobile) {
+        // Desktop: generer PDF continu via html2pdf.js
+        const script = document.createElement('script')
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+        script.onload = () => {
+          setTimeout(() => {
+            const el = document.querySelector('.wrap') as HTMLElement
+            if (!el) return
+            ;(window as any).html2pdf().set({
+              margin: [10, 12, 10, 12],
+              filename: document.title + '.pdf',
+              image: { type: 'jpeg', quality: 0.95 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+              pagebreak: { mode: 'avoid-all' }
+            }).from(el).save()
+          }, 500)
+        }
+        document.head.appendChild(script)
+      }
     }
   }, [ready])
 
@@ -61,13 +79,13 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
         @media print {
-          @page { size: 816px 100000px; margin: 10mm 12mm; }
+          @page { margin: 10mm 12mm; }
           html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
           a { color: inherit; }
           .wrap { padding: 0 !important; }
+          .card { break-inside: avoid; }
         }
-
 
 
 
