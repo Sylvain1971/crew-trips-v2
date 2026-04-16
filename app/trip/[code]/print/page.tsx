@@ -34,6 +34,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
 
   useEffect(() => {
     if (ready) {
+      // Auto-print seulement sur desktop — jamais sur mobile
       const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
       if (!isMobile) setTimeout(() => window.print(), 800)
     }
@@ -78,16 +79,16 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         }
         .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
-        .share-tip { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #0F2D0F; color: #fff; border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600; text-align: center; max-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,.3); z-index: 100; line-height: 1.5; }
+        .share-tip { display: none; }
         @media (max-width: 768px) {
           .back-btn { display: flex; }
-          .print-btn { display: none; }
+          .print-btn { display: none !important; }
           .share-tip { display: block; }
         }
         @media (min-width: 769px) {
           .print-btn { display: flex; align-items: center; gap: 8px; }
         }
-        .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 40px; }
+        .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 140px; }
         .header { background: #0F2D0F; color: #fff; padding: 24px 28px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
         .trip-title { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
         .trip-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 10px; }
@@ -122,10 +123,29 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         Imprimer / PDF
       </button>
 
-      <div className="no-print share-tip">
-        📄 Pour sauvegarder en PDF :<br/>
-        Appuyez sur <strong>Partager ↗</strong> puis<br/>
-        <strong>«&nbsp;Enregistrer en PDF&nbsp;»</strong>
+      <div className="no-print share-tip"
+        style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',
+          borderTop:'1px solid #e5e7eb',padding:'16px 20px',zIndex:100,
+          display:'flex',flexDirection:'column',gap:10,alignItems:'stretch'}}>
+        <button
+          onClick={()=>{
+            if(navigator.share){
+              navigator.share({title:document.title,url:window.location.href})
+            }
+          }}
+          style={{background:'#0F2D0F',color:'#fff',border:'none',borderRadius:12,
+            padding:'15px',fontSize:16,fontWeight:700,cursor:'pointer',
+            display:'flex',alignItems:'center',justifyContent:'center',gap:10}}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          Partager / Enregistrer en PDF
+        </button>
+        <div style={{fontSize:12,color:'#9ca3af',textAlign:'center',lineHeight:1.4}}>
+          Appuyez sur Partager puis <strong>«&nbsp;Enregistrer en PDF&nbsp;»</strong> pour un document continu
+        </div>
       </div>
 
       <div className="wrap">
