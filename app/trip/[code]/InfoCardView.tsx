@@ -1,7 +1,46 @@
-﻿'use client'
+'use client'
 import { getCat } from '@/lib/types'
-import { getYoutubeId, isPdf, ago, getCatLabel } from '@/lib/utils'
+import { getYoutubeId, isPdf, ago, getCatLabel, parseTableContent } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
+
+// Row de preview uniforme - hauteur 92px (thumbnail/icone 72x72 + padding 10px)
+type RowProps = {
+  href?: string
+  onClick?: () => void
+  thumb: React.ReactNode  // 72x72 sur la gauche
+  title: string
+  subtitle?: string
+  color?: string
+}
+
+function PreviewRow({ href, onClick, thumb, title, subtitle, color }: RowProps) {
+  const inner = (
+    <>
+      <div style={{width:72,height:72,borderRadius:10,overflow:'hidden',flexShrink:0,
+        display:'flex',alignItems:'center',justifyContent:'center',
+        background:color||'var(--sand)'}}>
+        {thumb}
+      </div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:13,fontWeight:700,color:'var(--text)',
+          whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{title}</div>
+        {subtitle && (
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:3,
+            whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{subtitle}</div>
+        )}
+      </div>
+      <div style={{fontSize:18,color:'var(--text-3)',flexShrink:0}}>›</div>
+    </>
+  )
+  const styles = {
+    display:'flex', alignItems:'center', gap:12, marginTop:10, width:'100%',
+    background:'var(--sand)', border:'1.5px solid var(--border)', borderRadius:10,
+    padding:'10px 14px', textDecoration:'none', cursor:'pointer', textAlign:'left' as const,
+    boxSizing:'border-box' as const, minHeight:92,
+  }
+  if (href) return <a href={href} target="_blank" rel="noreferrer" style={styles}>{inner}</a>
+  return <button type="button" onClick={onClick} style={{...styles, fontFamily:'inherit'}}>{inner}</button>
+}
 
 export default function InfoCardView({card, canDelete, canEdit, isCreateur, collapsed, tripType, onDelete, onEdit, onOpenPdf}: {
   card: InfoCard
@@ -32,81 +71,84 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
             letterSpacing:'.06em',marginBottom:4}}>{getCatLabel(card.categorie, tripType||'') || c.label}</div>
           <div style={{fontWeight:700,fontSize:15,letterSpacing:'-.01em',
             marginBottom:card.contenu?5:0}}>{card.titre}</div>
-          {card.contenu && (
-            <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap',
-              ...(collapsed ? {display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',whiteSpace:'normal'} : {})}}>
-              {card.contenu}
-            </div>
-          )}
-
-          {/* Lien externe simple */}
-          {card.lien && !ytId && !hasPdf && (
-            <a href={card.lien} target="_blank" rel="noreferrer"
-              style={{display:'inline-flex',alignItems:'center',gap:5,marginTop:8,fontSize:13,
-                color:'var(--green)',fontWeight:600,textDecoration:'none',
-                background:'var(--sand)',padding:'5px 10px',borderRadius:7}}>
-              🔗 Ouvrir le lien ↗
-            </a>
-          )}
-
-          {/* YouTube */}
-          {ytId && (
-            <a href={card.lien!} target="_blank" rel="noreferrer"
-              style={{display:'inline-block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative',width:160}}>
-              <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt=""
-                style={{width:160,display:'block',borderRadius:10}} />
-              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',
-                justifyContent:'center',background:'rgba(0,0,0,.3)',borderRadius:10}}>
-                <div style={{width:32,height:32,borderRadius:'50%',background:'rgba(255,0,0,.9)',
-                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,color:'#fff'}}>
-                  ▶
+          {card.contenu && (() => {
+            const tbl = parseTableContent(card.contenu)
+            if (tbl && !collapsed) {
+              return (
+                <div style={{marginTop:6,overflowX:'auto',borderRadius:6,border:'1.5px solid var(--border)'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:12.5,color:'var(--text-2)'}}>
+                    <tbody>
+                      {tbl.rows.map((r,ri)=>(
+                        <tr key={ri}>
+                          {r.map((cell,ci)=>(
+                            <td key={ci} style={{padding:'6px 10px',border:'1px solid var(--border)',verticalAlign:'top',whiteSpace:'pre-wrap'}}>{cell||' '}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              )
+            }
+            return (
+              <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.55,whiteSpace:'pre-wrap',
+                ...(collapsed ? {display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',whiteSpace:'normal'} : {})}}>
+                {card.contenu}
               </div>
-            </a>
-          )}
-
-          {/* Image uploadée */}
-          {isImage && (
-            collapsed ? (
-              <a href={card.fichier_url!} target="_blank" rel="noreferrer"
-                style={{display:'flex',alignItems:'center',gap:10,marginTop:10,width:'100%',
-                  background:'var(--sand)',border:'1.5px solid var(--border)',borderRadius:10,
-                  padding:'10px 14px',textDecoration:'none'}}>
-                <div style={{width:36,height:36,borderRadius:8,overflow:'hidden',flexShrink:0}}>
-                  <img src={card.fichier_url!} alt={card.titre}
-                    style={{width:36,height:36,objectFit:'cover',display:'block'}} />
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>Voir la photo</div>
-                  <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{card.titre}</div>
-                </div>
-                <div style={{fontSize:18,color:'var(--text-3)'}}>›</div>
-              </a>
-            ) : (
-              <a href={card.fichier_url!} target="_blank" rel="noreferrer"
-                style={{display:'inline-block',marginTop:10,borderRadius:10,overflow:'hidden',position:'relative',width:160}}>
-                <img src={card.fichier_url!} alt={card.titre}
-                  style={{width:160,height:90,objectFit:'cover',display:'block',borderRadius:10}} />
-              </a>
             )
+          })()}
+
+          {/* YouTube - row uniforme 92px avec thumbnail et badge play */}
+          {ytId && (
+            <PreviewRow href={card.lien!}
+              thumb={
+                <div style={{position:'relative',width:72,height:72}}>
+                  <img src={`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`} alt=""
+                    style={{width:72,height:72,objectFit:'cover',display:'block'}} />
+                  <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',
+                    justifyContent:'center',background:'rgba(0,0,0,.25)'}}>
+                    <div style={{width:24,height:24,borderRadius:'50%',background:'rgba(255,0,0,.9)',
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff'}}>
+                      ▶
+                    </div>
+                  </div>
+                </div>
+              }
+              title="Voir la vidéo"
+              subtitle={card.titre}
+            />
           )}
 
-          {/* PDF */}
+          {/* Lien externe simple - row uniforme 92px */}
+          {card.lien && !ytId && !hasPdf && (
+            <PreviewRow href={card.lien}
+              color="#ECFDF5"
+              thumb={<span style={{fontSize:28}}>🔗</span>}
+              title="Ouvrir le lien"
+              subtitle={card.titre}
+            />
+          )}
+
+          {/* Image - row uniforme 92px */}
+          {isImage && (
+            <PreviewRow href={card.fichier_url!}
+              thumb={
+                <img src={card.fichier_url!} alt={card.titre}
+                  style={{width:72,height:72,objectFit:'cover',display:'block'}} />
+              }
+              title="Voir la photo"
+              subtitle={card.titre}
+            />
+          )}
+
+          {/* PDF - row uniforme 92px */}
           {pdfUrl && (
-            <button onClick={() => onOpenPdf(pdfUrl, card.titre)}
-              style={{display:'flex',alignItems:'center',gap:10,marginTop:10,width:'100%',
-                background:'var(--sand)',border:'1.5px solid var(--border)',borderRadius:10,
-                padding:'10px 14px',cursor:'pointer',textAlign:'left'}}>
-              <div style={{width:36,height:36,borderRadius:8,background:'#FEE2E2',
-                display:'flex',alignItems:'center',justifyContent:'center',fontSize:20,flexShrink:0}}>
-                📄
-              </div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>Voir le document</div>
-                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{card.titre}.pdf</div>
-              </div>
-              <div style={{fontSize:18,color:'var(--text-3)'}}>›</div>
-            </button>
+            <PreviewRow onClick={() => onOpenPdf(pdfUrl, card.titre)}
+              color="#FEE2E2"
+              thumb={<span style={{fontSize:28}}>📄</span>}
+              title="Voir le document"
+              subtitle={`${card.titre}.pdf`}
+            />
           )}
 
           {card.membre_prenom && (

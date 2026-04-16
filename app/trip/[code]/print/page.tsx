@@ -2,7 +2,7 @@
 import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
-import { getCatLabel, getLodgeLabel } from '@/lib/utils'
+import { getCatLabel, getLodgeLabel, parseTableContent } from '@/lib/utils'
 import type { Trip, InfoCard } from '@/lib/types'
 
 const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
@@ -226,7 +226,27 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
               {catCards.map(card => (
                 <div key={card.id} className="card" style={{ borderLeftColor: def?.color || '#e5e7eb' }}>
                   <div className="card-title">{card.titre}</div>
-                  {card.contenu && <div className="card-content">{card.contenu}</div>}
+                  {card.contenu && (() => {
+                    const tbl = parseTableContent(card.contenu)
+                    if (tbl) {
+                      return (
+                        <div style={{marginTop:6,overflowX:'auto',border:'1.5px solid #d1d5db',borderRadius:6}}>
+                          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                            <tbody>
+                              {tbl.rows.map((r,ri)=>(
+                                <tr key={ri}>
+                                  {r.map((cell,ci)=>(
+                                    <td key={ci} style={{padding:'5px 8px',border:'1px solid #d1d5db',verticalAlign:'top',whiteSpace:'pre-wrap'}}>{cell||' '}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )
+                    }
+                    return <div className="card-content">{card.contenu}</div>
+                  })()}
                   {card.lien && <a href={card.lien} target="_blank" rel="noreferrer" className="card-link" style={{fontWeight:600}}>{card.lien}</a>}
                   {card.fichier_url && !card.lien && (() => {
                     const url = card.fichier_url!

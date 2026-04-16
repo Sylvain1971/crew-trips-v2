@@ -9,6 +9,7 @@ import InfoCardView from './InfoCardView'
 // Ordre fixe pour "Tout"
 const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
 
+
 function formatSize(b: number) {
   if (b < 1024) return `${b} B`
   if (b < 1048576) return `${(b/1024).toFixed(0)} KB`
