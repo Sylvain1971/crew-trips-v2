@@ -90,8 +90,8 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         @media (min-width: 769px) {
           .print-btn { display: flex; align-items: center; gap: 8px; }
         }
-        .wrap { max-width: 680px; margin: 0 auto; padding: 60px 0 140px; }
-        .header { background: #0F2D0F; color: #fff; padding: 24px 28px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
+        .wrap { max-width: 680px; margin: 0 auto; padding: 60px 16px 140px; }
+        .header { background: #0F2D0F; color: #fff; padding: 24px 16px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
         .trip-title { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
         .trip-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 10px; }
         .trip-link { font-size: 12px; color: rgba(255,255,255,.45); word-break: break-all; }
@@ -103,7 +103,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .lodge-label { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px; }
         .lodge-val { font-size: 13px; font-weight: 600; color: #111; word-break: break-all; }
         .section { margin-bottom: 20px; }
-        .section-title { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; }
+        .section-title { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1.5px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; }
         .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; border-left-width: 3px; page-break-inside: avoid; break-inside: avoid; }
         .card-title { font-size: 14px; font-weight: 700; color: #111; margin-bottom: 4px; }
         .card-content { font-size: 13px; color: #374151; line-height: 1.55; margin-bottom: 5px; white-space: pre-wrap; }
