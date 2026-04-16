@@ -56,11 +56,11 @@ export function getPermisLabel(type: string): string {
 export function getTripExamples(type: string): { nom: string; dest: string } {
   switch (type) {
     case 'peche':     return { nom: 'Rivière Babine — Septembre 2025', dest: 'Rivière Babine, BC' }
-    case 'ski':       return { nom: 'Tremblant — Février 2026',         dest: 'Mont-Tremblant, QC' }
-    case 'motoneige': return { nom: 'Laurentides — Janvier 2026',       dest: 'Saint-Donat, QC' }
+    case 'ski':       return { nom: 'Whistler — Mars 2026',             dest: 'Whistler, BC' }
+    case 'motoneige': return { nom: 'Monts Groulx — Février 2026',      dest: 'Monts Groulx, QC' }
     case 'hike':      return { nom: 'Torres del Paine — Août 2026',     dest: 'Patagonie, Chili' }
-    case 'velo':      return { nom: 'Véloroute des Bleuets — Juillet',  dest: 'Lac-Saint-Jean, QC' }
-    case 'chasse':    return { nom: 'Orignal — Octobre 2026',           dest: 'Réserve Mastigouche, QC' }
+    case 'velo':      return { nom: 'Texas Hill Country — Avril 2026',  dest: 'Austin, Texas' }
+    case 'chasse':    return { nom: 'Île Anticosti — Octobre 2026',     dest: 'Île Anticosti, QC' }
     case 'yoga':      return { nom: 'Retraite Tulum — Mars 2026',       dest: 'Tulum, Mexique' }
     case 'soleil':    return { nom: 'Punta Cana — Janvier 2026',        dest: 'Punta Cana, RD' }
     default:          return { nom: 'Notre trip — Été 2026',            dest: 'Destination' }
