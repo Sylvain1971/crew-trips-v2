@@ -13,6 +13,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
   const [cards, setCards] = useState<InfoCard[]>([])
   const [ready, setReady] = useState(false)
   const [hideUI, setHideUI] = useState(false)
+  const [showPrintTip, setShowPrintTip] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -119,13 +120,46 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         </svg>
         Retour
       </button>}
-      <button className="no-print print-btn" onClick={() => { const code = window.location.pathname.split('/')[2]; window.location.href = '/trip/' + code + '/pdf'; }}>
+      <button className="no-print print-btn" onClick={() => setShowPrintTip(true)}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
           <rect x="2" y="9" width="20" height="9" rx="2"/>
         </svg>
-        Télécharger le PDF
+        Enregistrer en PDF
       </button>
+
+      {showPrintTip && (
+        <div className="no-print" style={{position:'fixed',inset:0,background:'rgba(0,0,0,.5)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center'}}
+          onClick={()=>setShowPrintTip(false)}>
+          <div style={{background:'#fff',borderRadius:16,padding:28,maxWidth:420,width:'90%',boxShadow:'0 20px 60px rgba(0,0,0,.3)'}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{fontWeight:800,fontSize:18,marginBottom:6}}>Enregistrer en PDF</div>
+            <div style={{fontSize:13,color:'#6b7280',marginBottom:20,lineHeight:1.5}}>Dans Chrome, configurez ces options pour un PDF propre :</div>
+            <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:24}}>
+              <div style={{display:'flex',gap:12,alignItems:'center',background:'#f9fafb',borderRadius:10,padding:'10px 14px'}}>
+                <span style={{fontSize:20}}>🖨</span>
+                <div><strong>Destination</strong><br/><span style={{fontSize:12,color:'#6b7280'}}>Choisir → Enregistrer en PDF</span></div>
+              </div>
+              <div style={{display:'flex',gap:12,alignItems:'center',background:'#f9fafb',borderRadius:10,padding:'10px 14px'}}>
+                <span style={{fontSize:20}}>📐</span>
+                <div><strong>Marges</strong><br/><span style={{fontSize:12,color:'#6b7280'}}>Sélectionner → Aucune</span></div>
+              </div>
+              <div style={{display:'flex',gap:12,alignItems:'center',background:'#FFF7ED',borderRadius:10,padding:'10px 14px',border:'1px solid #FED7AA'}}>
+                <span style={{fontSize:20}}>☑️</span>
+                <div><strong>En-têtes et pieds de page</strong><br/><span style={{fontSize:12,color:'#6b7280'}}>Décocher cette option</span></div>
+              </div>
+            </div>
+            <button onClick={()=>{ setShowPrintTip(false); setTimeout(()=>window.print(), 200) }}
+              style={{width:'100%',padding:14,background:'#0F2D0F',color:'#fff',border:'none',borderRadius:10,fontSize:15,fontWeight:700,cursor:'pointer'}}>
+              Ouvrir l'impression Ctrl+P
+            </button>
+            <button onClick={()=>setShowPrintTip(false)}
+              style={{width:'100%',padding:10,background:'transparent',color:'#6b7280',border:'none',fontSize:13,cursor:'pointer',marginTop:8}}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {!hideUI && <div className="no-print share-tip"
         style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',
