@@ -37,9 +37,16 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
 
   useEffect(() => {
     if (ready) {
-      const isClean = typeof window !== 'undefined' && window.location.search.includes('clean=1')
+      const searchParams = new URLSearchParams(window.location.search)
+      const isClean = searchParams.has('clean')
+      const autoprint = searchParams.has('autoprint')
       const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
-      if (isClean && !isMobile) setTimeout(() => window.print(), 600)
+      if (isClean && !isMobile && autoprint) {
+        const s = document.createElement('style')
+        s.textContent = '@media print { @page { size: 21cm 99999cm; margin: 15mm 15mm; } }'
+        document.head.appendChild(s)
+        setTimeout(() => window.print(), 800)
+      }
     }
   }, [ready])
 
@@ -84,12 +91,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
         .share-tip { display: none; }
         @media (max-width: 768px) {
-          .back-btn { display: none; }
+        @media (max-width: 768px) {
+          .back-btn { display: flex; }
           .print-btn { display: none !important; }
           .share-tip { display: block; }
-          .wrap { padding: 20px 16px 140px; }
+          .wrap { padding: 70px 16px 140px; }
         }
-        @media screen and (min-width: 769px) {
           body { padding: 32px 24px; }
           .back-btn { display: flex; }
           .print-btn { display: flex; align-items: center; gap: 8px; }
@@ -120,7 +127,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         </svg>
         Retour
       </button>}
-      <button className="no-print print-btn" onClick={() => setShowPrintTip(true)}>
+      <button className="no-print print-btn" onClick={() => window.open(window.location.pathname + '?clean=1&autoprint=1', '_blank')}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
           <rect x="2" y="9" width="20" height="9" rx="2"/>

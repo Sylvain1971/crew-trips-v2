@@ -130,8 +130,8 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
           )}
           {canDelete && (
             <button onClick={onDelete}
-              style={{background:'none',border:'none',color:'var(--border)',
-                fontSize:18,cursor:'pointer',padding:2,lineHeight:1,marginTop:'auto'}}>
+              style={{background:'none',border:'none',color:'var(--text-2)',
+                fontSize:20,cursor:'pointer',padding:'0 4px',lineHeight:1,marginTop:'auto',fontWeight:300}}>
               ×
             </button>
           )}
