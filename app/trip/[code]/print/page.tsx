@@ -36,9 +36,10 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
 
   useEffect(() => {
     if (ready) {
-      // Auto-print seulement sur desktop — jamais sur mobile
+      // Si mode clean (PDF propre sans UI) → auto-print sur desktop
+      const isClean = typeof window !== 'undefined' && window.location.search.includes('clean=1')
       const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent)
-      if (!isMobile) setTimeout(() => window.print(), 800)
+      if (isClean && !isMobile) setTimeout(() => window.print(), 600)
     }
   }, [ready])
 
@@ -61,7 +62,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #111; }
         @media print {
           @page { 
-            margin: 8mm 10mm; 
+            margin: 8mm 12mm;
             size: auto;
           }
           html { height: auto !important; }
@@ -86,9 +87,9 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           .back-btn { display: flex; }
           .print-btn { display: none !important; }
           .share-tip { display: block; }
-        }
-        @media (min-width: 769px) {
+        @media screen and (min-width: 769px) {
           .print-btn { display: flex; align-items: center; gap: 8px; }
+        }
         }
         .wrap { max-width: 680px; margin: 0 auto; padding: 60px 16px 140px; }
         .header { background: #0F2D0F; color: #fff; padding: 24px 16px 20px; border-radius: 0 0 12px 12px; margin-bottom: 24px; }
@@ -117,12 +118,12 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         </svg>
         Retour
       </button>}
-      <button className="no-print print-btn" onClick={() => window.print()}>
+      <button className="no-print print-btn" onClick={() => window.open(window.location.href.split('?')[0] + '?clean=1', '_blank')}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/>
           <rect x="2" y="9" width="20" height="9" rx="2"/>
         </svg>
-        Imprimer / PDF
+        Enregistrer en PDF
       </button>
 
       {!hideUI && <div className="no-print share-tip"
