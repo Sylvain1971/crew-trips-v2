@@ -192,7 +192,7 @@ function NouveauInner() {
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM ET NOM</label>
-            <input className="input" placeholder="Ex: Sylvain Bergeron"
+            <input className="input" placeholder="Ex: Jean Tremblay"
               value={prenom} onChange={e=>setPrenom(e.target.value)}
               onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
