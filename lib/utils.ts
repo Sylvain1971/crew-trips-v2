@@ -1,4 +1,4 @@
-// Fonctions utilitaires partagées entre composants
+﻿// Fonctions utilitaires partagées entre composants
 
 export function getYoutubeId(url: string): string | null {
   const m = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
@@ -53,6 +53,91 @@ export function getPermisLabel(type: string): string {
 }
 
 // Exemples de placeholders pour la page Nouveau trip
+// Label catégorie adapté à l'activité (sheets ajouter/modifier)
+export function getCatLabel(catId: string, tripType: string): string {
+  if (catId === 'lodge') return getLodgeLabel(tripType).label + ' & Séjour'
+  if (catId === 'permis') {
+    switch (tripType) {
+      case 'ski':   return 'Billets & Forfaits'
+      case 'peche': return 'Permis & Règlements'
+      default:      return 'Accès & Règlements'
+    }
+  }
+  return ''
+}
+
+// Placeholders titre/détails selon catégorie + activité
+export function getCatPlaceholders(catId: string, tripType: string): { titre: string; details: string } {
+  switch (catId) {
+    case 'transport':
+      switch (tripType) {
+        case 'ski':       return { titre: 'Ex: Vol Air Canada YUL -> YVR',        details: 'Numéro de vol, navette, horaire...' }
+        case 'soleil':    return { titre: 'Ex: Vol Air Transat YQB -> PUJ',       details: 'Numéro de vol, transfert, horaire...' }
+        case 'hike':      return { titre: 'Ex: Vol Montréal -> Santiago',          details: 'Numéro de vol, correspondances...' }
+        case 'velo':      return { titre: 'Ex: Vol YYZ -> AUS',                   details: 'Numéro de vol, location vélo...' }
+        case 'chasse':    return { titre: 'Ex: Vol vers Port-Menier',             details: 'Vol, bateau, navette...' }
+        case 'motoneige': return { titre: 'Ex: Départ stationnement club',        details: 'Heure, rendez-vous, véhicules...' }
+        default:          return { titre: 'Ex: Vol Air Canada YQB -> YVR',        details: 'Numéro de vol, horaire, instructions...' }
+      }
+    case 'lodge':
+      switch (tripType) {
+        case 'ski':    return { titre: 'Ex: Chambre Deluxe - Fairmont',  details: 'Réservation, étage, accès...' }
+        case 'soleil': return { titre: 'Ex: Suite Océan - Hard Rock',    details: 'Réservation, formule, accès...' }
+        case 'yoga':   return { titre: 'Ex: Bungalow Wellness',          details: 'Réservation, check-in...' }
+        case 'hike':   return { titre: 'Ex: Refugio Las Torres',         details: 'Réservation, capacité...' }
+        case 'velo':   return { titre: 'Ex: Chambre - Marriott Austin',  details: 'Réservation, check-in...' }
+        default:       return { titre: 'Ex: Chalet principal - Babine',  details: 'Hébergement, accès, règles...' }
+      }
+    case 'permis':
+      switch (tripType) {
+        case 'ski':       return { titre: 'Ex: Forfait 5 jours Whistler',       details: 'Numéro forfait, dates, points de vente...' }
+        case 'peche':     return { titre: 'Ex: Permis pêche BC - Zone 6',       details: 'Numéro, espèces, limites de prise...' }
+        case 'chasse':    return { titre: 'Ex: Permis cerf Anticosti',          details: 'Numéro, zones, quotas...' }
+        case 'motoneige': return { titre: 'Ex: Laissez-passer FCMQ',           details: 'Numéro, pistes autorisées...' }
+        case 'hike':      return { titre: 'Ex: Billet parc Torres del Paine',   details: 'Billet, dates, règles du parc...' }
+        case 'velo':      return { titre: 'Ex: Pass piste cyclable Texas',      details: "Accès, règles, points d'entrée..." }
+        default:          return { titre: 'Ex: Accès et règlements',            details: 'Numéros, zones autorisées...' }
+      }
+    case 'equipement':
+      switch (tripType) {
+        case 'ski':       return { titre: 'Ex: Location skis - Whistler Sport',  details: 'Pointures, modèles, récupération...' }
+        case 'peche':     return { titre: 'Ex: Canne Spey 14pi - Rio Gold',      details: 'Modèle, soie, mouches recommandées...' }
+        case 'velo':      return { titre: 'Ex: Vélo de route à apporter',        details: 'Équipement, outils, pneus...' }
+        case 'hike':      return { titre: 'Ex: Sac 65L - liste complète',        details: 'Poids max, matériel obligatoire...' }
+        case 'chasse':    return { titre: 'Ex: Liste armes et munitions',        details: 'Calibres, transport, étui...' }
+        case 'motoneige': return { titre: 'Ex: Équipement sécurité requis',     details: 'Casque, combinaison, trousse survie...' }
+        case 'soleil':    return { titre: 'Ex: Valise plage - essentiels',       details: 'Crème solaire, snorkeling...' }
+        default:          return { titre: 'Ex: Liste équipement essentiel',      details: 'Détails, quantités, responsables...' }
+      }
+    case 'itineraire':
+      switch (tripType) {
+        case 'ski':       return { titre: 'Ex: Pistes noires - Jour 2',          details: 'Horaire, pistes, rendez-vous...' }
+        case 'peche':     return { titre: 'Ex: Section haute rivière - Matin',   details: 'Spot, heure, méthode, guide...' }
+        case 'hike':      return { titre: 'Ex: Trek Jour 3 - Camp de base',      details: 'Distance, dénivelé, durée...' }
+        case 'soleil':    return { titre: 'Ex: Excursion catamaran - Jour 2',    details: 'Horaire, départ, inclus...' }
+        case 'velo':      return { titre: 'Ex: Austin -> Wimberley - Jour 1',    details: 'Distance, ravitaillement...' }
+        case 'chasse':    return { titre: 'Ex: Secteur cerf - Zone Nord',        details: 'Heure, cartes, affûts...' }
+        case 'motoneige': return { titre: 'Ex: Sentier P8 - Monts Groulx',      details: 'Distance, carburant, pauses...' }
+        default:          return { titre: 'Ex: Journée principale - Jour 1',     details: 'Horaire, activités, rendez-vous...' }
+      }
+    case 'meteo':
+      return { titre: 'Ex: Prévisions semaine du trip', details: 'Températures, précipitations, vêtements...' }
+    case 'resto':
+      switch (tripType) {
+        case 'ski':    return { titre: 'Ex: Après-ski - Le Shack Whistler',  details: 'Adresse, horaires, réservation...' }
+        case 'soleil': return { titre: 'Ex: Resto plage - La Yola',          details: 'Adresse, spécialités, réservation...' }
+        case 'velo':   return { titre: 'Ex: BBQ Austin - Franklin BBQ',      details: "Adresse, heures, file d'attente..." }
+        case 'hike':   return { titre: 'Ex: Souper Puerto Natales',          details: 'Adresse, spécialités, réservation...' }
+        default:       return { titre: 'Ex: Souper de groupe - Chez Marcel', details: 'Adresse, horaires, réservation...' }
+      }
+    case 'infos':
+      return { titre: 'Ex: Infos importantes à lire', details: "Consignes, contacts, numéros d'urgence..." }
+    case 'liens':
+      return { titre: 'Ex: Site officiel du parc', details: 'Description, pourquoi utile...' }
+    default:
+      return { titre: "Ex: Titre de l'info", details: 'Détails, instructions, notes...' }
+  }
+}
 export function getTripExamples(type: string): { nom: string; dest: string } {
   switch (type) {
     case 'peche':     return { nom: 'Rivière Babine — Septembre 2025', dest: 'Rivière Babine, BC' }

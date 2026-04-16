@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
-import { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel } from '@/lib/utils'
+import { getYoutubeId, isPdf, ago, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders } from '@/lib/utils'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
 
@@ -457,7 +457,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                 style={{padding:'7px 12px',borderRadius:20,border:`1.5px solid ${editCat===c.id?c.color:'var(--border)'}`,
                   background:editCat===c.id?c.bg:'transparent',color:editCat===c.id?c.color:'var(--text-2)',
                   fontSize:13,fontWeight:600,cursor:'pointer'}}>
-                {c.icon} {c.label}
+                {c.icon} {getCatLabel(c.id, trip.type) || c.label}
               </button>
             ))}
           </div>
@@ -531,16 +531,16 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                 style={{padding:'7px 12px',borderRadius:20,border:`1.5px solid ${cat===c.id?c.color:'var(--border)'}`,
                   background:cat===c.id?c.bg:'transparent',color:cat===c.id?c.color:'var(--text-2)',
                   fontSize:13,fontWeight:600,cursor:'pointer'}}>
-                {c.icon} {c.label}
+                {c.icon} {getCatLabel(c.id, trip.type) || c.label}
               </button>
             ))}
           </div>
         </div>
         <div className="field"><label>Titre</label>
-          <input className="input" placeholder="Ex: Vol Air Canada YQB → YVR" value={titre} onChange={e=>setTitre(e.target.value)} />
+          <input className="input" placeholder={getCatPlaceholders(cat, trip.type).titre} value={titre} onChange={e=>setTitre(e.target.value)} />
         </div>
         <div className="field"><label>Détails (optionnel)</label>
-          <textarea className="input" rows={3} placeholder="Numéro de vol, horaire, instructions…" value={contenu} onChange={e=>setContenu(e.target.value)} />
+          <textarea className="input" rows={3} placeholder={getCatPlaceholders(cat, trip.type).details} value={contenu} onChange={e=>setContenu(e.target.value)} />
         </div>
         <div className="field"><label>Lien (optionnel)</label>
           <input className="input" type="url" placeholder="https://…" value={lien} onChange={e=>setLien(e.target.value)} />
