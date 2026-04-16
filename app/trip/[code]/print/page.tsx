@@ -84,16 +84,16 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
         .share-tip { display: none; }
         @media (max-width: 768px) {
-          .back-btn { display: flex; }
+          .back-btn { display: none; }
           .print-btn { display: none !important; }
           .share-tip { display: block; }
+          .wrap { padding: 20px 16px 140px; }
         }
         @media screen and (min-width: 769px) {
           body { padding: 32px 24px; }
           .back-btn { display: flex; }
           .print-btn { display: flex; align-items: center; gap: 8px; }
         }
-        .wrap { max-width: 720px; margin: 0 auto; padding: 70px 32px 140px; background: #fff; min-height: 100vh; box-shadow: 0 0 40px rgba(0,0,0,.08); }
         .header { background: #0F2D0F; color: #fff; padding: 24px 16px 20px; border-radius: 12px; margin: 8px 0 24px; }
         .trip-title { font-size: 26px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; }
         .trip-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-bottom: 10px; }
