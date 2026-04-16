@@ -357,10 +357,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
                 Depuis {new Date(m.created_at).toLocaleDateString('fr-CA',{day:'numeric',month:'long'})}
               {m.id===membre.id && !editingPrenom && (
                 <button onClick={()=>{setNewPrenomSelf(m.prenom);setEditingPrenom(true)}}
-                  style={{background:"none",border:"1px solid var(--border)",borderRadius:7,padding:"4px 10px",
-                    fontSize:12,fontWeight:600,color:"var(--text-2)",cursor:"pointer",marginTop:4,display:"flex",alignItems:"center",gap:4}}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  Modifier mon nom
+                  style={{background:"none",border:"none",padding:0,marginTop:3,cursor:"pointer",display:"flex",alignItems:"center",gap:5,color:"var(--green)"}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3"/><path d="M8 16l2.5-.5 6.5-6.5a1.5 1.5 0 0 0-2.1-2.1L8.5 13.5 8 16z"/></svg>
+                  <span style={{fontSize:11,fontWeight:600,textDecoration:"underline"}}>Modifier le nom</span>
                 </button>
               )}
               {m.id===membre.id && editingPrenom && (
