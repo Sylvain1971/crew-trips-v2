@@ -421,7 +421,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             onCardClick={filtre==='all' ? ()=>{
               setFiltre(card.categorie)
               setTimeout(()=>{
-                document.getElementById(card.id)?.scrollIntoView({behavior:'smooth',block:'center'})
+                const el = document.getElementById(card.id)
+                if (el) {
+                  const top = el.getBoundingClientRect().top + window.scrollY - 160
+                  window.scrollTo({top, behavior:'smooth'})
+                }
               }, 80)
             } : undefined} />
         ))}
