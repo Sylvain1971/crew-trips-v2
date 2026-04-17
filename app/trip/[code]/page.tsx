@@ -72,7 +72,7 @@ export default function TripPage({ params: paramsPromise }: { params: Promise<{ 
   if (!membre) return <JoinScreen trip={trip} autorises={autorises} onJoin={saveMembre} />
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', background: 'var(--sand)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: 'var(--sand)' }}>
       {tab !== 'infos' && (
         <div style={{ background: 'var(--forest)', padding: '12px 16px 10px', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <a href="/mes-trips"

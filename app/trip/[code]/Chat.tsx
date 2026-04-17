@@ -22,6 +22,7 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
   const [pendingPreview, setPendingPreview] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const feedRef = useRef<HTMLDivElement>(null)
@@ -79,6 +80,22 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
   useEffect(() => {
     return () => { if (pendingPreview) URL.revokeObjectURL(pendingPreview) }
   }, [pendingPreview])
+
+  // Fermer le menu "..." au clic en dehors
+  useEffect(() => {
+    if (!openMenuId) return
+    const close = () => setOpenMenuId(null)
+    // setTimeout pour eviter que le click qui ouvre le menu le referme immediatement
+    const t = setTimeout(() => {
+      document.addEventListener('click', close)
+      document.addEventListener('touchstart', close)
+    }, 0)
+    return () => {
+      clearTimeout(t)
+      document.removeEventListener('click', close)
+      document.removeEventListener('touchstart', close)
+    }
+  }, [openMenuId])
 
   useLayoutEffect(() => {
     if (msgs.length > 0) scrollToBottom('smooth')
@@ -232,7 +249,7 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
         </div>
       )}
 
-      <div ref={feedRef} style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 100px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div ref={feedRef} style={{ flex: 1, overflowY: 'auto', padding: '14px 14px 160px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
         {/* Bouton charger plus */}
         {hasMore && (
@@ -295,17 +312,43 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
                   <div style={{ fontSize: 12, color: '#B45309', paddingLeft: 4 }}>📌</div>
                 )}
 
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingLeft: 4, paddingRight: 4 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingLeft: 4, paddingRight: 4, position: 'relative' }}>
                   <span style={{ fontSize: 10, color: 'var(--text-3)' }}>{ago(m.created_at)}</span>
-                  <button onClick={() => toggleEpingle(m)} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: m.epingle ? '#B45309' : 'var(--text-3)', padding: 0 }}>
-                    {m.epingle ? '📌' : '☞ épingler'}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setOpenMenuId(prev => prev === m.id ? null : m.id) }}
+                    aria-label="Actions"
+                    style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--text-3)', padding: '0 4px', lineHeight: 1, letterSpacing: 2 }}>
+                    ⋯
                   </button>
-                  {mine && (
-                    <button onClick={() => deleteMessage(m)}
-                      aria-label="Supprimer"
-                      style={{ background: 'none', border: 'none', fontSize: 13, cursor: 'pointer', color: 'var(--text-3)', padding: 0, lineHeight: 1 }}>
-                      🗑
-                    </button>
+                  {m.epingle && <span style={{ fontSize: 12, color: '#B45309' }}>📌</span>}
+                  {openMenuId === m.id && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute',
+                        bottom: '100%', marginBottom: 6,
+                        ...(mine ? { right: 0 } : { left: 0 }),
+                        background: '#fff',
+                        border: '1px solid var(--border)',
+                        borderRadius: 10,
+                        boxShadow: '0 6px 20px rgba(0,0,0,.12)',
+                        minWidth: 160,
+                        overflow: 'hidden',
+                        zIndex: 25,
+                      }}>
+                      <button
+                        onClick={() => { toggleEpingle(m); setOpenMenuId(null) }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: '10px 14px', fontSize: 13, color: 'var(--text)', cursor: 'pointer', textAlign: 'left' }}>
+                        <span>📌</span> {m.epingle ? 'Désépingler' : 'Épingler'}
+                      </button>
+                      {mine && (
+                        <button
+                          onClick={() => { deleteMessage(m); setOpenMenuId(null) }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', borderTop: '1px solid var(--border)', padding: '10px 14px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textAlign: 'left' }}>
+                          <span>✕</span> Supprimer
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -325,7 +368,7 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
       )}
 
       {/* Barre d'envoi */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'rgba(255,255,255,.97)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--border)', padding: `9px 12px calc(env(safe-area-inset-bottom,0px) + 62px)`, display: 'flex', flexDirection: 'column', gap: 8, zIndex: 30 }}>
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: `calc(env(safe-area-inset-bottom,0px) + 64px)`, background: 'rgba(255,255,255,.97)', backdropFilter: 'blur(10px)', borderTop: '1px solid var(--border)', padding: '9px 12px 10px', display: 'flex', flexDirection: 'column', gap: 8, zIndex: 40 }}>
 
         {/* Preview photo pendante */}
         {pendingPreview && (
