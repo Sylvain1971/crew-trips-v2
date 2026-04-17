@@ -64,6 +64,12 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
           return prev
         })
       })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages', filter: `trip_id=eq.${tripId}` }, p => {
+        const deletedId = (p.old as { id?: string })?.id
+        if (!deletedId) return
+        setMsgs(prev => prev.filter(x => x.id !== deletedId))
+        setEpingle(prev => prev?.id === deletedId ? null : prev)
+      })
       .subscribe()
 
     return () => { supabase.removeChannel(ch) }
@@ -176,6 +182,32 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
     setEpingle(newVal ? m : null)
   }
 
+  // Supprimer un message (optimistic). Si c'est une photo, supprime aussi le fichier du storage.
+  async function deleteMessage(m: Message) {
+    if (!confirm('Supprimer ce message ?')) return
+    setMsgs(prev => prev.filter(x => x.id !== m.id))
+    if (epingle?.id === m.id) setEpingle(null)
+    try {
+      if (m.image_url) {
+        const match = m.image_url.match(/\/trip-photos\/(.+?)(\?|$)/)
+        if (match) {
+          const path = decodeURIComponent(match[1])
+          await supabase.storage.from('trip-photos').remove([path]).catch(() => {})
+        }
+      }
+      const { error } = await supabase.from('messages').delete().eq('id', m.id)
+      if (error) throw error
+    } catch (e: any) {
+      setMsgs(prev => {
+        const next = [...prev, m]
+        next.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        return next
+      })
+      if (m.epingle) setEpingle(m)
+      alert('Erreur lors de la suppression : ' + (e?.message || e))
+    }
+  }
+
   function onKey(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
   }
@@ -268,6 +300,13 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
                   <button onClick={() => toggleEpingle(m)} style={{ background: 'none', border: 'none', fontSize: 12, cursor: 'pointer', color: m.epingle ? '#B45309' : 'var(--text-3)', padding: 0 }}>
                     {m.epingle ? '📌' : '☞ épingler'}
                   </button>
+                  {mine && (
+                    <button onClick={() => deleteMessage(m)}
+                      aria-label="Supprimer"
+                      style={{ background: 'none', border: 'none', fontSize: 13, cursor: 'pointer', color: 'var(--text-3)', padding: 0, lineHeight: 1 }}>
+                      🗑
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
