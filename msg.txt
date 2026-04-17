@@ -1,1 +1,1 @@
-x button bottom of card  
+x same color as edit btn  
