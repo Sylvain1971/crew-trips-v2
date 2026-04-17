@@ -1,1 +1,1 @@
-refactor useNavFiltre CardContent Infos cleanup  
+fix btn spacing edit delete  
