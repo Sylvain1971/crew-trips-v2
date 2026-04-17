@@ -1,1 +1,1 @@
-fix fab svg plus excel empty cols  
+delete file in edit sheet  

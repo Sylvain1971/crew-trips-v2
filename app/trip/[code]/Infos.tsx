@@ -35,6 +35,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   const [editContenu, setEditContenu] = useState('')
   const [editLien, setEditLien] = useState('')
   const [editPdfFile, setEditPdfFile] = useState<File|null>(null)
+  const [editFichierRemoved, setEditFichierRemoved] = useState(false)
   const [editUploading, setEditUploading] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
   const editFileRef = useRef<HTMLInputElement>(null)
@@ -144,12 +145,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setEditContenu(card.contenu||'')
     setEditLien(card.lien||'')
     setEditPdfFile(null)
+    setEditFichierRemoved(false)
   }
 
   async function updateCard() {
     if (!editCard || !editTitre.trim()) return
     setSavingEdit(true)
-    let fichier_url = editCard.fichier_url ?? null
+    let fichier_url = editFichierRemoved ? null : (editCard.fichier_url ?? null)
     if (editPdfFile) {
       setEditUploading(true)
       const uploaded = await uploadFichier(editPdfFile)
@@ -169,6 +171,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       setCards(p => p.map(c => c.id === editCard.id ? data : c))
       setEditCard(null)
       setEditPdfFile(null)
+      setEditFichierRemoved(false)
     }
     setSavingEdit(false)
   }
@@ -491,7 +494,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <label>Photo / PDF (optionnel)</label>
           <input ref={editFileRef} type="file" accept="application/pdf,image/*" style={{display:'none'}}
             onChange={e=>setEditPdfFile(e.target.files?.[0]||null)} />
-          {editCard?.fichier_url && !editPdfFile && (
+          {editCard?.fichier_url && !editPdfFile && !editFichierRemoved && (
             <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,
               padding:'10px 14px',border:'1.5px solid var(--border)',marginBottom:8}}>
               <span style={{fontSize:20}}>{isPdf(editCard.fichier_url)?'📄':'🖼️'}</span>
@@ -502,6 +505,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                 style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
                   fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer',flexShrink:0}}>
                 Remplacer
+              </button>
+              <button onClick={()=>setEditFichierRemoved(true)}
+                style={{background:'none',border:'1px solid #FCA5A5',borderRadius:7,padding:'4px 10px',
+                  fontSize:12,fontWeight:600,color:'#DC2626',cursor:'pointer',flexShrink:0}}>
+                Supprimer
               </button>
             </div>
           )}
