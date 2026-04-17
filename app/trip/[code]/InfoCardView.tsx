@@ -72,9 +72,10 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
                 <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.7,marginTop:4}}>
                   {card.contenu.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').map((line,i) => {
                     const tabs = line.match(/^\t*/)?.[0].length ?? 0
-                    const text = line.replace(/^\t+/, '')
+                    // Joindre les cellules non-vides de la ligne avec un espace
+                    const text = line.replace(/^\t+/, '').split('\t').map(c=>c.trim()).filter(Boolean).join('   ')
                     return (
-                      <div key={i} style={{paddingLeft: tabs * 20, minHeight: text ? undefined : 6}}>
+                      <div key={i} style={{paddingLeft: tabs * 20, minHeight: text ? undefined : 8}}>
                         {text || '\u00a0'}
                       </div>
                     )

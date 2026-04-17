@@ -155,38 +155,7 @@ export function getTripExamples(type: string): { nom: string; dest: string } {
 
 // Détection/parsing d'un collage Excel
 // Renvoie null si pas un vrai tableau de données (doc formaté avec indentation = null)
+// parseTableContent : désactivé - le rendu indenté gère tout dans InfoCardView
 export function parseTableContent(s: string | null | undefined): { rows: string[][] } | null {
-  if (!s) return null
-  const lines = s.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
-  while (lines.length && lines[lines.length - 1] === '') lines.pop()
-  if (lines.length < 2) return null
-  if (!lines.some(l => l.includes('\t'))) return null
-
-  const cols = Math.max(...lines.map(l => l.split('\t').length))
-  if (cols < 2) return null
-
-  const rows = lines.map(l => {
-    const cells = l.split('\t')
-    while (cells.length < cols) cells.push('')
-    return cells
-  })
-
-  // Calculer le ratio de cellules vides
-  // Si >70% des cellules sont vides, c'est un doc formate (indentation Excel) pas un vrai tableau
-  const totalCells = rows.length * cols
-  const emptyCells = rows.reduce((acc, r) => acc + r.filter(c => c.trim() === '').length, 0)
-  const emptyRatio = emptyCells / totalCells
-  if (emptyRatio > 0.70) return null
-
-  // Identifier les colonnes entierement vides et les retirer
-  const activeCols = Array.from({length: cols}, (_,ci) =>
-    rows.some(r => r[ci].trim() !== '')
-  )
-  const filteredRows = rows.map(r => r.filter((_,ci) => activeCols[ci]))
-
-  // Si apres filtrage il ne reste qu'une seule colonne -> rendu texte (pas tableau)
-  const remainingCols = activeCols.filter(Boolean).length
-  if (remainingCols < 2) return null
-
-  return { rows: filteredRows }
+  return null
 }
