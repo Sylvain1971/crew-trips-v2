@@ -78,7 +78,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
     setMembres(p=>p.filter(x=>x.id!==m.id))
   }
 
-  async function togglePermission(key: 'can_delete'|'can_edit') {
+  async function togglePermission(key: 'can_delete'|'can_edit'|'can_post_photos') {
     const newVal = !trip[key]
     await supabase.from('trips').update({[key]:newVal}).eq('id',trip.id)
     onTripUpdate({[key]:newVal})
@@ -310,6 +310,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
           {([
             {key:'can_delete' as const, label:'Peuvent supprimer des cards', desc:'Les participants peuvent effacer des infos'},
             {key:'can_edit' as const,   label:'Peuvent modifier des cards',   desc:'Les participants peuvent éditer des infos'},
+            {key:'can_post_photos' as const, label:'Peuvent envoyer des photos', desc:'Les participants peuvent partager des photos dans le chat'},
           ]).map(p=>(
             <div key={p.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',
               padding:'10px 0',borderBottom:'1px solid var(--border-light)'}}>
@@ -319,7 +320,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
               </div>
               <button onClick={()=>togglePermission(p.key)}
                 style={{width:44,height:26,borderRadius:13,border:'none',cursor:'pointer',
-                  background:trip[p.key]?'var(--green)':'#D1D5DB',transition:'background .2s',
+                  background:(trip[p.key] !== false)?'var(--green)':'#D1D5DB',transition:'background .2s',
                   position:'relative',flexShrink:0}}>
                 <span style={{position:'absolute',top:3,borderRadius:'50%',width:20,height:20,
                   background:'#fff',transition:'left .2s',

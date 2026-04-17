@@ -3,14 +3,16 @@ import { useEffect, useState, useRef, useLayoutEffect, useCallback } from 'react
 import { supabase } from '@/lib/supabase'
 import { ago } from '@/lib/utils'
 import { compressImage } from '@/lib/imageCompression'
-import type { Message, Membre } from '@/lib/types'
+import type { Message, Membre, Trip } from '@/lib/types'
 
 const PAGE_SIZE = 100
 // Transformation Supabase : thumbnail pour l'affichage dans le fil (gain perf)
 const thumbUrl = (url: string, w = 600) =>
   url.includes('?') ? url : `${url}?width=${w}&quality=75`
 
-export default function Chat({ tripId, membre }: { tripId: string, membre: Membre }) {
+export default function Chat({ tripId, trip, membre }: { tripId: string, trip: Trip, membre: Membre }) {
+  // can_post_photos: default true si undefined (retrocompat avec trips avant la migration)
+  const canPostPhotos = membre.is_createur || trip.can_post_photos !== false
   const [msgs, setMsgs] = useState<Message[]>([])
   const [txt, setTxt] = useState('')
   const [epingle, setEpingle] = useState<Message | null>(null)
@@ -317,7 +319,7 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
                   <button
                     onClick={(e) => { e.stopPropagation(); setOpenMenuId(prev => prev === m.id ? null : m.id) }}
                     aria-label="Actions"
-                    style={{ background: 'none', border: 'none', fontSize: 16, cursor: 'pointer', color: 'var(--text-3)', padding: '0 4px', lineHeight: 1, letterSpacing: 2 }}>
+                    style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: 'var(--text-3)', padding: '0 6px', lineHeight: 1, letterSpacing: 2 }}>
                     ⋯
                   </button>
                   {m.epingle && <span style={{ fontSize: 12, color: '#B45309' }}>📌</span>}
@@ -385,7 +387,8 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
           {/* Bouton photo */}
-          <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onPickImage} />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif" style={{ display: 'none' }} onChange={onPickImage} />
+          {canPostPhotos && (
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
@@ -403,6 +406,7 @@ export default function Chat({ tripId, membre }: { tripId: string, membre: Membr
               <circle cx="12" cy="13" r="4"/>
             </svg>
           </button>
+          )}
 
           <textarea ref={inputRef}
             style={{ flex: 1, padding: '10px 14px', border: '1.5px solid var(--border)', borderRadius: 22, fontSize: 14, fontFamily: 'inherit', resize: 'none', height: 42, lineHeight: 1.4, maxHeight: 120, outline: 'none', background: '#fff', transition: 'border-color .15s' }}
