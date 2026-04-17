@@ -33,6 +33,12 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       window.history.replaceState({...window.history.state, filtre: f}, '')
     }
   }
+  // Sauvegarder le filtre avant navigation externe (pour retour correct)
+  const pushFiltre = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('crew-trips-filtre', filtre)
+    }
+  }
 
   // Restaurer le filtre au retour browser (popstate ou retour depuis lien externe)
   useEffect(() => {
@@ -456,7 +462,17 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             tripType={trip.type}
             onDelete={()=>removeCard(card.id)}
             onEdit={()=>openEdit(card)}
-            onOpenPdf={(url,nom)=>setPdfViewer({url,nom})}
+            onOpenPdf={(url,nom)=>{
+              // Sur mobile : ouvrir le viewer natif (pinch-to-zoom)
+              // Sur desktop : ouvrir l'iframe interne
+              const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+              if (isMobile) {
+                pushFiltre()
+                window.open(url, '_blank')
+              } else {
+                setPdfViewer({url,nom})
+              }
+            }}
             onCardClick={filtre==='all' ? ()=>{
               // Sauvegarder 'all' dans l'historique avant de naviguer vers la categorie
               window.history.pushState({...window.history.state, filtre:'all'}, '')

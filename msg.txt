@@ -1,1 +1,1 @@
-stop propagation badges fix pdf viewer  
+pdf native viewer mobile pinch zoom  
