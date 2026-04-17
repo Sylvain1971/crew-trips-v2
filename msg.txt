@@ -1,1 +1,1 @@
-pdf native viewer mobile pinch zoom  
+fix desktop nav window focus pdf close restore  

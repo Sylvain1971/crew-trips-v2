@@ -56,11 +56,21 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         }
       }
     }
+    // focus : declenche sur desktop quand on revient depuis un nouvel onglet
+    const onFocus = () => {
+      const saved = sessionStorage.getItem('crew-trips-filtre')
+      if (saved) {
+        setFiltreRaw(saved)
+        sessionStorage.removeItem('crew-trips-filtre')
+      }
+    }
     window.addEventListener('popstate', onPop)
     document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
     return () => {
       window.removeEventListener('popstate', onPop)
       document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
     }
   }, [])
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -253,7 +263,12 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       {pdfViewer && (
         <div style={{position:'fixed',inset:0,zIndex:100,display:'flex',flexDirection:'column',background:'#111'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',background:'#1a1a1a',flexShrink:0}}>
-            <button onClick={()=>setPdfViewer(null)}
+            <button onClick={()=>{
+              setPdfViewer(null)
+              // Restaurer le filtre sauvegarde avant ouverture PDF
+              const saved = sessionStorage.getItem('crew-trips-filtre')
+              if (saved) { setFiltreRaw(saved); sessionStorage.removeItem('crew-trips-filtre') }
+            }}
               style={{background:'rgba(255,255,255,.1)',border:'none',color:'#fff',borderRadius:8,padding:'7px 12px',cursor:'pointer',fontSize:13,fontWeight:600}}>
               ← Retour
             </button>
