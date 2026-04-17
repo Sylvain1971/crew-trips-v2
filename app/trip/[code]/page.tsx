@@ -168,7 +168,10 @@ export default function TripPage({params:paramsPromise}:{params:Promise<{code:st
       <span style={{fontSize:52}}>🔍</span>
       <div style={{fontWeight:700,fontSize:20,color:'#fff'}}>Trip introuvable</div>
       <div style={{color:'rgba(255,255,255,.5)',fontSize:14}}>Ce lien ne correspond à aucun trip actif.</div>
-      <a href="/" style={{marginTop:8,fontSize:14,color:'rgba(255,255,255,.7)',textDecoration:'underline'}}>← Créer un nouveau trip</a>
+      <a href="/mes-trips" style={{marginTop:12,display:'inline-flex',alignItems:'center',gap:8,
+        background:'rgba(255,255,255,.15)',border:'1.5px solid rgba(255,255,255,.25)',
+        borderRadius:10,padding:'10px 20px',fontSize:14,fontWeight:600,
+        color:'#fff',textDecoration:'none'}}>← Mes trips</a>
     </div>
   )
 
