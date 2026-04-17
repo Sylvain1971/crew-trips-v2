@@ -118,14 +118,14 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
         </div>
 
         {/* Actions édition/suppression */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, flexShrink: 0, alignSelf: 'flex-start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, alignSelf: 'stretch' }}>
           {canEdit && (
             <button onClick={onEdit} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
               {SVG.edit}
             </button>
           )}
           {canDelete && (
-            <button onClick={onDelete} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 5, color: 'var(--text-3)', fontSize: 16, cursor: 'pointer', padding: '1px 5px', lineHeight: 1, fontWeight: 400 }}>
+            <button onClick={onDelete} style={{ background: 'none', border: 'none', color: 'var(--text-2)', fontSize: 20, cursor: 'pointer', padding: '0 2px', lineHeight: 1, fontWeight: 300 }}>
               ×
             </button>
           )}
