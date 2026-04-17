@@ -1,1 +1,1 @@
-fix card click zone title only  
+refactor useNavFiltre CardContent Infos cleanup  
