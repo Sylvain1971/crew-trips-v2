@@ -132,9 +132,10 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
             )
           })()}
 
-          {/* Badges compacts */}
+          {/* Badges compacts - stopPropagation pour ne pas declencher onCardClick */}
           {(ytId || (card.lien && !ytId && !hasPdf) || isImage || pdfUrl || (collapsed && card.contenu && onCardClick)) && (
-            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:7}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:7}}
+              onClick={e => e.stopPropagation()}>
               {ytId && (
                 <a href={card.lien!} target="_blank" rel="noreferrer" style={badge()} onClick={pushFiltre}>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg> Voir la vidéo

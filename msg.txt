@@ -1,1 +1,1 @@
-fix back nav pushstate sessionStorage  
+stop propagation badges fix pdf viewer  
