@@ -29,7 +29,8 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
   // Sauvegarder le filtre courant dans l'historique avant toute navigation externe
   const pushFiltre = () => {
     if (typeof window !== 'undefined' && currentFiltre) {
-      window.history.pushState({...window.history.state, filtre: currentFiltre}, '')
+      // Sauvegarder dans sessionStorage - survit aux liens target=_blank
+      sessionStorage.setItem('crew-trips-filtre', currentFiltre)
     }
   }
   const ytId = card.lien ? getYoutubeId(card.lien) : null

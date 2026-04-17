@@ -34,14 +34,28 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     }
   }
 
-  // Restaurer le filtre au retour browser (popstate)
+  // Restaurer le filtre au retour browser (popstate ou retour depuis lien externe)
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
       if (e.state?.filtre) setFiltreRaw(e.state.filtre)
       else setFiltreRaw('all')
     }
+    // visibilitychange : declenche quand on revient sur l'onglet depuis un lien externe
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        const saved = sessionStorage.getItem('crew-trips-filtre')
+        if (saved) {
+          setFiltreRaw(saved)
+          sessionStorage.removeItem('crew-trips-filtre')
+        }
+      }
+    }
     window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [])
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editCard, setEditCard] = useState<InfoCard|null>(null)
@@ -444,6 +458,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             onEdit={()=>openEdit(card)}
             onOpenPdf={(url,nom)=>setPdfViewer({url,nom})}
             onCardClick={filtre==='all' ? ()=>{
+              // Sauvegarder 'all' dans l'historique avant de naviguer vers la categorie
+              window.history.pushState({...window.history.state, filtre:'all'}, '')
               setFiltre(card.categorie)
               setTimeout(()=>{
                 const el = document.getElementById(card.id)
