@@ -78,6 +78,12 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
                 return { leadTabs, cells, nonEmpty }
               })
               const maxCols = Math.max(...parsedLines.map(l => l.nonEmpty.length), 1)
+              // Calculer largeur col1 = longueur max du label + 1ch de marge
+              const multiLines = parsedLines.filter(l => l.nonEmpty.length >= 2)
+              const maxCol1Chars = multiLines.reduce((m,l) => Math.max(m, l.nonEmpty[0]?.length ?? 0), 0)
+              const maxCol2Chars = multiLines.reduce((m,l) => Math.max(m, l.nonEmpty[1]?.length ?? 0), 0)
+              const col1Width = `${Math.max(maxCol1Chars * 7.5 + 16, 80)}px`
+              const col2Width = `${Math.max(maxCol2Chars * 7.5 + 16, 60)}px`
               return (
                 <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.6,marginTop:4}}>
                   {parsedLines.map((l,i) => {
@@ -99,8 +105,9 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
                         {l.nonEmpty.map((cell,ci) => (
                           <span key={ci} style={{
                             display:'inline-block',
-                            minWidth: ci === 0 ? '45%' : ci === 1 ? '30%' : 'auto',
-                            paddingRight:8,
+                            width: ci === 0 ? col1Width : ci === 1 ? col2Width : 'auto',
+                            flexShrink: 0,
+                            paddingRight:12,
                             color: ci === 0 ? 'var(--text-3)' : 'var(--text)',
                           }}>{cell}</span>
                         ))}
