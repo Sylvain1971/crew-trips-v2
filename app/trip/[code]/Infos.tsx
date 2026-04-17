@@ -21,7 +21,28 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   const canDelete = isCreateur || trip.can_delete
   const canEdit = isCreateur || trip.can_edit
   const [cards, setCards] = useState<InfoCard[]>([])
-  const [filtre, setFiltre] = useState<string>('all')
+  const [filtre, setFiltreRaw] = useState<string>(() => {
+    if (typeof window !== 'undefined' && window.history.state?.filtre) {
+      return window.history.state.filtre
+    }
+    return 'all'
+  })
+  const setFiltre = (f: string) => {
+    setFiltreRaw(f)
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({...window.history.state, filtre: f}, '')
+    }
+  }
+
+  // Restaurer le filtre au retour browser (popstate)
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      if (e.state?.filtre) setFiltreRaw(e.state.filtre)
+      else setFiltreRaw('all')
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editCard, setEditCard] = useState<InfoCard|null>(null)
   const [editLodge, setEditLodge] = useState(false)
@@ -417,6 +438,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             canEdit={canEdit}
             isCreateur={isCreateur}
             collapsed={filtre==='all'}
+            currentFiltre={filtre}
             tripType={trip.type}
             onDelete={()=>removeCard(card.id)}
             onEdit={()=>openEdit(card)}
