@@ -65,18 +65,45 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
                 </div>
               )
             }
-            // Convertir les tabs en indentation visuelle (24px par tab)
             const hasTabIndent = card.contenu.includes('\t')
             if (hasTabIndent) {
+              const allLines = card.contenu.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n')
+              // Retirer lignes vides trailing
+              while (allLines.length && allLines[allLines.length-1].trim() === '') allLines.pop()
+              // Calculer le nombre max de colonnes non-vides pour dimensionner
+              const parsedLines = allLines.map(line => {
+                const leadTabs = line.match(/^\t*/)?.[0].length ?? 0
+                const cells = line.replace(/^\t+/,'').split('\t').map(c => c.trim())
+                const nonEmpty = cells.filter(Boolean)
+                return { leadTabs, cells, nonEmpty }
+              })
+              const maxCols = Math.max(...parsedLines.map(l => l.nonEmpty.length), 1)
               return (
-                <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.7,marginTop:4}}>
-                  {card.contenu.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').map((line,i) => {
-                    const tabs = line.match(/^\t*/)?.[0].length ?? 0
-                    // Joindre les cellules non-vides de la ligne avec un espace
-                    const text = line.replace(/^\t+/, '').split('\t').map(c=>c.trim()).filter(Boolean).join('   ')
+                <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.6,marginTop:4}}>
+                  {parsedLines.map((l,i) => {
+                    if (l.nonEmpty.length === 0) {
+                      // Ligne vide -> espace
+                      return <div key={i} style={{height:6}}/>
+                    }
+                    if (l.nonEmpty.length === 1) {
+                      // Titre ou ligne simple -> texte indenté
+                      return (
+                        <div key={i} style={{paddingLeft: l.leadTabs * 18, marginBottom:1}}>
+                          {l.nonEmpty[0]}
+                        </div>
+                      )
+                    }
+                    // Ligne avec plusieurs valeurs -> rendu tableau aligné
                     return (
-                      <div key={i} style={{paddingLeft: tabs * 20, minHeight: text ? undefined : 8}}>
-                        {text || '\u00a0'}
+                      <div key={i} style={{paddingLeft: l.leadTabs * 18, display:'flex', gap:0, marginBottom:1}}>
+                        {l.nonEmpty.map((cell,ci) => (
+                          <span key={ci} style={{
+                            display:'inline-block',
+                            minWidth: ci === 0 ? '45%' : ci === 1 ? '30%' : 'auto',
+                            paddingRight:8,
+                            color: ci === 0 ? 'var(--text-3)' : 'var(--text)',
+                          }}>{cell}</span>
+                        ))}
                       </div>
                     )
                   })}
