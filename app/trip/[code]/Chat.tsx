@@ -266,7 +266,7 @@ export default function Chat({ tripId, trip, membre }: { tripId: string, trip: T
                     <button
                       onClick={() => deleteMessage(m)}
                       style={{
-                        background: '#FEF2F2', border: '1px solid #FCA5A5', color: '#DC2626',
+                        background: '#F9FAFB', border: '1px solid var(--border)', color: 'var(--text-3)',
                         borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600,
                         cursor: 'pointer', lineHeight: 1.2,
                       }}>
