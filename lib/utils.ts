@@ -178,5 +178,15 @@ export function parseTableContent(s: string | null | undefined): { rows: string[
   const emptyRatio = emptyCells / totalCells
   if (emptyRatio > 0.70) return null
 
-  return { rows }
+  // Identifier les colonnes entierement vides et les retirer
+  const activeCols = Array.from({length: cols}, (_,ci) =>
+    rows.some(r => r[ci].trim() !== '')
+  )
+  const filteredRows = rows.map(r => r.filter((_,ci) => activeCols[ci]))
+
+  // Si apres filtrage il ne reste qu'une seule colonne -> rendu texte (pas tableau)
+  const remainingCols = activeCols.filter(Boolean).length
+  if (remainingCols < 2) return null
+
+  return { rows: filteredRows }
 }

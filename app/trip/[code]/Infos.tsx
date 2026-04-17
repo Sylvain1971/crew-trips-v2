@@ -431,7 +431,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         ))}
       </div>
 
-      <button className="fab" onClick={()=>{if(filtre!=='all')setCat(filtre);setSheetOpen(true)}}>+</button>
+      <button className="fab" onClick={()=>{if(filtre!=='all')setCat(filtre);setSheetOpen(true)}} aria-label="Ajouter">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
 
       {/* Sheet modifier trip */}
       <div className={`overlay ${editTrip?'open':''}`} onClick={()=>setEditTrip(false)} />

@@ -86,7 +86,7 @@ textarea.input { resize: none; line-height: 1.5; }
   position: fixed; bottom: calc(80px + env(safe-area-inset-bottom,0px)); right: 18px;
   width: 58px; height: 58px; border-radius: 50%;
   background: var(--forest); color: var(--white); border: none;
-  font-size: 26px; display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   box-shadow: 0 6px 24px rgba(15,29,15,.35); z-index: 40; cursor: pointer;
   transition: transform .15s;
 }
