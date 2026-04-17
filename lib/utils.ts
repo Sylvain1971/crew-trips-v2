@@ -153,9 +153,23 @@ export function getTripExamples(type: string): { nom: string; dest: string } {
   }
 }
 
-// Détection/parsing d'un collage Excel
-// Renvoie null si pas un vrai tableau de données (doc formaté avec indentation = null)
-// parseTableContent : désactivé - le rendu indenté gère tout dans InfoCardView
-export function parseTableContent(s: string | null | undefined): { rows: string[][] } | null {
-  return null
+
+// Retry simple pour mutations Supabase : 1 tentative supplémentaire en cas d'échec réseau.
+// Ne re-essaie PAS les erreurs métier (validation, contraintes, permissions) — seulement les pannes réseau/timeout.
+// Usage : await withRetry(() => supabase.from(...).update(...))
+export async function withRetry<T>(fn: () => PromiseLike<T>, delayMs = 300): Promise<T> {
+  try {
+    return await fn()
+  } catch (err: any) {
+    // Les erreurs Supabase propres (PostgrestError avec code) ne sont PAS relancées :
+    // un 23505 (duplicate) ou 42501 (permission) ne sera pas corrigé par un retry.
+    // Un échec réseau pur (TypeError: fetch failed, AbortError) vaut le coup d'être relancé.
+    const isNetworkError = err instanceof TypeError
+      || err?.name === 'AbortError'
+      || err?.message?.includes('fetch')
+      || err?.message?.includes('NetworkError')
+    if (!isNetworkError) throw err
+    await new Promise(r => setTimeout(r, delayMs))
+    return await fn()
+  }
 }

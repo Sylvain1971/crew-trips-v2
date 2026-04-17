@@ -1,8 +1,8 @@
 'use client'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat } from '@/lib/types'
-import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders } from '@/lib/utils'
+import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders, withRetry } from '@/lib/utils'
 import { useNavFiltre } from '@/lib/useNavFiltre'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
@@ -91,8 +91,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       })
   }, [trip.id])
 
-  // Cards filtrées/triées
-  const filtered = (() => {
+  // Cards filtrées/triées — memo sur [cards, filtre] pour éviter le recalcul à chaque render
+  const filtered = useMemo(() => {
     if (filtre !== 'all') return cards.filter(c => c.categorie === filtre)
     return [...cards].sort((a, b) => {
       const ai = CAT_ORDER.indexOf(a.categorie)
@@ -100,7 +100,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       if (ai !== bi) return ai - bi
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     })
-  })()
+  }, [cards, filtre])
 
   // Upload fichier
   const uploadFichier = useCallback(async (file: File): Promise<string|null> => {
@@ -125,11 +125,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         setUploading(false)
         if (!fichier_url) return
       }
-      const { data, error } = await supabase.from('infos').insert({
+      const { data, error } = await withRetry(() => supabase.from('infos').insert({
         trip_id: trip.id, categorie: cat, titre: titre.trim(),
         contenu: contenu.trim()||null, lien: lien.trim()||null, fichier_url,
         membre_prenom: null,
-      }).select().single()
+      }).select().single())
       if (error) throw error
       setCards(p => [...p, data])
       setTitre(''); setContenu(''); setLien(''); setPdfFile(null)
@@ -141,8 +141,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     }
   }
 
-  // Modifier une card
-  function openEdit(card: InfoCard) {
+  // Modifier une card — useCallback pour stabiliser la réf passée à InfoCardView
+  const openEdit = useCallback((card: InfoCard) => {
     setEditCard(card)
     setEditCat(card.categorie)
     setEditTitre(card.titre)
@@ -150,7 +150,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setEditLien(card.lien||'')
     setEditPdfFile(null)
     setEditFichierRemoved(false)
-  }
+  }, [])
 
   async function updateCard() {
     if (!editCard || !editTitre.trim()) return
@@ -164,11 +164,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         if (!uploaded) return
         fichier_url = uploaded
       }
-      const { data, error } = await supabase.from('infos').update({
+      const { data, error } = await withRetry(() => supabase.from('infos').update({
         categorie: editCat, titre: editTitre.trim(),
         contenu: editContenu.trim()||null, lien: editLien.trim()||null,
         fichier_url, membre_prenom: isCreateur ? null : membre.prenom,
-      }).eq('id', editCard.id).select().single()
+      }).eq('id', editCard.id).select().single())
       if (error) throw error
       setCards(p => p.map(c => c.id === editCard.id ? data : c))
       setEditCard(null); setEditPdfFile(null); setEditFichierRemoved(false)
@@ -179,27 +179,27 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     }
   }
 
-  // Supprimer une card
-  async function removeCard(id: string) {
+  // Supprimer une card — useCallback (stabilise la réf passée aux cards enfants)
+  const removeCard = useCallback(async (id: string) => {
     if (!confirm('Supprimer cette info ? Cette action est irréversible.')) return
     try {
-      const { error } = await supabase.from('infos').delete().eq('id', id)
+      const { error } = await withRetry(() => supabase.from('infos').delete().eq('id', id))
       if (error) throw error
       setCards(p => p.filter(c => c.id !== id))
     } catch (e: any) {
       alert('Erreur lors de la suppression : ' + e.message)
     }
-  }
+  }, [])
 
   // Sauvegarder Lodge
   async function saveLodge() {
     setSavingLodge(true)
     try {
-      const { error } = await supabase.from('trips').update({
+      const { error } = await withRetry(() => supabase.from('trips').update({
         lodge_nom: lodge.nom||null, lodge_adresse: lodge.adresse||null,
         lodge_tel: lodge.tel||null, lodge_wifi: lodge.wifi||null,
         lodge_code: lodge.code||null, lodge_arrivee: lodge.arrivee||null,
-      }).eq('id', trip.id)
+      }).eq('id', trip.id))
       if (error) throw error
       setEditLodge(false)
     } catch (e: any) {
@@ -214,10 +214,10 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     if (!editNom.trim()) return
     setSavingTrip(true)
     try {
-      const { error } = await supabase.from('trips').update({
+      const { error } = await withRetry(() => supabase.from('trips').update({
         nom: editNom.trim(), destination: editDest.trim()||null,
         date_debut: editD1||null, date_fin: editD2||null,
-      }).eq('id', trip.id)
+      }).eq('id', trip.id))
       if (error) throw error
       onTripUpdate?.({ nom: editNom.trim(), destination: editDest.trim()||undefined, date_debut: editD1||undefined, date_fin: editD2||undefined })
       setEditTrip(false)
@@ -235,8 +235,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setTimeout(() => setCopied(false), 2500)
   }
 
-  // Ouvrir PDF
-  function openPdf(url: string, nom: string) {
+  // Ouvrir PDF — useCallback (stabilise la réf passée à InfoCardView)
+  const openPdf = useCallback((url: string, nom: string) => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
     if (isMobile) {
       pushFiltre()
@@ -245,7 +245,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       pushFiltre()
       setPdfViewer({ url, nom })
     }
-  }
+  }, [pushFiltre])
 
   const haslodge = lodge.nom || lodge.adresse || lodge.tel || lodge.wifi || lodge.code || lodge.arrivee
   const fmtDate = (d?: string) => d ? new Date(d + 'T00:00:00').toLocaleDateString('fr-CA', {day:'numeric',month:'long',year:'numeric'}) : ''
