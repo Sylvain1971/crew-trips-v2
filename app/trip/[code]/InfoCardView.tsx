@@ -39,19 +39,21 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
   const isImage = card.fichier_url && !hasPdf && /\.(jpg|jpeg|png|gif|webp|heic)/i.test(card.fichier_url.split('?')[0])
 
   return (
-    <div className="card" id={card.id}
-      onClick={collapsed && onCardClick ? onCardClick : undefined}
-      style={collapsed && onCardClick ? {cursor:'pointer'} : undefined}>
+    <div className="card" id={card.id}>
       <div style={{display:'flex',alignItems:'flex-start',gap:12,padding:'13px 14px'}}>
         <div style={{width:36,height:36,borderRadius:9,background:c.bg,display:'flex',
           alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>
           {c.icon}
         </div>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:10,fontWeight:700,color:c.color,textTransform:'uppercase',
-            letterSpacing:'.06em',marginBottom:3}}>{getCatLabel(card.categorie, tripType||'') || c.label}</div>
-          <div style={{fontWeight:700,fontSize:14,letterSpacing:'-.01em',
-            marginBottom:card.contenu?4:0}}>{card.titre}</div>
+          <div
+            onClick={collapsed && onCardClick ? onCardClick : undefined}
+            style={collapsed && onCardClick ? {cursor:'pointer'} : undefined}>
+            <div style={{fontSize:10,fontWeight:700,color:c.color,textTransform:'uppercase',
+              letterSpacing:'.06em',marginBottom:3}}>{getCatLabel(card.categorie, tripType||'') || c.label}</div>
+            <div style={{fontWeight:700,fontSize:14,letterSpacing:'-.01em',
+              marginBottom:card.contenu?4:0}}>{card.titre}</div>
+          </div>
 
           {/* Contenu texte / tableau Excel */}
           {card.contenu && !collapsed && (() => {

@@ -1,1 +1,1 @@
-fix desktop nav window focus pdf close restore  
+fix card click zone title only  
