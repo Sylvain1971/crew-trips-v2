@@ -128,7 +128,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
           )}
         </div>
 
-        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'space-between',flexShrink:0,alignSelf:'stretch'}}>
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,flexShrink:0,alignSelf:'flex-start'}}>
           {canEdit && (
             <button onClick={onEdit}
               style={{background:'none',border:'none',color:'var(--text-3)',
@@ -142,7 +142,7 @@ export default function InfoCardView({card, canDelete, canEdit, isCreateur, coll
           {canDelete && (
             <button onClick={onDelete}
               style={{background:'none',border:'none',color:'var(--text-2)',
-                fontSize:20,cursor:'pointer',padding:'0 4px',lineHeight:1,marginTop:'auto',fontWeight:300}}>
+                fontSize:20,cursor:'pointer',padding:'0 2px',lineHeight:1,fontWeight:300}}>
               ×
             </button>
           )}
