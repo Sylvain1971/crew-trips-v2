@@ -17,7 +17,8 @@ export interface InfoCard {
   membre_prenom?: string; created_at: string
 }
 export interface Message {
-  id: string; trip_id: string; contenu: string; epingle: boolean
+  id: string; trip_id: string; contenu?: string; epingle: boolean
+  image_url?: string
   membre_id?: string; membre_prenom?: string; membre_couleur?: string; created_at: string
 }
 export interface ParticipantAutorise {
