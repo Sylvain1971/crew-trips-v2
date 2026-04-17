@@ -50,9 +50,14 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
     <div className="card" id={card.id}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 14px' }}>
 
-        {/* Icône catégorie */}
-        <div style={{ width: 36, height: 36, borderRadius: 9, background: c.bg, display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+        {/* Icône catégorie — cliquable en mode "Tout" (navigue vers la catégorie) */}
+        <div
+          onClick={collapsed && onCardClick ? onCardClick : undefined}
+          style={{
+            width: 36, height: 36, borderRadius: 9, background: c.bg, display: 'flex',
+            alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
+            cursor: collapsed && onCardClick ? 'pointer' : undefined,
+          }}>
           {c.icon}
         </div>
 

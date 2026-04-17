@@ -113,11 +113,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     return supabase.storage.from('trip-photos').getPublicUrl(path).data.publicUrl
   }, [trip.id, membre.prenom])
 
-  // Ajouter une card
+  // Ajouter une card — optimistic : la card apparaît immédiatement,
+  // rollback si Supabase échoue.
   async function save() {
     if (!titre.trim()) return
     setSaving(true)
     try {
+      // Upload fichier d'abord (bloquant : on ne peut pas être optimistic sur une URL inconnue)
       let fichier_url: string|null = null
       if (pdfFile) {
         setUploading(true)
@@ -125,17 +127,46 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         setUploading(false)
         if (!fichier_url) return
       }
-      const { data, error } = await withRetry(() => supabase.from('infos').insert({
-        trip_id: trip.id, categorie: cat, titre: titre.trim(),
-        contenu: contenu.trim()||null, lien: lien.trim()||null, fichier_url,
-        membre_prenom: null,
-      }).select().single())
-      if (error) throw error
-      setCards(p => [...p, data])
+
+      // Card optimiste : id temporaire, on l'affiche tout de suite
+      const tempId = `temp-${Date.now()}`
+      const optimisticCard: InfoCard = {
+        id: tempId,
+        trip_id: trip.id,
+        categorie: cat,
+        titre: titre.trim(),
+        contenu: contenu.trim() || undefined,
+        lien: lien.trim() || undefined,
+        fichier_url: fichier_url || undefined,
+        membre_prenom: undefined,
+        created_at: new Date().toISOString(),
+      }
+      setCards(p => [...p, optimisticCard])
+      // Snapshot pour rollback des champs si échec
+      const snapshot = { titre, contenu, lien, pdfFile, cat }
       setTitre(''); setContenu(''); setLien(''); setPdfFile(null)
       setSheetOpen(false)
-    } catch (e: any) {
-      alert('Erreur lors de l\'ajout : ' + e.message)
+
+      try {
+        const { data, error } = await withRetry(() => supabase.from('infos').insert({
+          trip_id: trip.id, categorie: cat, titre: snapshot.titre.trim(),
+          contenu: snapshot.contenu.trim()||null, lien: snapshot.lien.trim()||null, fichier_url,
+          membre_prenom: null,
+        }).select().single())
+        if (error) throw error
+        // Remplacer la temp par la vraie card
+        setCards(p => p.map(c => c.id === tempId ? data : c))
+      } catch (e: any) {
+        // Rollback : retirer la card optimiste, restaurer le sheet avec les valeurs
+        setCards(p => p.filter(c => c.id !== tempId))
+        setCat(snapshot.cat)
+        setTitre(snapshot.titre)
+        setContenu(snapshot.contenu)
+        setLien(snapshot.lien)
+        setPdfFile(snapshot.pdfFile)
+        setSheetOpen(true)
+        alert('Erreur lors de l\'ajout : ' + e.message)
+      }
     } finally {
       setSaving(false)
     }
@@ -156,6 +187,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     if (!editCard || !editTitre.trim()) return
     setSavingEdit(true)
     try {
+      // Upload fichier d'abord si nouveau
       let fichier_url = editFichierRemoved ? null : (editCard.fichier_url ?? null)
       if (editPdfFile) {
         setEditUploading(true)
@@ -164,29 +196,67 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         if (!uploaded) return
         fichier_url = uploaded
       }
-      const { data, error } = await withRetry(() => supabase.from('infos').update({
-        categorie: editCat, titre: editTitre.trim(),
-        contenu: editContenu.trim()||null, lien: editLien.trim()||null,
-        fichier_url, membre_prenom: isCreateur ? null : membre.prenom,
-      }).eq('id', editCard.id).select().single())
-      if (error) throw error
-      setCards(p => p.map(c => c.id === editCard.id ? data : c))
+
+      // Snapshot pour rollback
+      const originalCard = editCard
+      const optimisticCard: InfoCard = {
+        ...editCard,
+        categorie: editCat,
+        titre: editTitre.trim(),
+        contenu: editContenu.trim() || undefined,
+        lien: editLien.trim() || undefined,
+        fichier_url: fichier_url || undefined,
+        membre_prenom: isCreateur ? undefined : membre.prenom,
+      }
+
+      // Appliquer immédiatement + fermer le sheet
+      setCards(p => p.map(c => c.id === originalCard.id ? optimisticCard : c))
       setEditCard(null); setEditPdfFile(null); setEditFichierRemoved(false)
-    } catch (e: any) {
-      alert('Erreur lors de la modification : ' + e.message)
+
+      try {
+        const { data, error } = await withRetry(() => supabase.from('infos').update({
+          categorie: optimisticCard.categorie, titre: optimisticCard.titre,
+          contenu: optimisticCard.contenu ?? null, lien: optimisticCard.lien ?? null,
+          fichier_url: optimisticCard.fichier_url ?? null,
+          membre_prenom: optimisticCard.membre_prenom ?? null,
+        }).eq('id', originalCard.id).select().single())
+        if (error) throw error
+        // Supabase peut renvoyer des valeurs normalisées (timestamps, trimmed...) : on resync
+        setCards(p => p.map(c => c.id === originalCard.id ? data : c))
+      } catch (e: any) {
+        // Rollback : restaurer la card d'origine
+        setCards(p => p.map(c => c.id === originalCard.id ? originalCard : c))
+        alert('Erreur lors de la modification : ' + e.message)
+      }
     } finally {
       setSavingEdit(false)
     }
   }
 
-  // Supprimer une card — useCallback (stabilise la réf passée aux cards enfants)
+  // Supprimer une card — optimistic : la card disparaît immédiatement,
+  // rollback (ré-insertion) si Supabase échoue.
   const removeCard = useCallback(async (id: string) => {
     if (!confirm('Supprimer cette info ? Cette action est irréversible.')) return
+    // Snapshot : la card + sa position d'origine pour rollback
+    let snapshot: { card: InfoCard, index: number } | null = null
+    setCards(p => {
+      const idx = p.findIndex(c => c.id === id)
+      if (idx === -1) return p
+      snapshot = { card: p[idx], index: idx }
+      return p.filter(c => c.id !== id)
+    })
+    if (!snapshot) return
     try {
       const { error } = await withRetry(() => supabase.from('infos').delete().eq('id', id))
       if (error) throw error
-      setCards(p => p.filter(c => c.id !== id))
     } catch (e: any) {
+      // Rollback : ré-insérer la card à sa position
+      const snap = snapshot as unknown as { card: InfoCard, index: number }
+      setCards(p => {
+        const next = [...p]
+        next.splice(snap.index, 0, snap.card)
+        return next
+      })
       alert('Erreur lors de la suppression : ' + e.message)
     }
   }, [])
