@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
+import { canShareFiles, shareAllTogether, shareOneByOne } from '@/lib/shareFiles'
 import type { Message, Membre, Trip } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
 
@@ -198,6 +199,10 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
 
   // Download tout en ZIP
   const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(null)
+
+  // Partage multi-photos (mode selection)
+  const [sharing, setSharing] = useState(false)
+  const [shareChoiceOpen, setShareChoiceOpen] = useState(false)
 
   async function downloadAll() {
     if (photos.length === 0) return
@@ -414,6 +419,40 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     if (initialId) setSelectedIds(new Set([initialId]))
   }
 
+  async function onShareSelected(mode: 'together' | 'one-by-one') {
+    setShareChoiceOpen(false)
+    const selected = photos.filter(p => selectedIds.has(p.id) && !p._pending)
+    if (selected.length === 0) return
+    setSharing(true)
+    try {
+      const ok = mode === 'together'
+        ? await shareAllTogether(selected, trip.nom)
+        : await shareOneByOne(selected, trip.nom)
+      if (!ok) {
+        alert("Partage impossible. Essaie l'autre mode, ou utilise le téléchargement ZIP.")
+      } else {
+        exitSelectionMode()
+      }
+    } finally {
+      setSharing(false)
+    }
+  }
+
+  function onShareClick() {
+    const count = photos.filter(p => selectedIds.has(p.id) && !p._pending).length
+    if (count === 0 || sharing) return
+    if (!canShareFiles()) {
+      alert("Ton navigateur ne supporte pas le partage direct. Utilise le téléchargement ZIP.")
+      return
+    }
+    if (count === 1) {
+      // Une seule photo : pas besoin de demander
+      onShareSelected('together')
+    } else {
+      setShareChoiceOpen(true)
+    }
+  }
+
   async function deleteSelected() {
     // Filtrer sur les photos de l'utilisateur courant seulement
     const mine = photos.filter(p => selectedIds.has(p.id) && p.membre_id === membre.id)
@@ -513,6 +552,17 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           <div style={{ flex: 1, fontSize: 13, color: 'var(--text-2)' }}>
             {selectedCount === 0 ? 'Sélectionnez des photos' : `${selectedCount} sélectionnée${selectedCount > 1 ? 's' : ''}`}
           </div>
+          {selectedCount > 0 && canShareFiles() && (
+            <button onClick={onShareClick} disabled={sharing}
+              style={{ background: 'var(--forest)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 12px', fontSize: 13, fontWeight: 600, cursor: sharing ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              {sharing ? '…' : `Partager ${selectedCount}`}
+            </button>
+          )}
           {selectedMineCount > 0 && (
             <button onClick={deleteSelected}
               style={{ background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
@@ -766,6 +816,39 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           onPrev={lightboxPrev}
           onNext={lightboxNext}
         />
+      )}
+
+      {/* Sheet choix mode de partage (apparait si 2+ photos selectionnees) */}
+      {shareChoiceOpen && (
+        <>
+          <div className="overlay open" onClick={() => setShareChoiceOpen(false)} />
+          <div className="sheet open" onClick={e => e.stopPropagation()} style={{ zIndex: 71 }}>
+            <div className="sheet-handle" />
+            <div className="sheet-title">
+              Partager {photos.filter(p => selectedIds.has(p.id) && !p._pending).length} photos
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.5 }}>
+              Sur iOS, certaines apps (comme iMessage) acceptent mieux les photos une par une.
+            </div>
+            <button onClick={() => onShareSelected('together')} disabled={sharing}
+              style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none',
+                background: 'var(--forest)', color: '#fff',
+                fontWeight: 600, fontSize: 15, cursor: sharing ? 'default' : 'pointer', marginBottom: 8 }}>
+              Toutes en même temps
+            </button>
+            <button onClick={() => onShareSelected('one-by-one')} disabled={sharing}
+              style={{ width: '100%', padding: '13px', borderRadius: 10, border: '1px solid var(--border)',
+                background: '#fff', color: 'var(--text-1)',
+                fontWeight: 600, fontSize: 15, cursor: sharing ? 'default' : 'pointer', marginBottom: 10 }}>
+              Une par une
+            </button>
+            <button onClick={() => setShareChoiceOpen(false)}
+              style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border)',
+                background: 'transparent', color: 'var(--text-2)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+              Annuler
+            </button>
+          </div>
+        </>
       )}
 
       {/* Sheet de partage — createur only */}
