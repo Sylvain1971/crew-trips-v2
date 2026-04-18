@@ -26,6 +26,15 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   // Navigation
   const { filtre, setFiltre, pushFiltre, pushFiltreAndNavigate } = useNavFiltre()
 
+  // Auto-close de la card Lodge quand on change de filtre (sauf si pinnée)
+  const prevFiltreRef = useRef(filtre)
+  useEffect(() => {
+    if (prevFiltreRef.current !== filtre) {
+      prevFiltreRef.current = filtre
+      setLodgeOpen(open => open && !lodgePinnedRef.current ? false : open)
+    }
+  }, [filtre])
+
   // Cards
   const [cards, setCards] = useState<InfoCard[]>([])
 
@@ -66,6 +75,27 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   const [savingLodge, setSavingLodge] = useState(false)
   const [lodgeOpen, setLodgeOpen] = useState(false)
   const [editLodge, setEditLodge] = useState(false)
+
+  // Pin Lodge (persiste par device via localStorage)
+  const lodgePinKey = `crew-trips:lodge-pinned:${trip.code}`
+  const [lodgePinned, setLodgePinned] = useState(false)
+  const lodgePinnedRef = useRef(false)
+  useEffect(() => { lodgePinnedRef.current = lodgePinned }, [lodgePinned])
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      const v = window.localStorage.getItem(lodgePinKey)
+      if (v === '1') { setLodgePinned(true); setLodgeOpen(true) }
+    } catch {}
+  }, [lodgePinKey])
+  const togglePin = useCallback(() => {
+    setLodgePinned(p => {
+      const next = !p
+      try { window.localStorage.setItem(lodgePinKey, next ? '1' : '0') } catch {}
+      if (next) setLodgeOpen(true)
+      return next
+    })
+  }, [lodgePinKey])
 
   // Modifier trip
   const [editTrip, setEditTrip] = useState(false)
@@ -376,14 +406,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           </a>
           <div style={{display:'flex',gap:8}}>
             {isCreateur && (
-              <button onClick={()=>setEditTrip(true)} style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center'}}>
+              <button onClick={()=>setEditTrip(true)} aria-label="Modifier le trip" style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'rgba(255,255,255,.75)',cursor:'pointer',display:'flex',alignItems:'center'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
             )}
-            <button onClick={copyLink} style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5}}>
-              {copied ? <SvgIcon name="check" size={13} /> : <><SvgIcon name="link" size={13} /> Inviter</>}
-            </button>
-            <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')} style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')} aria-label="Imprimer" style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'rgba(255,255,255,.75)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/><rect x="2" y="9" width="20" height="9" rx="2"/><circle cx="17" cy="13.5" r="1.2" fill="currentColor" stroke="none"/></svg>
             </button>
           </div>
@@ -405,12 +432,25 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         {/* Header Lodge (toujours visible) */}
         <div style={{padding:'14px 16px',borderBottom:'1px solid var(--border-light, var(--border))'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}} onClick={()=>setLodgeOpen(o=>!o)}>
-            <div style={{fontWeight:700,fontSize:14,display:'inline-flex',alignItems:'center',gap:8}}>
+            <div style={{fontWeight:700,fontSize:14,display:'inline-flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
               <span style={{display:'inline-flex',width:26,height:26,borderRadius:7,background:'#16A34A',color:'#fff',alignItems:'center',justifyContent:'center'}}>{getCatSvg('lodge', 15, trip.type)}</span>
               {getLodgeLabel(trip.type).label}
               <span style={{display:'inline-flex',alignItems:'center',padding:'2px 7px',borderRadius:6,fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'.05em',background:'rgba(22,163,74,.1)',color:'#16A34A',border:'1px solid rgba(22,163,74,.3)'}}>Principal</span>
+              {lodgePinned && (
+                <span style={{display:'inline-flex',alignItems:'center',gap:3,padding:'2px 7px',borderRadius:6,fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'.05em',background:'rgba(22,163,74,.1)',color:'#16A34A',border:'1px solid rgba(22,163,74,.3)'}}>
+                  <SvgIcon name="pin" size={9} />Épinglée
+                </span>
+              )}
             </div>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
+              {lodgeOpen && (
+                <button onClick={e=>{e.stopPropagation();togglePin()}}
+                  aria-label={lodgePinned?'Désépingler':'Épingler'}
+                  title={lodgePinned?'Désépingler':'Épingler pour la garder ouverte'}
+                  style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,border:lodgePinned?'1px solid #16A34A':'1px solid rgba(22,163,74,.3)',background:lodgePinned?'#16A34A':'rgba(22,163,74,.1)',color:lodgePinned?'#fff':'#16A34A',cursor:'pointer',padding:0}}>
+                  <SvgIcon name="pin" size={16} />
+                </button>
+              )}
               {isCreateur && (
                 <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
                   aria-label={editLodge?'Fermer':haslodge?'Modifier':'Ajouter'}
@@ -418,7 +458,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                   <SvgIcon name={editLodge?'close':haslodge?'edit':'plus'} size={16} />
                 </button>
               )}
-              <span style={{color:'var(--text-3)',transition:'transform .2s',display:'inline-flex',alignItems:'center',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}><SvgIcon name="chevronDown" size={18} /></span>
+              <span aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,border:'1px solid rgba(22,163,74,.3)',background:'rgba(22,163,74,.1)',color:'#16A34A',transition:'transform .2s',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}>
+                <SvgIcon name="chevronDown" size={16} />
+              </span>
             </div>
           </div>
         </div>
@@ -447,11 +489,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       {lodgeOpen && (
         <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
           {!editLodge && haslodge && (
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,alignItems:'stretch'}}>
               {lodge.nom && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/></svg>} label="Nom" val={lodge.nom} />}
               {lodge.adresse && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>} label="Adresse" val={lodge.adresse} />}
               {lodge.tel && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>} label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
-              {lodge.wifi && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>} label="WiFi" val={lodge.wifi} />}
+              {lodge.wifi && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>} label="Wifi ou code" val={lodge.wifi} />}
               {lodge.arrivee && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>} label="Arrivée" val={lodge.arrivee} />}
               {lodge.code && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>} label="Départ" val={lodge.code} />}
             </div>
@@ -468,7 +510,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                   {key:'nom', label:'Nom du Lodge', ph:`Ex: Babine Norlakes`},
                   {key:'adresse', label:'Adresse', ph:'Ex: Smithers, BC'},
                   {key:'tel', label:'Téléphone', ph:'+1 250 000 0000'},
-                  {key:'wifi', label:'WiFi', ph:'Ex: fishing2025'},
+                  {key:'wifi', label:'Wifi ou code', ph:'Ex: fishing2025'},
                   {key:'arrivee', label:"Heure d'arrivée", ph:'Ex: 14h00 le 8 juin'},
                   {key:'code', label:'Heure de départ', ph:'Ex: 10h00 le 25 avril'},
                 ].map(({key,label,ph}) => (
@@ -698,14 +740,14 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
 function LodgeItem({icon,label,val,link}:{icon:React.ReactNode,label:string,val:string,link?:string}) {
   return (
-    <div style={{background:'var(--sand)',borderRadius:10,padding:'9px 12px'}}>
-      <div style={{fontSize:11,color:'var(--text-3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3,display:'inline-flex',alignItems:'center',gap:5}}>
+    <div style={{background:'var(--sand)',borderRadius:10,padding:'7px 10px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'center'}}>
+      <div style={{fontSize:10,color:'var(--text-3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:2,display:'inline-flex',alignItems:'center',gap:5}}>
         <span style={{display:'inline-flex',alignItems:'center',color:'var(--text-3)'}}>{icon}</span>
         {label}
       </div>
       {link
-        ? <a href={link} style={{fontSize:13,fontWeight:600,color:'var(--green)',textDecoration:'none'}}>{val}</a>
-        : <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{val}</div>}
+        ? <a href={link} style={{fontSize:12,fontWeight:600,color:'var(--text)',textDecoration:'none'}}>{val}</a>
+        : <div style={{fontSize:12,fontWeight:600,color:'var(--text)'}}>{val}</div>}
     </div>
   )
 }
