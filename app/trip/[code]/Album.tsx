@@ -133,6 +133,18 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggered = useRef(false)
 
+  // Tracking des blob URLs vivants pour cleanup fiable au unmount
+  // (previews upload + photos optimistic pending). Necessaire car le
+  // useEffect cleanup capture l'etat au mount (vide) s'il n'a pas de deps.
+  const liveBlobUrls = useRef<Set<string>>(new Set())
+  const trackBlob = useCallback((url: string) => { liveBlobUrls.current.add(url) }, [])
+  const revokeBlob = useCallback((url: string) => {
+    if (liveBlobUrls.current.has(url)) {
+      try { URL.revokeObjectURL(url) } catch {}
+      liveBlobUrls.current.delete(url)
+    }
+  }, [])
+
   // Partage (creator only) — sheet "Partager l'album"
   const [shareSheetOpen, setShareSheetOpen] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
@@ -239,12 +251,13 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     return () => { supabase.removeChannel(ch) }
   }, [tripId])
 
-  // Cleanup previews
+  // Cleanup fiable des blob URLs au unmount (uploads en cours, optimistic previews)
   useEffect(() => {
+    const set = liveBlobUrls.current
     return () => {
-      pending.forEach(p => URL.revokeObjectURL(p.preview))
+      set.forEach(url => { try { URL.revokeObjectURL(url) } catch {} })
+      set.clear()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Reset zoom quand on change de photo dans la lightbox (sans re-mount du TransformWrapper)
@@ -280,17 +293,18 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       }, 100)
     }
 
-    const previews = toAdd.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }))
+    const previews = toAdd.map(file => {
+      const preview = URL.createObjectURL(file)
+      trackBlob(preview)
+      return { file, preview }
+    })
     setPending(previews)
     setPendingIdx(0)
     setPendingCaption('')
   }
 
   function cancelPending() {
-    pending.forEach(p => URL.revokeObjectURL(p.preview))
+    pending.forEach(p => revokeBlob(p.preview))
     setPending([])
     setPendingIdx(0)
     setPendingCaption('')
@@ -312,17 +326,21 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       const compressed = await Promise.all(pendingSnapshot.map(p => compressImage(p.file)))
 
       // Créer les photos optimistes immédiatement + fermer la sheet
-      const tempPhotos: AlbumPhoto[] = compressed.map((file, i) => ({
-        id: `temp-upload-${Date.now()}-${i}`,
-        trip_id: tripId,
-        contenu: pendingSnapshot[i].caption || undefined,
-        image_url: URL.createObjectURL(file),
-        membre_id: membre.id,
-        membre_prenom: membre.prenom,
-        membre_couleur: membre.couleur,
-        created_at: new Date().toISOString(),
-        _pending: true,
-      }))
+      const tempPhotos: AlbumPhoto[] = compressed.map((file, i) => {
+        const blobUrl = URL.createObjectURL(file)
+        trackBlob(blobUrl)
+        return {
+          id: `temp-upload-${Date.now()}-${i}`,
+          trip_id: tripId,
+          contenu: pendingSnapshot[i].caption || undefined,
+          image_url: blobUrl,
+          membre_id: membre.id,
+          membre_prenom: membre.prenom,
+          membre_couleur: membre.couleur,
+          created_at: new Date().toISOString(),
+          _pending: true,
+        }
+      })
 
       // Optimistic : ajouter en tête + fermer la sheet d'envoi
       setPhotos(prev => [...tempPhotos.slice().reverse(), ...prev])
@@ -359,13 +377,13 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           // Remplacer la temp par la vraie photo (avec vraie URL)
           setPhotos(prev => prev.map(p => p.id === tempId ? (data as Message) : p))
           // Libérer la blob URL
-          try { URL.revokeObjectURL(blobUrl) } catch {}
+          revokeBlob(blobUrl)
         } catch (e) {
           console.error('Upload failed for photo', i, e)
           failedIndexes.push(i)
           // Retirer la temp qui a échoué
           setPhotos(prev => prev.filter(p => p.id !== tempId))
-          try { URL.revokeObjectURL(blobUrl) } catch {}
+          revokeBlob(blobUrl)
         }
       }
 
