@@ -6,6 +6,7 @@
   can_delete: boolean; can_edit: boolean; can_post_photos?: boolean
   whatsapp_lien?: string; sms_lien?: string
   createur_tel?: string
+  share_token?: string | null
   created_at: string
 }
 export interface Membre {

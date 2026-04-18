@@ -23,6 +23,8 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [editingPrenom, setEditingPrenom] = useState(false)
   const [newPrenomSelf, setNewPrenomSelf] = useState('')
   const [savingPrenom, setSavingPrenom] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+  const [generatingShare, setGeneratingShare] = useState(false)
   const router = useRouter()
   const isCreateur = membre.is_createur
 
@@ -115,6 +117,43 @@ export default function Membres({trip, membre, onTripUpdate}: {
     setMembres(p => p.map(m => m.id === membre.id ? { ...m, prenom: newPrenomSelf.trim() } : m))
     setSavingPrenom(false)
     setEditingPrenom(false)
+  }
+
+  async function generateShareToken() {
+    if (generatingShare) return
+    setGeneratingShare(true)
+    try {
+      const token = crypto.randomUUID()
+      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      if (error) throw error
+      onTripUpdate({ share_token: token })
+    } catch (e: unknown) {
+      alert('Erreur lors de la génération du lien : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  async function regenerateShareToken() {
+    if (!confirm('Régénérer le lien ? L\'ancien lien ne fonctionnera plus et toute personne qui l\'a reçu perdra l\'accès.')) return
+    if (generatingShare) return
+    setGeneratingShare(true)
+    try {
+      const token = crypto.randomUUID()
+      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      if (error) throw error
+      onTripUpdate({ share_token: token })
+    } catch (e: unknown) {
+      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  function copyShareLink() {
+    if (!trip.share_token) return
+    navigator.clipboard.writeText(`${window.location.origin}/album/${trip.share_token}`)
+    setShareCopied(true); setTimeout(()=>setShareCopied(false),3000)
   }
 
   async function supprimerTrip() {
@@ -261,6 +300,56 @@ export default function Membres({trip, membre, onTripUpdate}: {
           </div>
         )}
       </div>
+
+      {/* Partager l'album — créateur seulement */}
+      {isCreateur && (
+        <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:trip.share_token?10:12}}>
+            <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
+              📸 Partager l&apos;album
+            </div>
+          </div>
+          {!trip.share_token && (
+            <>
+              <div style={{fontSize:12,color:'var(--text-3)',marginBottom:10,lineHeight:1.5}}>
+                Génère un lien public en lecture seule pour partager l&apos;album avec quelqu&apos;un qui n&apos;est pas dans le trip.
+              </div>
+              <button onClick={generateShareToken} disabled={generatingShare}
+                style={{width:'100%',padding:'11px',borderRadius:10,border:'none',
+                  background:generatingShare?'var(--border)':'var(--forest)',
+                  color:'#fff',fontWeight:600,fontSize:14,cursor:generatingShare?'default':'pointer'}}>
+                {generatingShare?'Génération…':'🔗 Générer un lien de partage'}
+              </button>
+            </>
+          )}
+          {trip.share_token && (
+            <>
+              <div style={{fontSize:12,color:'var(--text-3)',marginBottom:8,lineHeight:1.5}}>
+                Toute personne avec ce lien peut consulter l&apos;album en lecture seule.
+              </div>
+              <div style={{background:'var(--sand)',borderRadius:10,padding:'8px 12px',fontSize:12,
+                color:'var(--text-2)',fontFamily:'monospace',marginBottom:10,wordBreak:'break-all',
+                border:'1px solid var(--border)'}}>
+                {typeof window!=='undefined'?`${window.location.origin}/album/${trip.share_token}`:`/album/${trip.share_token}`}
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button onClick={copyShareLink}
+                  style={{flex:1,padding:'10px',borderRadius:10,border:'none',
+                    background:shareCopied?'var(--green)':'var(--forest)',
+                    color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',transition:'background .2s'}}>
+                  {shareCopied?'✓ Copié !':'📋 Copier le lien'}
+                </button>
+                <button onClick={regenerateShareToken} disabled={generatingShare}
+                  style={{padding:'10px 14px',borderRadius:10,border:'1px solid var(--border)',
+                    background:'#fff',color:'var(--text-2)',fontWeight:600,fontSize:13,
+                    cursor:generatingShare?'default':'pointer'}}>
+                  {generatingShare?'…':'🔄 Régénérer'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Participants autorisés — créateur seulement */}
       {isCreateur && (
