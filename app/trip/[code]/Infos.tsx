@@ -400,80 +400,87 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         )}
       </div>
 
-      {/* Lodge */}
-      <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}} onClick={()=>setLodgeOpen(o=>!o)}>
-          <div style={{fontWeight:700,fontSize:14}}>{getLodgeLabel(trip.type).icon} {getLodgeLabel(trip.type).label}</div>
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
-            {isCreateur && (
-              <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
-                style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-                {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
-              </button>
-            )}
-            <span style={{fontSize:18,color:'var(--text-3)',transition:'transform .2s',display:'inline-block',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}>⌄</span>
+      {/* Wrapper sticky : header Lodge (compact) + filtres */}
+      <div style={{position:'sticky',top:0,zIndex:20,background:'#fff',borderBottom:'1px solid var(--border)'}}>
+        {/* Header Lodge (toujours visible) */}
+        <div style={{padding:'14px 16px',borderBottom:'1px solid var(--border-light, var(--border))'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}} onClick={()=>setLodgeOpen(o=>!o)}>
+            <div style={{fontWeight:700,fontSize:14}}>{getLodgeLabel(trip.type).icon} {getLodgeLabel(trip.type).label}</div>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              {isCreateur && (
+                <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
+                  style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
+                  {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
+                </button>
+              )}
+              <span style={{fontSize:18,color:'var(--text-3)',transition:'transform .2s',display:'inline-block',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}>⌄</span>
+            </div>
           </div>
         </div>
-        {lodgeOpen && !editLodge && haslodge && (
-          <div style={{marginTop:12,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-            {lodge.nom && <LodgeItem icon="🏠" label="Nom" val={lodge.nom} />}
-            {lodge.adresse && <LodgeItem icon="📍" label="Adresse" val={lodge.adresse} />}
-            {lodge.tel && <LodgeItem icon="📞" label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
-            {lodge.wifi && <LodgeItem icon="📶" label="WiFi" val={lodge.wifi} />}
-            {lodge.arrivee && <LodgeItem icon="🛬" label="Arrivée" val={lodge.arrivee} />}
-            {lodge.code && <LodgeItem icon="🛫" label="Départ" val={lodge.code} />}
+
+        {/* Filtres */}
+        <div style={{padding:'10px 14px'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6,marginBottom:6}}>
+            <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')} icon={CAT_ICONS.all}>Tout</FilterBtn>
+            {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+              <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color} icon={CAT_ICONS[id]}>
+                {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:getPermisLabel(trip.type)}
+              </FilterBtn>
+            )})}
           </div>
-        )}
-        {lodgeOpen && !editLodge && !haslodge && isCreateur && (
-          <div style={{marginTop:12}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6}}>
+            {['equipement','infos','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+              <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color} icon={CAT_ICONS[id]}>
+                {id==='equipement'?'Équipements':id==='infos'?'Infos':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
+              </FilterBtn>
+            )})}
+          </div>
+        </div>
+      </div>
+
+      {/* Détails Lodge (hors sticky, scrollable) */}
+      {lodgeOpen && (
+        <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
+          {!editLodge && haslodge && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              {lodge.nom && <LodgeItem icon="🏠" label="Nom" val={lodge.nom} />}
+              {lodge.adresse && <LodgeItem icon="📍" label="Adresse" val={lodge.adresse} />}
+              {lodge.tel && <LodgeItem icon="📞" label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
+              {lodge.wifi && <LodgeItem icon="📶" label="WiFi" val={lodge.wifi} />}
+              {lodge.arrivee && <LodgeItem icon="🛬" label="Arrivée" val={lodge.arrivee} />}
+              {lodge.code && <LodgeItem icon="🛫" label="Départ" val={lodge.code} />}
+            </div>
+          )}
+          {!editLodge && !haslodge && isCreateur && (
             <button onClick={()=>setEditLodge(true)} style={{width:'100%',padding:'10px',borderRadius:8,border:'1.5px dashed var(--border)',background:'transparent',color:'var(--text-3)',fontSize:13,cursor:'pointer'}}>
               + Ajouter les infos du {getLodgeLabel(trip.type).label.toLowerCase()}
             </button>
-          </div>
-        )}
-        {lodgeOpen && editLodge && (
-          <div style={{marginTop:12}}>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
-              {[
-                {key:'nom', label:'Nom du Lodge', ph:`Ex: Babine Norlakes`},
-                {key:'adresse', label:'Adresse', ph:'Ex: Smithers, BC'},
-                {key:'tel', label:'Téléphone', ph:'+1 250 000 0000'},
-                {key:'wifi', label:'WiFi', ph:'Ex: fishing2025'},
-                {key:'arrivee', label:"Heure d'arrivée", ph:'Ex: 14h00 le 8 juin'},
-                {key:'code', label:'Heure de départ', ph:'Ex: 10h00 le 25 avril'},
-              ].map(({key,label,ph}) => (
-                <div key={key}>
-                  <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>{label}</div>
-                  <input className="input" placeholder={ph} value={(lodge as any)[key]}
-                    onChange={e=>setLodge(p=>({...p,[key]:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
-                </div>
-              ))}
+          )}
+          {editLodge && (
+            <div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
+                {[
+                  {key:'nom', label:'Nom du Lodge', ph:`Ex: Babine Norlakes`},
+                  {key:'adresse', label:'Adresse', ph:'Ex: Smithers, BC'},
+                  {key:'tel', label:'Téléphone', ph:'+1 250 000 0000'},
+                  {key:'wifi', label:'WiFi', ph:'Ex: fishing2025'},
+                  {key:'arrivee', label:"Heure d'arrivée", ph:'Ex: 14h00 le 8 juin'},
+                  {key:'code', label:'Heure de départ', ph:'Ex: 10h00 le 25 avril'},
+                ].map(({key,label,ph}) => (
+                  <div key={key}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>{label}</div>
+                    <input className="input" placeholder={ph} value={(lodge as any)[key]}
+                      onChange={e=>setLodge(p=>({...p,[key]:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+                  </div>
+                ))}
+              </div>
+              <button className="btn btn-primary" onClick={saveLodge} disabled={savingLodge} style={{padding:'10px',fontSize:13}}>
+                {savingLodge?'Sauvegarde…':'Sauvegarder'}
+              </button>
             </div>
-            <button className="btn btn-primary" onClick={saveLodge} disabled={savingLodge} style={{padding:'10px',fontSize:13}}>
-              {savingLodge?'Sauvegarde…':'Sauvegarder'}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Filtres */}
-      <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6,marginBottom:6}}>
-          <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')} icon={CAT_ICONS.all}>Tout</FilterBtn>
-          {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
-            <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color} icon={CAT_ICONS[id]}>
-              {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:getPermisLabel(trip.type)}
-            </FilterBtn>
-          )})}
+          )}
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6}}>
-          {['equipement','infos','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
-            <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color} icon={CAT_ICONS[id]}>
-              {id==='equipement'?'Équipements':id==='infos'?'Infos':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
-            </FilterBtn>
-          )})}
-        </div>
-      </div>
+      )}
 
       {/* Cards */}
       <div style={{padding:'14px 14px 100px',display:'flex',flexDirection:'column',gap:10}}>
