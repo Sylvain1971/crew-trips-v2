@@ -10,7 +10,7 @@ export default function Home() {
         <div style={{fontSize:60,marginBottom:16}}>🏕</div>
         <h1 style={{fontSize:34,fontWeight:800,color:'#fff',letterSpacing:'-.04em',lineHeight:1.1,margin:0}}>Crew Trips</h1>
         <p style={{fontSize:15,color:'rgba(255,255,255,.5)',marginTop:12,lineHeight:1.6}}>
-          Tout ce que ton groupe a besoin de savoir.<br/>Un seul lien.
+          Un seul lien.<br/>Pour tout savoir.
         </p>
       </div>
 
