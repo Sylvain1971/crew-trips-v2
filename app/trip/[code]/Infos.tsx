@@ -333,12 +333,24 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   async function saveLodge() {
     setSavingLodge(true)
     try {
+      // Normaliser l'adresse: sauts de ligne → ", ", espaces multiples → " ", trim
+      const adresseCleaned = (lodge.adresse || '')
+        .replace(/\r/g, '')
+        .split(/\n+/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(', ')
+        .replace(/\s*,\s*/g, ', ')
+        .replace(/\s{2,}/g, ' ')
+        .trim()
       const { error } = await withRetry(() => supabase.from('trips').update({
-        lodge_nom: lodge.nom||null, lodge_adresse: lodge.adresse||null,
+        lodge_nom: lodge.nom||null, lodge_adresse: adresseCleaned||null,
         lodge_tel: lodge.tel||null, lodge_wifi: lodge.wifi||null,
         lodge_code: lodge.code||null, lodge_arrivee: lodge.arrivee||null,
       }).eq('id', trip.id))
       if (error) throw error
+      // Mettre à jour le state local avec l'adresse nettoyée pour cohérence immédiate
+      setLodge(p => ({...p, adresse: adresseCleaned}))
       setEditLodge(false)
     } catch (e: any) {
       alert('Erreur sauvegarde lodge : ' + e.message)
@@ -514,7 +526,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       {lodgeOpen && (
         <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
           {!editLodge && haslodge && (
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,alignItems:'stretch'}}>
+            <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)',gap:8,alignItems:'stretch'}}>
               {lodge.nom && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/></svg>} label="Nom" val={lodge.nom} />}
               {lodge.adresse && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>} label="Adresse" val={lodge.adresse} link={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lodge.adresse)}`} />}
               {lodge.tel && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>} label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
@@ -532,17 +544,26 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             <div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
                 {[
-                  {key:'nom', label:'Nom du Lodge', ph:`Ex: Babine Norlakes`},
-                  {key:'adresse', label:'Adresse', ph:'Ex: Smithers, BC'},
-                  {key:'tel', label:'Téléphone', ph:'+1 250 000 0000'},
-                  {key:'wifi', label:'Wifi ou code', ph:'Ex: fishing2025'},
-                  {key:'arrivee', label:"Heure d'arrivée", ph:'Ex: 14h00 le 8 juin'},
-                  {key:'code', label:'Heure de départ', ph:'Ex: 10h00 le 25 avril'},
-                ].map(({key,label,ph}) => (
-                  <div key={key}>
-                    <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>{label}</div>
-                    <input className="input" placeholder={ph} value={(lodge as any)[key]}
-                      onChange={e=>setLodge(p=>({...p,[key]:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+                  {key:'nom', label:'Nom du Lodge', ph:`Ex: Babine Norlakes`, multiline:false, full:false, hint:''},
+                  {key:'tel', label:'Téléphone', ph:'+1 250 000 0000', multiline:false, full:false, hint:''},
+                  {key:'adresse', label:'Adresse', ph:'Ex: 3740 Cedar Key Avenue, Terrace, BC V8G 4M6', multiline:true, full:true, hint:'Colle n\'importe quel format'},
+                  {key:'wifi', label:'Wifi ou code', ph:'Ex: fishing2025', multiline:false, full:false, hint:''},
+                  {key:'arrivee', label:"Heure d'arrivée", ph:'Ex: 14h00 le 8 juin', multiline:false, full:false, hint:''},
+                  {key:'code', label:'Heure de départ', ph:'Ex: 10h00 le 25 avril', multiline:false, full:false, hint:''},
+                ].map(({key,label,ph,multiline,full,hint}) => (
+                  <div key={key} style={full?{gridColumn:'1 / -1'}:undefined}>
+                    <div style={{fontSize:11,fontWeight:700,color:'var(--text-3)',textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5,display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+                      <span>{label}</span>
+                      {hint && <span style={{color:'#16A34A',textTransform:'none',letterSpacing:0,fontSize:10,fontWeight:500}}>{hint}</span>}
+                    </div>
+                    {multiline
+                      ? <textarea className="input" placeholder={ph} value={(lodge as any)[key]}
+                          onChange={e=>setLodge(p=>({...p,[key]:e.target.value}))}
+                          rows={3}
+                          style={{padding:'9px 11px',fontSize:13,width:'100%',minHeight:72,resize:'vertical',fontFamily:'inherit',lineHeight:1.4}} />
+                      : <input className="input" placeholder={ph} value={(lodge as any)[key]}
+                          onChange={e=>setLodge(p=>({...p,[key]:e.target.value}))} style={{padding:'9px 11px',fontSize:13}} />
+                    }
                   </div>
                 ))}
               </div>
@@ -765,17 +786,17 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
 function LodgeItem({icon,label,val,link}:{icon:React.ReactNode,label:string,val:string,link?:string}) {
   return (
-    <div style={{background:'var(--sand)',borderRadius:10,padding:'7px 10px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'center'}}>
+    <div style={{background:'var(--sand)',borderRadius:10,padding:'7px 10px',height:'100%',display:'flex',flexDirection:'column',justifyContent:'center',minWidth:0}}>
       <div style={{fontSize:10,color:'var(--text-3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:2,display:'inline-flex',alignItems:'center',gap:5}}>
         <span style={{display:'inline-flex',alignItems:'center',color:'var(--text-3)'}}>{icon}</span>
         {label}
       </div>
       {link
-        ? <a href={link} target={link.startsWith('http')?'_blank':undefined} rel={link.startsWith('http')?'noreferrer':undefined} style={{fontSize:12,fontWeight:600,color:'#16A34A',textDecoration:'none',display:'inline-flex',alignItems:'flex-start',gap:4}}>
-            <span>{val}</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.6,marginTop:3,flexShrink:0}}><path d="M7 17L17 7M7 7h10v10"/></svg>
+        ? <a href={link} target={link.startsWith('http')?'_blank':undefined} rel={link.startsWith('http')?'noreferrer':undefined} title={val} style={{fontSize:12,fontWeight:600,color:'#16A34A',textDecoration:'none',display:'flex',alignItems:'center',gap:4,minWidth:0}}>
+            <span style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',minWidth:0,flex:'0 1 auto'}}>{val}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.6,flexShrink:0}}><path d="M7 17L17 7M7 7h10v10"/></svg>
           </a>
-        : <div style={{fontSize:12,fontWeight:600,color:'var(--text)'}}>{val}</div>}
+        : <div title={val} style={{fontSize:12,fontWeight:600,color:'var(--text)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{val}</div>}
     </div>
   )
 }
