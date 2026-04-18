@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, memo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
@@ -22,6 +22,91 @@ type PendingPhoto = { file: File; preview: string }
 
 // Type local étendu : Message + flag optimistic pending
 type AlbumPhoto = Message & { _pending?: boolean }
+
+// Tuile photo memoizee : ne re-render que si ses propres props changent.
+// Critique a 100 photos : evite 100 re-renders quand on toggle selection / ouvre lightbox.
+type PhotoTileProps = {
+  photo: AlbumPhoto
+  idx: number
+  isSelected: boolean
+  isMine: boolean
+  selectionMode: boolean
+  onPointerDown: (id: string) => void
+  onPointerUp: () => void
+  onClick: (photo: AlbumPhoto, idx: number) => void
+}
+const PhotoTile = memo(function PhotoTile({
+  photo, idx, isSelected, isMine, selectionMode,
+  onPointerDown, onPointerUp, onClick,
+}: PhotoTileProps) {
+  const pending = photo._pending
+  return (
+    <div
+      onPointerDown={() => { if (!pending) onPointerDown(photo.id) }}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onClick={() => { if (!pending) onClick(photo, idx) }}
+      style={{
+        position: 'relative',
+        aspectRatio: '1 / 1',
+        background: '#e5e5e5',
+        cursor: 'pointer',
+        overflow: 'hidden',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+      }}>
+      <img
+        src={thumbUrl(photo.image_url!, 400)}
+        alt={photo.contenu || ''}
+        loading="lazy"
+        draggable={false}
+        style={{
+          width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+          opacity: selectionMode && !isSelected ? 0.5 : 1,
+          transition: 'opacity .15s',
+        }}
+      />
+      {selectionMode && (
+        <div style={{
+          position: 'absolute', top: 6, right: 6,
+          width: 22, height: 22, borderRadius: '50%',
+          background: isSelected ? 'var(--forest)' : 'rgba(255,255,255,.7)',
+          border: isSelected ? '2px solid #fff' : '2px solid rgba(255,255,255,.9)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontSize: 13, fontWeight: 700,
+          boxShadow: '0 1px 3px rgba(0,0,0,.3)',
+        }}>
+          {isSelected && '✓'}
+        </div>
+      )}
+      {selectionMode && isMine && !isSelected && (
+        <div style={{
+          position: 'absolute', bottom: 4, left: 4,
+          width: 6, height: 6, borderRadius: '50%',
+          background: photo.membre_couleur || 'var(--forest)',
+          boxShadow: '0 0 0 1.5px rgba(255,255,255,.9)',
+        }} />
+      )}
+      {pending && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(0,0,0,.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: '50%',
+            border: '2.5px solid rgba(255,255,255,.35)',
+            borderTopColor: '#fff',
+            animation: 'crew-spin 0.8s linear infinite',
+          }} />
+        </div>
+      )}
+    </div>
+  )
+})
 
 export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: string, trip: Trip, membre: Membre, onTripUpdate: (t: Partial<Trip>) => void }) {
   // can_post_photos: default true si undefined (retrocompat)
@@ -505,79 +590,19 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 2,
           }}>
-            {photos.map((p, idx) => {
-              const isSelected = selectedIds.has(p.id)
-              const isMine = p.membre_id === membre.id
-              return (
-                <div key={p.id}
-                  onPointerDown={() => { if (!p._pending) onPhotoPointerDown(p.id) }}
-                  onPointerUp={clearLongPress}
-                  onPointerLeave={clearLongPress}
-                  onPointerCancel={clearLongPress}
-                  onClick={() => { if (!p._pending) onPhotoClick(p, idx) }}
-                  style={{
-                    position: 'relative',
-                    aspectRatio: '1 / 1',
-                    background: '#e5e5e5',
-                    cursor: 'pointer',
-                    overflow: 'hidden',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  }}>
-                  <img
-                    src={thumbUrl(p.image_url!, 400)}
-                    alt={p.contenu || ''}
-                    loading="lazy"
-                    draggable={false}
-                    style={{
-                      width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-                      opacity: selectionMode && !isSelected ? 0.5 : 1,
-                      transition: 'opacity .15s',
-                    }}
-                  />
-                  {/* Checkmark mode selection */}
-                  {selectionMode && (
-                    <div style={{
-                      position: 'absolute', top: 6, right: 6,
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: isSelected ? 'var(--forest)' : 'rgba(255,255,255,.7)',
-                      border: isSelected ? '2px solid #fff' : '2px solid rgba(255,255,255,.9)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: 13, fontWeight: 700,
-                      boxShadow: '0 1px 3px rgba(0,0,0,.3)',
-                    }}>
-                      {isSelected && '✓'}
-                    </div>
-                  )}
-                  {/* Indicateur "mes photos" en mode selection (pour qu'on sache lesquelles sont supprimables) */}
-                  {selectionMode && isMine && !isSelected && (
-                    <div style={{
-                      position: 'absolute', bottom: 4, left: 4,
-                      width: 6, height: 6, borderRadius: '50%',
-                      background: p.membre_couleur || 'var(--forest)',
-                      boxShadow: '0 0 0 1.5px rgba(255,255,255,.9)',
-                    }} />
-                  )}
-                  {/* Overlay upload en cours (optimistic UI) */}
-                  {p._pending && (
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: 'rgba(0,0,0,.35)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      pointerEvents: 'none',
-                    }}>
-                      <div style={{
-                        width: 22, height: 22, borderRadius: '50%',
-                        border: '2.5px solid rgba(255,255,255,.35)',
-                        borderTopColor: '#fff',
-                        animation: 'crew-spin 0.8s linear infinite',
-                      }} />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {photos.map((p, idx) => (
+              <PhotoTile
+                key={p.id}
+                photo={p}
+                idx={idx}
+                isSelected={selectedIds.has(p.id)}
+                isMine={p.membre_id === membre.id}
+                selectionMode={selectionMode}
+                onPointerDown={onPhotoPointerDown}
+                onPointerUp={clearLongPress}
+                onClick={onPhotoClick}
+              />
+            ))}
           </div>
         )}
       </div>
