@@ -26,7 +26,7 @@ export default function Home() {
           </div>
           <div>
             <div style={{fontSize:16,fontWeight:700}}>Mes trips</div>
-            <div style={{fontSize:12,color:'var(--text-2)',fontWeight:400,marginTop:2}}>Créateurs et participants</div>
+            <div style={{fontSize:12,color:'var(--text-2)',fontWeight:400,marginTop:2}}>Administrateurs et participants</div>
           </div>
           <div style={{marginLeft:'auto',fontSize:20,color:'var(--text-3)'}}>›</div>
         </button>

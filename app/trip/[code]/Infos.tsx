@@ -394,7 +394,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           {tripDate && <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:5}}>{tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}</div>}
         </div>
         {cd && (
-          <div style={{marginTop:10,background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,textAlign:'center'}}>
+          <div style={{marginTop:8,fontSize:13,color:'rgba(255,255,255,.7)',fontWeight:600}}>
             {cd}
           </div>
         )}
@@ -413,8 +413,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               {isCreateur && (
                 <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
-                  style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-                  {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
+                  aria-label={editLodge?'Fermer':haslodge?'Modifier':'Ajouter'}
+                  style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,border:'1px solid rgba(22,163,74,.3)',background:'rgba(22,163,74,.1)',color:'#16A34A',cursor:'pointer',padding:0}}>
+                  <SvgIcon name={editLodge?'close':haslodge?'edit':'plus'} size={16} />
                 </button>
               )}
               <span style={{color:'var(--text-3)',transition:'transform .2s',display:'inline-flex',alignItems:'center',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}><SvgIcon name="chevronDown" size={18} /></span>
