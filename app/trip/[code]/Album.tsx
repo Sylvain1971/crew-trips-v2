@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageCompression'
 import type { Message, Membre, Trip } from '@/lib/types'
+import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 
 const MAX_PHOTOS = 100
 const WARN_THRESHOLD = 90
@@ -30,6 +31,7 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
 
   // Lightbox
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
+  const [isZoomed, setIsZoomed] = useState(false)
 
   // Mode selection
   const [selectionMode, setSelectionMode] = useState(false)
@@ -255,9 +257,9 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
   }, [selectionMode])
 
   // --- Navigation lightbox ---
-  const closeLightbox = () => setLightboxIdx(null)
-  const lightboxPrev = () => setLightboxIdx(i => i === null ? null : Math.max(0, i - 1))
-  const lightboxNext = () => setLightboxIdx(i => i === null ? null : Math.min(photos.length - 1, i + 1))
+  const closeLightbox = () => { setLightboxIdx(null); setIsZoomed(false) }
+  const lightboxPrev = () => { setLightboxIdx(i => i === null ? null : Math.max(0, i - 1)); setIsZoomed(false) }
+  const lightboxNext = () => { setLightboxIdx(i => i === null ? null : Math.min(photos.length - 1, i + 1)); setIsZoomed(false) }
 
   const currentLightboxPhoto = lightboxIdx !== null ? photos[lightboxIdx] : null
   const selectedCount = selectedIds.size
@@ -560,20 +562,44 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
               }}>×</button>
           </div>
 
-          {/* Photo */}
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 12, minHeight: 0, position: 'relative',
-          }}>
-            <img
-              src={currentLightboxPhoto.image_url!}
-              alt={currentLightboxPhoto.contenu || ''}
-              onClick={e => e.stopPropagation()}
-              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4 }}
-            />
+          {/* Photo avec zoom (react-zoom-pan-pinch : pinch mobile, double-tap, pan) */}
+          <div
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              minHeight: 0, position: 'relative', overflow: 'hidden',
+            }}>
+            <TransformWrapper
+              key={lightboxIdx}
+              initialScale={1}
+              minScale={1}
+              maxScale={4}
+              doubleClick={{ mode: 'toggle', step: 1.5 }}
+              wheel={{ step: 0.15 }}
+              pinch={{ step: 5 }}
+              panning={{ velocityDisabled: true }}
+              onTransform={(_ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number }) => setIsZoomed(state.scale > 1.02)}
+            >
+              <TransformComponent
+                wrapperStyle={{ width: '100%', height: '100%' }}
+                contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <img
+                  src={currentLightboxPhoto.image_url!}
+                  alt={currentLightboxPhoto.contenu || ''}
+                  onClick={e => e.stopPropagation()}
+                  draggable={false}
+                  style={{
+                    maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4,
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    WebkitTouchCallout: 'none',
+                  }}
+                />
+              </TransformComponent>
+            </TransformWrapper>
 
-            {/* Fleche precedente */}
-            {lightboxIdx !== null && lightboxIdx > 0 && (
+            {/* Fleche precedente — cachee quand zoome */}
+            {!isZoomed && lightboxIdx !== null && lightboxIdx > 0 && (
               <button
                 onClick={e => { e.stopPropagation(); lightboxPrev() }}
                 aria-label="Précédente"
@@ -582,11 +608,12 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
                   width: 40, height: 40, borderRadius: '50%', border: 'none',
                   background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 5,
                 }}>‹</button>
             )}
 
-            {/* Fleche suivante */}
-            {lightboxIdx !== null && lightboxIdx < photos.length - 1 && (
+            {/* Fleche suivante — cachee quand zoome */}
+            {!isZoomed && lightboxIdx !== null && lightboxIdx < photos.length - 1 && (
               <button
                 onClick={e => { e.stopPropagation(); lightboxNext() }}
                 aria-label="Suivante"
@@ -595,6 +622,7 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
                   width: 40, height: 40, borderRadius: '50%', border: 'none',
                   background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 5,
                 }}>›</button>
             )}
           </div>
