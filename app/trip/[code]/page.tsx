@@ -101,7 +101,7 @@ export default function TripPage({ params: paramsPromise }: { params: Promise<{ 
 
       <div style={{ flex: 1, overflow: tab === 'album' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
         {tab === 'infos' && <Infos trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
-        {tab === 'album' && <Album tripId={trip.id} trip={trip} membre={membre} />}
+        {tab === 'album' && <Album tripId={trip.id} trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
         {tab === 'membres' && <Membres trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
       </div>
 

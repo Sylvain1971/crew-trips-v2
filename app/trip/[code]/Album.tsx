@@ -15,7 +15,7 @@ const thumbUrl = (url: string, w = 600) =>
 
 type PendingPhoto = { file: File; preview: string }
 
-export default function Album({ tripId, trip, membre }: { tripId: string, trip: Trip, membre: Membre }) {
+export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: string, trip: Trip, membre: Membre, onTripUpdate: (t: Partial<Trip>) => void }) {
   // can_post_photos: default true si undefined (retrocompat)
   const canPostPhotos = membre.is_createur || trip.can_post_photos !== false
 
@@ -38,6 +38,48 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const longPressTriggered = useRef(false)
+
+  // Partage (creator only) — sheet "Partager l'album"
+  const [shareSheetOpen, setShareSheetOpen] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+  const [generatingShare, setGeneratingShare] = useState(false)
+
+  async function generateShareToken() {
+    if (generatingShare) return
+    setGeneratingShare(true)
+    try {
+      const token = crypto.randomUUID()
+      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      if (error) throw error
+      onTripUpdate({ share_token: token })
+    } catch (e: unknown) {
+      alert('Erreur lors de la génération du lien : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  async function regenerateShareToken() {
+    if (!confirm("Régénérer le lien ? L'ancien lien ne fonctionnera plus et toute personne qui l'a reçu perdra l'accès.")) return
+    if (generatingShare) return
+    setGeneratingShare(true)
+    try {
+      const token = crypto.randomUUID()
+      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      if (error) throw error
+      onTripUpdate({ share_token: token })
+    } catch (e: unknown) {
+      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setGeneratingShare(false)
+    }
+  }
+
+  function copyShareLink() {
+    if (!trip.share_token) return
+    navigator.clipboard.writeText(`${window.location.origin}/album/${trip.share_token}`)
+    setShareCopied(true); setTimeout(() => setShareCopied(false), 3000)
+  }
 
   // Chargement initial : toutes les photos (max 100, order desc pour avoir les + recentes en haut)
   useEffect(() => {
@@ -293,13 +335,27 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
         </div>
       )}
 
-      {/* Bouton Selectionner (quand hors mode selection ET album non vide) */}
-      {!selectionMode && photos.length > 0 && (
-        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={() => enterSelectionMode()}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
-            Sélectionner
-          </button>
+      {/* Toolbar haut : Partager (createur) + Selectionner (hors mode selection) */}
+      {!selectionMode && (membre.is_createur || photos.length > 0) && (
+        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          {membre.is_createur ? (
+            <button onClick={() => setShareSheetOpen(true)}
+              aria-label="Partager l'album"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              Partager
+            </button>
+          ) : <span />}
+          {photos.length > 0 && (
+            <button onClick={() => enterSelectionMode()}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
+              Sélectionner
+            </button>
+          )}
         </div>
       )}
 
@@ -639,6 +695,61 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
             </div>
           )}
         </div>
+      )}
+
+      {/* Sheet de partage — createur only */}
+      {shareSheetOpen && (
+        <>
+          <div className="overlay open" onClick={() => setShareSheetOpen(false)} />
+          <div className="sheet open" onClick={e => e.stopPropagation()} style={{ zIndex: 71 }}>
+            <div className="sheet-handle" />
+            <div className="sheet-title">Partager l&apos;album</div>
+            {!trip.share_token && (
+              <>
+                <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.5 }}>
+                  Génère un lien public en lecture seule. Toute personne avec ce lien pourra voir les photos sans avoir à rejoindre le trip.
+                </div>
+                <button onClick={generateShareToken} disabled={generatingShare}
+                  style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none',
+                    background: generatingShare ? 'var(--border)' : 'var(--forest)',
+                    color: '#fff', fontWeight: 600, fontSize: 15, cursor: generatingShare ? 'default' : 'pointer' }}>
+                  {generatingShare ? 'Génération…' : '🔗 Générer un lien de partage'}
+                </button>
+              </>
+            )}
+            {trip.share_token && (
+              <>
+                <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 10, lineHeight: 1.5 }}>
+                  Toute personne avec ce lien peut consulter l&apos;album en lecture seule.
+                </div>
+                <div style={{ background: 'var(--sand)', borderRadius: 10, padding: '10px 12px', fontSize: 12,
+                  color: 'var(--text-2)', fontFamily: 'monospace', marginBottom: 12, wordBreak: 'break-all',
+                  border: '1px solid var(--border)' }}>
+                  {typeof window !== 'undefined' ? `${window.location.origin}/album/${trip.share_token}` : `/album/${trip.share_token}`}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                  <button onClick={copyShareLink}
+                    style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none',
+                      background: shareCopied ? 'var(--green)' : 'var(--forest)',
+                      color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'background .2s' }}>
+                    {shareCopied ? '✓ Copié !' : '📋 Copier le lien'}
+                  </button>
+                  <button onClick={regenerateShareToken} disabled={generatingShare}
+                    style={{ padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border)',
+                      background: '#fff', color: 'var(--text-2)', fontWeight: 600, fontSize: 14,
+                      cursor: generatingShare ? 'default' : 'pointer' }}>
+                    {generatingShare ? '…' : '🔄 Régénérer'}
+                  </button>
+                </div>
+              </>
+            )}
+            <button onClick={() => setShareSheetOpen(false)}
+              style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid var(--border)',
+                background: 'transparent', color: 'var(--text-2)', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        </>
       )}
 
     </div>
