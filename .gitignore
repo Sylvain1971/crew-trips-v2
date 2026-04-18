@@ -42,4 +42,6 @@ next-env.d.ts
 
 # local utility scripts (machine-specific)
 _*.bat
+_*.txt
+_*.cjs
 *.log
