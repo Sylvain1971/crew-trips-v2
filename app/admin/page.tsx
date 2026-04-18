@@ -93,8 +93,8 @@ export default function AdminPage() {
 
   if (!auth) return (
     <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
-      <a href="/" style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 10, padding: '8px 14px', color: 'rgba(255,255,255,.7)', fontSize: 14, textDecoration: 'none', fontWeight: 600 }}>
-        ← Accueil
+      <a href="/mes-trips" style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 10, padding: '8px 14px', color: 'rgba(255,255,255,.7)', fontSize: 14, textDecoration: 'none', fontWeight: 600 }}>
+        ← Mes trips
       </a>
       <div style={{ width: '100%', maxWidth: 340, background: 'rgba(255,255,255,.06)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
@@ -130,7 +130,7 @@ export default function AdminPage() {
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length !== 1 ? 's' : ''} actif{trips.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <a href="/" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>← Accueil</a>
+            <a href="/mes-trips" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>← Mes trips</a>
             <button onClick={() => setAuth(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>Déconnexion</button>
           </div>
         </div>
