@@ -1,11 +1,15 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, memo } from 'react'
+import dynamic from 'next/dynamic'
 import { supabase } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import type { Message, Membre, Trip } from '@/lib/types'
-import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 import { SvgIcon } from '@/lib/svgIcons'
+
+// Lightbox chargee uniquement quand on ouvre une photo (evite ~18KB gzip de
+// react-zoom-pan-pinch dans le bundle initial de la grille)
+const Lightbox = dynamic(() => import('./Lightbox'), { ssr: false })
 
 const MAX_PHOTOS = 100
 const WARN_THRESHOLD = 90
@@ -125,7 +129,6 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   // Lightbox
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
   const [isZoomed, setIsZoomed] = useState(false)
-  const transformRef = useRef<ReactZoomPanPinchRef | null>(null)
 
   // Mode selection
   const [selectionMode, setSelectionMode] = useState(false)
@@ -259,13 +262,6 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       set.clear()
     }
   }, [])
-
-  // Reset zoom quand on change de photo dans la lightbox (sans re-mount du TransformWrapper)
-  useEffect(() => {
-    if (lightboxIdx !== null && transformRef.current) {
-      transformRef.current.resetTransform()
-    }
-  }, [lightboxIdx])
 
   // --- Upload multi-photos ---
   function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
@@ -495,7 +491,6 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   const lightboxPrev = () => { setLightboxIdx(i => i === null ? null : Math.max(0, i - 1)); setIsZoomed(false) }
   const lightboxNext = () => { setLightboxIdx(i => i === null ? null : Math.min(photos.length - 1, i + 1)); setIsZoomed(false) }
 
-  const currentLightboxPhoto = lightboxIdx !== null ? photos[lightboxIdx] : null
   const selectedCount = selectedIds.size
   const selectedMineCount = photos.filter(p => selectedIds.has(p.id) && p.membre_id === membre.id).length
 
@@ -760,125 +755,17 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
         </div>
       )}
 
-      {/* Lightbox plein ecran avec swipe entre photos */}
-      {currentLightboxPhoto && (
-        <div
-          onClick={closeLightbox}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(0,0,0,.95)',
-            zIndex: 200, display: 'flex', flexDirection: 'column',
-            paddingTop: 'env(safe-area-inset-top,0)',
-            paddingBottom: 'env(safe-area-inset-bottom,0)',
-          }}>
-
-          {/* Header avec nom du membre + close */}
-          <div onClick={e => e.stopPropagation()}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '10px 16px', color: '#fff', flexShrink: 0,
-            }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: '50%',
-              background: `${currentLightboxPhoto.membre_couleur || '#888'}`,
-              color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, flexShrink: 0,
-            }}>
-              {(currentLightboxPhoto.membre_prenom || '?')[0].toUpperCase()}
-            </div>
-            <div style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>
-              {currentLightboxPhoto.membre_prenom || 'Inconnu'}
-            </div>
-            <button onClick={closeLightbox}
-              aria-label="Fermer"
-              style={{
-                width: 36, height: 36, borderRadius: '50%', border: 'none',
-                background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 20,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>×</button>
-          </div>
-
-          {/* Photo avec zoom (react-zoom-pan-pinch : pinch mobile, double-tap, pan) */}
-          <div
-            style={{
-              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              minHeight: 0, position: 'relative', overflow: 'hidden',
-            }}>
-            <TransformWrapper
-              ref={transformRef}
-              initialScale={1}
-              minScale={1}
-              maxScale={4}
-              doubleClick={{ mode: 'toggle', step: 1.5 }}
-              wheel={{ step: 0.15 }}
-              pinch={{ step: 5 }}
-              panning={{ velocityDisabled: true }}
-              onTransform={(_ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number }) => setIsZoomed(state.scale > 1.02)}
-            >
-              <TransformComponent
-                wrapperStyle={{ width: '100%', height: '100%' }}
-                contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <img
-                  src={thumbUrl(currentLightboxPhoto.image_url!, 1600)}
-                  alt={currentLightboxPhoto.contenu || ''}
-                  onClick={e => e.stopPropagation()}
-                  draggable={false}
-                  style={{
-                    maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4,
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  }}
-                />
-              </TransformComponent>
-            </TransformWrapper>
-
-            {/* Fleche precedente — cachee quand zoome */}
-            {!isZoomed && lightboxIdx !== null && lightboxIdx > 0 && (
-              <button
-                onClick={e => { e.stopPropagation(); lightboxPrev() }}
-                aria-label="Précédente"
-                style={{
-                  position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-                  width: 40, height: 40, borderRadius: '50%', border: 'none',
-                  background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  zIndex: 5,
-                }}>‹</button>
-            )}
-
-            {/* Fleche suivante — cachee quand zoome */}
-            {!isZoomed && lightboxIdx !== null && lightboxIdx < photos.length - 1 && (
-              <button
-                onClick={e => { e.stopPropagation(); lightboxNext() }}
-                aria-label="Suivante"
-                style={{
-                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                  width: 40, height: 40, borderRadius: '50%', border: 'none',
-                  background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  zIndex: 5,
-                }}>›</button>
-            )}
-          </div>
-
-          {/* Legende (si presente) */}
-          {/* Légende (si présente) — bandeau bas bien visible */}
-          {currentLightboxPhoto.contenu && (
-            <div onClick={e => e.stopPropagation()}
-              style={{
-                padding: '16px 20px calc(20px + env(safe-area-inset-bottom,0px))',
-                color: '#fff',
-                fontSize: 15, lineHeight: 1.5, flexShrink: 0,
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.95) 100%)',
-                textAlign: 'center',
-                fontWeight: 500,
-                letterSpacing: '.01em',
-              }}>
-              {currentLightboxPhoto.contenu}
-            </div>
-          )}
-        </div>
+      {/* Lightbox plein ecran avec swipe entre photos (chargee dynamiquement) */}
+      {lightboxIdx !== null && (
+        <Lightbox
+          photos={photos}
+          lightboxIdx={lightboxIdx}
+          isZoomed={isZoomed}
+          onZoomChange={setIsZoomed}
+          onClose={closeLightbox}
+          onPrev={lightboxPrev}
+          onNext={lightboxNext}
+        />
       )}
 
       {/* Sheet de partage — createur only */}
