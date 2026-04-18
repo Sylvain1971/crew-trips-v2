@@ -39,6 +39,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   const [contenu, setContenu] = useState('')
   const [lien, setLien] = useState('')
   const [pdfFile, setPdfFile] = useState<File|null>(null)
+  const [isPrive, setIsPrive] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -50,6 +51,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   const [editContenu, setEditContenu] = useState('')
   const [editLien, setEditLien] = useState('')
   const [editPdfFile, setEditPdfFile] = useState<File|null>(null)
+  const [editIsPrive, setEditIsPrive] = useState(false)
   const [editFichierRemoved, setEditFichierRemoved] = useState(false)
   const [editUploading, setEditUploading] = useState(false)
   const [savingEdit, setSavingEdit] = useState(false)
@@ -96,14 +98,16 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
   // Cards filtrées/triées — memo sur [cards, filtre] pour éviter le recalcul à chaque render
   const filtered = useMemo(() => {
-    if (filtre !== 'all') return cards.filter(c => c.categorie === filtre)
-    return [...cards].sort((a, b) => {
+    // Filtrage privé: cacher les cards privées dont on n'est pas l'auteur
+    const visibles = cards.filter(c => !c.is_prive || c.auteur_id === membre.id)
+    if (filtre !== 'all') return visibles.filter(c => c.categorie === filtre)
+    return [...visibles].sort((a, b) => {
       const ai = CAT_ORDER.indexOf(a.categorie)
       const bi = CAT_ORDER.indexOf(b.categorie)
       if (ai !== bi) return ai - bi
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     })
-  }, [cards, filtre])
+  }, [cards, filtre, membre.id])
 
   // Upload fichier
   const uploadFichier = useCallback(async (file: File): Promise<string|null> => {
@@ -143,11 +147,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         fichier_url: fichier_url || undefined,
         membre_prenom: undefined,
         created_at: new Date().toISOString(),
+        is_prive: isPrive,
+        auteur_id: membre.id,
       }
       setCards(p => [...p, optimisticCard])
       // Snapshot pour rollback des champs si échec
-      const snapshot = { titre, contenu, lien, pdfFile, cat }
-      setTitre(''); setContenu(''); setLien(''); setPdfFile(null)
+      const snapshot = { titre, contenu, lien, pdfFile, cat, isPrive }
+      setTitre(''); setContenu(''); setLien(''); setPdfFile(null); setIsPrive(false)
       setSheetOpen(false)
 
       try {
@@ -155,6 +161,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           trip_id: trip.id, categorie: cat, titre: snapshot.titre.trim(),
           contenu: snapshot.contenu.trim()||null, lien: snapshot.lien.trim()||null, fichier_url,
           membre_prenom: null,
+          is_prive: snapshot.isPrive, auteur_id: membre.id,
         }).select().single())
         if (error) throw error
         // Remplacer la temp par la vraie card
@@ -167,6 +174,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         setContenu(snapshot.contenu)
         setLien(snapshot.lien)
         setPdfFile(snapshot.pdfFile)
+        setIsPrive(snapshot.isPrive)
         setSheetOpen(true)
         alert('Erreur lors de l\'ajout : ' + e.message)
       }
@@ -184,6 +192,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setEditLien(card.lien||'')
     setEditPdfFile(null)
     setEditFichierRemoved(false)
+    setEditIsPrive(!!card.is_prive)
   }, [])
 
   async function updateCard() {
@@ -210,11 +219,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         lien: editLien.trim() || undefined,
         fichier_url: fichier_url || undefined,
         membre_prenom: isCreateur ? undefined : membre.prenom,
+        is_prive: editIsPrive,
+        // auteur_id conservé tel quel depuis editCard
       }
 
       // Appliquer immédiatement + fermer le sheet
       setCards(p => p.map(c => c.id === originalCard.id ? optimisticCard : c))
-      setEditCard(null); setEditPdfFile(null); setEditFichierRemoved(false)
+      setEditCard(null); setEditPdfFile(null); setEditFichierRemoved(false); setEditIsPrive(false)
 
       try {
         const { data, error } = await withRetry(() => supabase.from('infos').update({
@@ -222,6 +233,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           contenu: optimisticCard.contenu ?? null, lien: optimisticCard.lien ?? null,
           fichier_url: optimisticCard.fichier_url ?? null,
           membre_prenom: optimisticCard.membre_prenom ?? null,
+          is_prive: optimisticCard.is_prive ?? false,
         }).eq('id', originalCard.id).select().single())
         if (error) throw error
         // Supabase peut renvoyer des valeurs normalisées (timestamps, trimmed...) : on resync
@@ -596,6 +608,16 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           )}
         </div>
         {editUploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%'}}><SvgIcon name="hourglass" size={14} /> Upload en cours…</div>}
+        <button onClick={()=>setEditIsPrive(v=>!v)} style={{width:'100%',padding:'10px 14px',borderRadius:10,border:`1.5px solid ${editIsPrive?'#B45309':'var(--border)'}`,background:editIsPrive?'rgba(180,83,9,.08)':'transparent',color:editIsPrive?'#B45309':'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+          <span style={{display:'inline-flex',width:28,height:28,borderRadius:7,background:editIsPrive?'#B45309':'var(--border)',color:'#fff',alignItems:'center',justifyContent:'center',flexShrink:0}}><SvgIcon name="lock" size={14} /></span>
+          <div style={{flex:1,textAlign:'left',lineHeight:1.3}}>
+            <div style={{fontSize:13,fontWeight:600}}>Carte privée</div>
+            <div style={{fontSize:11,fontWeight:400,color:editIsPrive?'#B45309':'var(--text-3)',marginTop:1}}>Visible par toi uniquement</div>
+          </div>
+          <span style={{display:'inline-flex',width:36,height:20,borderRadius:10,background:editIsPrive?'#B45309':'var(--border)',position:'relative',transition:'background .15s',flexShrink:0}}>
+            <span style={{position:'absolute',top:2,left:editIsPrive?18:2,width:16,height:16,borderRadius:'50%',background:'#fff',transition:'left .15s'}} />
+          </span>
+        </button>
         <button className="btn btn-primary" onClick={updateCard} disabled={savingEdit||!editTitre.trim()}>
           {savingEdit?(editUploading?'Upload…':'Sauvegarde…'):'Sauvegarder'}
         </button>
@@ -654,6 +676,16 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           )}
         </div>
         {uploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%'}}><SvgIcon name="hourglass" size={14} /> Upload en cours…</div>}
+        <button onClick={()=>setIsPrive(v=>!v)} style={{width:'100%',padding:'10px 14px',borderRadius:10,border:`1.5px solid ${isPrive?'#B45309':'var(--border)'}`,background:isPrive?'rgba(180,83,9,.08)':'transparent',color:isPrive?'#B45309':'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
+          <span style={{display:'inline-flex',width:28,height:28,borderRadius:7,background:isPrive?'#B45309':'var(--border)',color:'#fff',alignItems:'center',justifyContent:'center',flexShrink:0}}><SvgIcon name="lock" size={14} /></span>
+          <div style={{flex:1,textAlign:'left',lineHeight:1.3}}>
+            <div style={{fontSize:13,fontWeight:600}}>Carte privée</div>
+            <div style={{fontSize:11,fontWeight:400,color:isPrive?'#B45309':'var(--text-3)',marginTop:1}}>Visible par toi uniquement</div>
+          </div>
+          <span style={{display:'inline-flex',width:36,height:20,borderRadius:10,background:isPrive?'#B45309':'var(--border)',position:'relative',transition:'background .15s',flexShrink:0}}>
+            <span style={{position:'absolute',top:2,left:isPrive?18:2,width:16,height:16,borderRadius:'50%',background:'#fff',transition:'left .15s'}} />
+          </span>
+        </button>
         <button className="btn btn-primary" onClick={save} disabled={saving||!titre.trim()}>
           {saving?(uploading?'Upload…':'Ajout…'):'Ajouter'}
         </button>

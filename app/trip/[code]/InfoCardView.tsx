@@ -1,6 +1,7 @@
 'use client'
 import { getCat, getCatSvg } from '@/lib/types'
 import { getYoutubeId, isPdf, getCatLabel } from '@/lib/utils'
+import { SvgIcon } from '@/lib/svgIcons'
 import type { InfoCard } from '@/lib/types'
 import CardContent from './CardContent'
 
@@ -69,8 +70,13 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
           <div onClick={collapsed && onCardClick ? onCardClick : undefined}
             style={collapsed && onCardClick ? { cursor: 'pointer' } : undefined}>
             <div style={{ fontSize: 10, fontWeight: 700, color: c.color, textTransform: 'uppercase',
-              letterSpacing: '.06em', marginBottom: 3 }}>
-              {getCatLabel(card.categorie, tripType || '') || c.label}
+              letterSpacing: '.06em', marginBottom: 3, display:'inline-flex', alignItems:'center', gap:6 }}>
+              <span>{getCatLabel(card.categorie, tripType || '') || c.label}</span>
+              {card.is_prive && (
+                <span style={{display:'inline-flex',alignItems:'center',gap:3,padding:'1px 6px',borderRadius:4,fontSize:9,background:'rgba(180,83,9,.12)',color:'#B45309',border:'0.5px solid rgba(180,83,9,.3)',letterSpacing:'.04em'}}>
+                  <SvgIcon name="lock" size={9} /> Privée
+                </span>
+              )}
             </div>
             <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', marginBottom: card.contenu ? 4 : 0 }}>
               {card.titre}

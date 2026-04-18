@@ -19,6 +19,7 @@ export interface InfoCard {
   id: string; trip_id: string; categorie: string; titre: string
   contenu?: string; lien?: string; fichier_url?: string
   membre_prenom?: string; created_at: string
+  is_prive?: boolean; auteur_id?: string
 }
 export interface Message {
   id: string; trip_id: string; contenu?: string
