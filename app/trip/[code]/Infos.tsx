@@ -26,14 +26,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   // Navigation
   const { filtre, setFiltre, pushFiltre, pushFiltreAndNavigate } = useNavFiltre()
 
-  // Auto-close de la card Lodge quand on change de filtre (sauf si pinnée)
-  const prevFiltreRef = useRef(filtre)
-  useEffect(() => {
-    if (prevFiltreRef.current !== filtre) {
-      prevFiltreRef.current = filtre
-      setLodgeOpen(open => open && !lodgePinnedRef.current ? false : open)
-    }
-  }, [filtre])
+  // Ref sentinel pour trouver le conteneur scrollable parent (utilisé par l'auto-close Lodge)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   // Cards
   const [cards, setCards] = useState<InfoCard[]>([])
@@ -96,6 +90,30 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       return next
     })
   }, [lodgePinKey])
+
+  // Auto-close de la card Lodge au scroll down (sauf si pinnée)
+  useEffect(() => {
+    if (!lodgeOpen || lodgePinnedRef.current) return
+    // Trouver le conteneur scrollable parent
+    let el: HTMLElement | null = sentinelRef.current?.parentElement ?? null
+    while (el && el !== document.body) {
+      const oy = getComputedStyle(el).overflowY
+      if (oy === 'auto' || oy === 'scroll') break
+      el = el.parentElement
+    }
+    const scroller: HTMLElement | Window = (el && el !== document.body) ? el : window
+    let lastY = scroller instanceof Window ? window.scrollY : (scroller as HTMLElement).scrollTop
+    const onScroll = () => {
+      if (lodgePinnedRef.current) return
+      const y = scroller instanceof Window ? window.scrollY : (scroller as HTMLElement).scrollTop
+      if (y > lastY + 8) {
+        setLodgeOpen(false)
+      }
+      lastY = y
+    }
+    scroller.addEventListener('scroll', onScroll, { passive: true })
+    return () => scroller.removeEventListener('scroll', onScroll)
+  }, [lodgeOpen])
 
   // Modifier trip
   const [editTrip, setEditTrip] = useState(false)
@@ -427,6 +445,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         )}
       </div>
 
+      {/* Sentinel pour détecter le conteneur scrollable parent */}
+      <div ref={sentinelRef} style={{height:0,overflow:'hidden'}} aria-hidden="true" />
+
       {/* Wrapper sticky : header Lodge (compact) + filtres */}
       <div style={{position:'sticky',top:0,zIndex:20,background:'#fff',borderBottom:'1px solid var(--border)'}}>
         {/* Header Lodge (toujours visible) */}
@@ -455,7 +476,11 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                 <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
                   aria-label={editLodge?'Fermer':haslodge?'Modifier':'Ajouter'}
                   style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,border:'1px solid rgba(22,163,74,.3)',background:'rgba(22,163,74,.1)',color:'#16A34A',cursor:'pointer',padding:0}}>
-                  <SvgIcon name={editLodge?'close':haslodge?'edit':'plus'} size={16} />
+                  {editLodge
+                    ? <SvgIcon name="close" size={16} />
+                    : haslodge
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      : <SvgIcon name="plus" size={16} />}
                 </button>
               )}
               <span aria-hidden="true" style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:32,height:32,borderRadius:8,border:'1px solid rgba(22,163,74,.3)',background:'rgba(22,163,74,.1)',color:'#16A34A',transition:'transform .2s',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}>
@@ -491,7 +516,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           {!editLodge && haslodge && (
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,alignItems:'stretch'}}>
               {lodge.nom && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/></svg>} label="Nom" val={lodge.nom} />}
-              {lodge.adresse && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>} label="Adresse" val={lodge.adresse} />}
+              {lodge.adresse && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>} label="Adresse" val={lodge.adresse} link={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(lodge.adresse)}`} />}
               {lodge.tel && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>} label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
               {lodge.wifi && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>} label="Wifi ou code" val={lodge.wifi} />}
               {lodge.arrivee && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>} label="Arrivée" val={lodge.arrivee} />}
@@ -746,7 +771,10 @@ function LodgeItem({icon,label,val,link}:{icon:React.ReactNode,label:string,val:
         {label}
       </div>
       {link
-        ? <a href={link} style={{fontSize:12,fontWeight:600,color:'var(--text)',textDecoration:'none'}}>{val}</a>
+        ? <a href={link} target={link.startsWith('http')?'_blank':undefined} rel={link.startsWith('http')?'noreferrer':undefined} style={{fontSize:12,fontWeight:600,color:'#16A34A',textDecoration:'none',display:'inline-flex',alignItems:'flex-start',gap:4}}>
+            <span>{val}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.6,marginTop:3,flexShrink:0}}><path d="M7 17L17 7M7 7h10v10"/></svg>
+          </a>
         : <div style={{fontSize:12,fontWeight:600,color:'var(--text)'}}>{val}</div>}
     </div>
   )
