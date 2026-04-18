@@ -254,10 +254,68 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
     }
   }, [selectionMode])
 
+  // --- Zoom / pan du lightbox (double-tap to zoom) ---
+  // Etat zoom : scale=1 -> taille normale, scale=2.5 -> zoome. offset en px d'ecran.
+  const ZOOM_OFF = { scale: 1, x: 0, y: 0 }
+  const ZOOM_IN = 2.5
+  const [zoom, setZoom] = useState(ZOOM_OFF)
+  const lastTapTime = useRef(0)
+  const panStart = useRef<{ x: number, y: number, ox: number, oy: number } | null>(null)
+  const imgContainerRef = useRef<HTMLDivElement>(null)
+
+  // Gestionnaire tap sur l'image : double-tap < 300ms = toggle zoom, single-tap zoomé = dézoom
+  const onImageTap = useCallback((e: React.MouseEvent<HTMLImageElement> | React.TouchEvent<HTMLImageElement>) => {
+    e.stopPropagation()
+    const now = Date.now()
+    const isDoubleTap = now - lastTapTime.current < 300
+    lastTapTime.current = now
+
+    if (isDoubleTap) {
+      // Double-tap : toggle zoom
+      if (zoom.scale > 1) {
+        setZoom(ZOOM_OFF)
+      } else {
+        // Zoomer centre sur le point tape (relatif au conteneur)
+        const container = imgContainerRef.current
+        if (!container) { setZoom({ scale: ZOOM_IN, x: 0, y: 0 }); return }
+        const rect = container.getBoundingClientRect()
+        const clientX = 'touches' in e ? (e.changedTouches[0]?.clientX ?? rect.left + rect.width/2) : e.clientX
+        const clientY = 'touches' in e ? (e.changedTouches[0]?.clientY ?? rect.top + rect.height/2) : e.clientY
+        // Decalage a appliquer pour que le point tape reste visuellement au meme endroit
+        const centerX = rect.left + rect.width / 2
+        const centerY = rect.top + rect.height / 2
+        const offsetX = (centerX - clientX) * (ZOOM_IN - 1)
+        const offsetY = (centerY - clientY) * (ZOOM_IN - 1)
+        setZoom({ scale: ZOOM_IN, x: offsetX, y: offsetY })
+      }
+    } else if (zoom.scale > 1) {
+      // Tap simple quand zoome : dezoom (ne ferme pas)
+      setZoom(ZOOM_OFF)
+    }
+    // Tap simple quand pas zoome : on laisse passer (ferme le lightbox via le parent)
+  }, [zoom.scale])
+
+  // Pan (drag) quand zoome — desktop mouse + mobile touch
+  const onPanStart = useCallback((clientX: number, clientY: number) => {
+    if (zoom.scale === 1) return
+    panStart.current = { x: clientX, y: clientY, ox: zoom.x, oy: zoom.y }
+  }, [zoom])
+
+  const onPanMove = useCallback((clientX: number, clientY: number) => {
+    if (!panStart.current || zoom.scale === 1) return
+    const dx = clientX - panStart.current.x
+    const dy = clientY - panStart.current.y
+    setZoom(z => ({ ...z, x: panStart.current!.ox + dx, y: panStart.current!.oy + dy }))
+  }, [zoom.scale])
+
+  const onPanEnd = useCallback(() => {
+    panStart.current = null
+  }, [])
+
   // --- Navigation lightbox ---
-  const closeLightbox = () => setLightboxIdx(null)
-  const lightboxPrev = () => setLightboxIdx(i => i === null ? null : Math.max(0, i - 1))
-  const lightboxNext = () => setLightboxIdx(i => i === null ? null : Math.min(photos.length - 1, i + 1))
+  const closeLightbox = () => { setLightboxIdx(null); setZoom(ZOOM_OFF) }
+  const lightboxPrev = () => { setLightboxIdx(i => i === null ? null : Math.max(0, i - 1)); setZoom(ZOOM_OFF) }
+  const lightboxNext = () => { setLightboxIdx(i => i === null ? null : Math.min(photos.length - 1, i + 1)); setZoom(ZOOM_OFF) }
 
   const currentLightboxPhoto = lightboxIdx !== null ? photos[lightboxIdx] : null
   const selectedCount = selectedIds.size
@@ -560,20 +618,42 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
               }}>×</button>
           </div>
 
-          {/* Photo */}
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 12, minHeight: 0, position: 'relative',
-          }}>
+          {/* Photo (avec support double-tap zoom + pan) */}
+          <div
+            ref={imgContainerRef}
+            onMouseDown={e => { e.stopPropagation(); onPanStart(e.clientX, e.clientY) }}
+            onMouseMove={e => { if (panStart.current) { e.stopPropagation(); onPanMove(e.clientX, e.clientY) } }}
+            onMouseUp={e => { if (panStart.current) { e.stopPropagation(); onPanEnd() } }}
+            onMouseLeave={onPanEnd}
+            onTouchStart={e => { e.stopPropagation(); const t = e.touches[0]; if (t) onPanStart(t.clientX, t.clientY) }}
+            onTouchMove={e => { if (panStart.current) { e.stopPropagation(); const t = e.touches[0]; if (t) onPanMove(t.clientX, t.clientY) } }}
+            onTouchEnd={e => { if (panStart.current) { e.stopPropagation(); onPanEnd() } }}
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 12, minHeight: 0, position: 'relative',
+              overflow: 'hidden',
+              cursor: zoom.scale > 1 ? (panStart.current ? 'grabbing' : 'grab') : 'default',
+              touchAction: zoom.scale > 1 ? 'none' : 'auto',
+            }}>
             <img
               src={currentLightboxPhoto.image_url!}
               alt={currentLightboxPhoto.contenu || ''}
-              onClick={e => e.stopPropagation()}
-              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4 }}
+              onClick={onImageTap}
+              draggable={false}
+              style={{
+                maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 4,
+                transform: `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`,
+                transformOrigin: 'center center',
+                transition: panStart.current ? 'none' : 'transform .22s ease-out',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none',
+                willChange: 'transform',
+              }}
             />
 
-            {/* Fleche precedente */}
-            {lightboxIdx !== null && lightboxIdx > 0 && (
+            {/* Fleche precedente — cachee quand zoome */}
+            {zoom.scale === 1 && lightboxIdx !== null && lightboxIdx > 0 && (
               <button
                 onClick={e => { e.stopPropagation(); lightboxPrev() }}
                 aria-label="Précédente"
@@ -585,8 +665,8 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
                 }}>‹</button>
             )}
 
-            {/* Fleche suivante */}
-            {lightboxIdx !== null && lightboxIdx < photos.length - 1 && (
+            {/* Fleche suivante — cachee quand zoome */}
+            {zoom.scale === 1 && lightboxIdx !== null && lightboxIdx < photos.length - 1 && (
               <button
                 onClick={e => { e.stopPropagation(); lightboxNext() }}
                 aria-label="Suivante"
