@@ -609,14 +609,14 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           )}
         </div>
         {editUploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%'}}><SvgIcon name="hourglass" size={14} /> Upload en cours…</div>}
-        <button onClick={()=>setEditIsPrive(v=>!v)} style={{width:'100%',padding:'10px 14px',borderRadius:10,border:`1.5px solid ${editIsPrive?'#B45309':'var(--border)'}`,background:editIsPrive?'rgba(180,83,9,.08)':'transparent',color:editIsPrive?'#B45309':'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-          <span style={{display:'inline-flex',width:28,height:28,borderRadius:7,background:editIsPrive?'#B45309':'var(--border)',color:'#fff',alignItems:'center',justifyContent:'center',flexShrink:0}}><SvgIcon name="lock" size={14} /></span>
+        <button onClick={()=>setEditIsPrive(v=>!v)} style={{width:'100%',padding:'12px 14px',borderRadius:12,border:`1.5px solid ${editIsPrive?'#B45309':'var(--border)'}`,background:editIsPrive?'rgba(180,83,9,.08)':'transparent',color:editIsPrive?'#B45309':'var(--text-2)',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+          <span style={{display:'inline-flex',width:36,height:36,borderRadius:9,background:editIsPrive?'#B45309':'var(--border)',color:'#fff',alignItems:'center',justifyContent:'center',flexShrink:0}}><SvgIcon name="lock" size={18} /></span>
           <div style={{flex:1,textAlign:'left',lineHeight:1.3}}>
-            <div style={{fontSize:13,fontWeight:600}}>Carte privée</div>
-            <div style={{fontSize:11,fontWeight:400,color:editIsPrive?'#B45309':'var(--text-3)',marginTop:1}}>Visible par toi uniquement</div>
+            <div style={{fontSize:15,fontWeight:700}}>Carte privée</div>
+            <div style={{fontSize:12,fontWeight:400,color:editIsPrive?'#B45309':'var(--text-3)',marginTop:2}}>Visible par toi uniquement</div>
           </div>
-          <span style={{display:'inline-flex',width:36,height:20,borderRadius:10,background:editIsPrive?'#B45309':'var(--border)',position:'relative',transition:'background .15s',flexShrink:0}}>
-            <span style={{position:'absolute',top:2,left:editIsPrive?18:2,width:16,height:16,borderRadius:'50%',background:'#fff',transition:'left .15s'}} />
+          <span style={{display:'inline-flex',width:44,height:24,borderRadius:12,background:editIsPrive?'#B45309':'var(--border)',position:'relative',transition:'background .15s',flexShrink:0}}>
+            <span style={{position:'absolute',top:2,left:editIsPrive?22:2,width:20,height:20,borderRadius:'50%',background:'#fff',transition:'left .15s'}} />
           </span>
         </button>
         <button className="btn btn-primary" onClick={updateCard} disabled={savingEdit||!editTitre.trim()}>
@@ -677,14 +677,14 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           )}
         </div>
         {uploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%'}}><SvgIcon name="hourglass" size={14} /> Upload en cours…</div>}
-        <button onClick={()=>setIsPrive(v=>!v)} style={{width:'100%',padding:'10px 14px',borderRadius:10,border:`1.5px solid ${isPrive?'#B45309':'var(--border)'}`,background:isPrive?'rgba(180,83,9,.08)':'transparent',color:isPrive?'#B45309':'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:10,marginBottom:10}}>
-          <span style={{display:'inline-flex',width:28,height:28,borderRadius:7,background:isPrive?'#B45309':'var(--border)',color:'#fff',alignItems:'center',justifyContent:'center',flexShrink:0}}><SvgIcon name="lock" size={14} /></span>
+        <button onClick={()=>setIsPrive(v=>!v)} style={{width:'100%',padding:'12px 14px',borderRadius:12,border:`1.5px solid ${isPrive?'#B45309':'var(--border)'}`,background:isPrive?'rgba(180,83,9,.08)':'transparent',color:isPrive?'#B45309':'var(--text-2)',fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+          <span style={{display:'inline-flex',width:36,height:36,borderRadius:9,background:isPrive?'#B45309':'var(--border)',color:'#fff',alignItems:'center',justifyContent:'center',flexShrink:0}}><SvgIcon name="lock" size={18} /></span>
           <div style={{flex:1,textAlign:'left',lineHeight:1.3}}>
-            <div style={{fontSize:13,fontWeight:600}}>Carte privée</div>
-            <div style={{fontSize:11,fontWeight:400,color:isPrive?'#B45309':'var(--text-3)',marginTop:1}}>Visible par toi uniquement</div>
+            <div style={{fontSize:15,fontWeight:700}}>Carte privée</div>
+            <div style={{fontSize:12,fontWeight:400,color:isPrive?'#B45309':'var(--text-3)',marginTop:2}}>Visible par toi uniquement</div>
           </div>
-          <span style={{display:'inline-flex',width:36,height:20,borderRadius:10,background:isPrive?'#B45309':'var(--border)',position:'relative',transition:'background .15s',flexShrink:0}}>
-            <span style={{position:'absolute',top:2,left:isPrive?18:2,width:16,height:16,borderRadius:'50%',background:'#fff',transition:'left .15s'}} />
+          <span style={{display:'inline-flex',width:44,height:24,borderRadius:12,background:isPrive?'#B45309':'var(--border)',position:'relative',transition:'background .15s',flexShrink:0}}>
+            <span style={{position:'absolute',top:2,left:isPrive?22:2,width:20,height:20,borderRadius:'50%',background:'#fff',transition:'left .15s'}} />
           </span>
         </button>
         <button className="btn btn-primary" onClick={save} disabled={saving||!titre.trim()}>
