@@ -1,4 +1,3 @@
-import JSZip from 'jszip'
 import type { Message } from './types'
 
 // Sanitize pour filename : retire caractères interdits Windows/Mac + limite longueur
@@ -46,6 +45,9 @@ export async function downloadAlbumAsZip(
 ): Promise<void> {
   if (photos.length === 0) return
 
+  // jszip charge dynamiquement (~40 KB gzip) : seulement quand l'utilisateur
+  // clique "Telecharger tout", pas dans le bundle initial de l'Album
+  const { default: JSZip } = await import('jszip')
   const zip = new JSZip()
   let done = 0
 
