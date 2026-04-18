@@ -562,7 +562,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                 fontSize: 14, fontWeight: 600,
                 cursor: sending ? 'default' : 'pointer',
               }}>
-              {sending ? 'Envoi…' : 'Envoyer'}
+              {sending ? 'Ajout…' : 'Ajouter'}
             </button>
           </div>
 
@@ -738,12 +738,17 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           </div>
 
           {/* Legende (si presente) */}
+          {/* Légende (si présente) — bandeau bas bien visible */}
           {currentLightboxPhoto.contenu && (
             <div onClick={e => e.stopPropagation()}
               style={{
-                padding: '10px 16px 16px', color: '#fff',
-                fontSize: 14, lineHeight: 1.5, flexShrink: 0,
-                background: 'rgba(0,0,0,.3)',
+                padding: '16px 20px calc(20px + env(safe-area-inset-bottom,0px))',
+                color: '#fff',
+                fontSize: 15, lineHeight: 1.5, flexShrink: 0,
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.95) 100%)',
+                textAlign: 'center',
+                fontWeight: 500,
+                letterSpacing: '.01em',
               }}>
               {currentLightboxPhoto.contenu}
             </div>
