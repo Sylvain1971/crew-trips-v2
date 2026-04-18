@@ -10,6 +10,7 @@ type IconName =
   | 'link' | 'chat' | 'camera' | 'clipboard' | 'refresh'
   | 'lock' | 'settings' | 'trash' | 'alert' | 'chevronDown'
   | 'hourglass' | 'pin' | 'calendar' | 'star' | 'check' | 'plane'
+  | 'key' | 'phone' | 'users'
 
 export function SvgIcon({ name, size = 16 }: { name: IconName; size?: number }) {
   const a = { width: size, height: size, viewBox: '0 0 24 24', fill: 'currentColor' }
@@ -47,6 +48,12 @@ export function SvgIcon({ name, size = 16 }: { name: IconName; size?: number }) 
       return <svg {...a}><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
     case 'plane':
       return <svg {...a}><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+    case 'key':
+      return <svg {...a}><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>
+    case 'phone':
+      return <svg {...a}><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+    case 'users':
+      return <svg {...a}><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
     default: return null
   }
 }

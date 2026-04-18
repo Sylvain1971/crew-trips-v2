@@ -3,6 +3,7 @@ import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat, getCatSvg } from '@/lib/types'
 import { getCatLabel, getLodgeLabel } from '@/lib/utils'
+import { SvgIcon } from '@/lib/svgIcons'
 import CardContent from '../CardContent'
 import type { Trip, InfoCard } from '@/lib/types'
 
@@ -194,24 +195,27 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           <div className="trip-title">{trip.nom}</div>
           {(trip.destination || dateDebut) && (
             <div className="trip-sub">
-              {trip.destination && <span>📍 {trip.destination}</span>}
+              {trip.destination && <span style={{display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="pin" size={13} /> {trip.destination}</span>}
               {trip.destination && dateDebut && <span style={{ margin: '0 8px' }}>·</span>}
-              {dateDebut && <span>📅 {dateDebut}{dateFin ? ` → ${dateFin}` : ''}</span>}
+              {dateDebut && <span style={{display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="calendar" size={13} /> {dateDebut}{dateFin ? ` → ${dateFin}` : ''}</span>}
             </div>
           )}
-          <div className="trip-link">🔗 <a href={tripUrl}>{tripUrl}</a></div>
+          <div className="trip-link" style={{display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="link" size={13} /> <a href={tripUrl}>{tripUrl}</a></div>
         </div>
 
         {(trip.lodge_nom || trip.lodge_adresse || trip.lodge_tel || trip.lodge_wifi || trip.lodge_arrivee || trip.lodge_code) && (
           <div className="lodge-box">
-            <div className="lodge-title">{getLodgeLabel(trip.type).icon} {getLodgeLabel(trip.type).label}</div>
+            <div className="lodge-title" style={{display:'inline-flex',alignItems:'center',gap:8}}>
+              <span style={{display:'inline-flex',width:22,height:22,borderRadius:6,background:'#16A34A',color:'#fff',alignItems:'center',justifyContent:'center'}}>{getCatSvg('lodge', 13, trip.type)}</span>
+              {getLodgeLabel(trip.type).label}
+            </div>
             <div className="lodge-grid">
-              {trip.lodge_nom && <div className="lodge-item"><div className="lodge-label">🏠 Nom</div><div className="lodge-val">{trip.lodge_nom}</div></div>}
-              {trip.lodge_adresse && <div className="lodge-item"><div className="lodge-label">📍 Adresse</div><div className="lodge-val">{trip.lodge_adresse}</div></div>}
-              {trip.lodge_tel && <div className="lodge-item"><div className="lodge-label">📞 Téléphone</div><div className="lodge-val"><a href={`tel:${trip.lodge_tel}`}>{trip.lodge_tel}</a></div></div>}
-              {trip.lodge_wifi && <div className="lodge-item"><div className="lodge-label">📶 WiFi</div><div className="lodge-val">{trip.lodge_wifi}</div></div>}
-              {trip.lodge_arrivee && <div className="lodge-item"><div className="lodge-label">🛬 Arrivée</div><div className="lodge-val">{trip.lodge_arrivee}</div></div>}
-              {trip.lodge_code && <div className="lodge-item"><div className="lodge-label">🛫 Départ</div><div className="lodge-val">{trip.lodge_code}</div></div>}
+              {trip.lodge_nom && <div className="lodge-item"><div className="lodge-label" style={{display:'inline-flex',alignItems:'center',gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/></svg> Nom</div><div className="lodge-val">{trip.lodge_nom}</div></div>}
+              {trip.lodge_adresse && <div className="lodge-item"><div className="lodge-label" style={{display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="pin" size={12} /> Adresse</div><div className="lodge-val">{trip.lodge_adresse}</div></div>}
+              {trip.lodge_tel && <div className="lodge-item"><div className="lodge-label" style={{display:'inline-flex',alignItems:'center',gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg> Téléphone</div><div className="lodge-val"><a href={`tel:${trip.lodge_tel}`}>{trip.lodge_tel}</a></div></div>}
+              {trip.lodge_wifi && <div className="lodge-item"><div className="lodge-label" style={{display:'inline-flex',alignItems:'center',gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg> WiFi</div><div className="lodge-val">{trip.lodge_wifi}</div></div>}
+              {trip.lodge_arrivee && <div className="lodge-item"><div className="lodge-label" style={{display:'inline-flex',alignItems:'center',gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg> Arrivée</div><div className="lodge-val">{trip.lodge_arrivee}</div></div>}
+              {trip.lodge_code && <div className="lodge-item"><div className="lodge-label" style={{display:'inline-flex',alignItems:'center',gap:4}}><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg> Départ</div><div className="lodge-val">{trip.lodge_code}</div></div>}
             </div>
           </div>
         )}

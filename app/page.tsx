@@ -1,5 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { SvgIcon } from '@/lib/svgIcons'
 
 export default function Home() {
   const router = useRouter()
@@ -20,8 +21,8 @@ export default function Home() {
           style={{width:'100%',padding:'18px 24px',borderRadius:16,border:'none',
             background:'#fff',color:'var(--forest)',fontSize:16,fontWeight:700,
             cursor:'pointer',display:'flex',alignItems:'center',gap:14,textAlign:'left'}}>
-          <div style={{width:44,height:44,borderRadius:12,background:'var(--forest)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>
-            📋
+          <div style={{width:44,height:44,borderRadius:12,background:'var(--forest)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',flexShrink:0}}>
+            <SvgIcon name="clipboard" size={22} />
           </div>
           <div>
             <div style={{fontSize:16,fontWeight:700}}>Mes trips</div>

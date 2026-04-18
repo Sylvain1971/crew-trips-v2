@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import type { Message, Trip } from '@/lib/types'
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
+import { SvgIcon } from '@/lib/svgIcons'
 
 // Thumbnail pour la grille (perf)
 const thumbUrl = (url: string, w = 400) =>
@@ -117,7 +118,7 @@ export default function AlbumPublicPage({ params }: { params: Promise<{ token: s
     return (
       <div style={{ minHeight: '100dvh', background: 'var(--sand)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <div style={{ textAlign: 'center', maxWidth: 360 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <div style={{ display:'inline-flex', width:80, height:80, borderRadius:'50%', background:'rgba(107,114,128,.1)', color:'#6B7280', alignItems:'center', justifyContent:'center', marginBottom: 16 }}><SvgIcon name="lock" size={40} /></div>
           <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 8, color: 'var(--text)' }}>
             Lien expiré ou inexistant
           </div>
@@ -178,7 +179,7 @@ export default function AlbumPublicPage({ params }: { params: Promise<{ token: s
       <div style={{ flex: 1, padding: '8px 6px 40px' }}>
         {photos.length === 0 && (
           <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 42 }}>📷</div>
+            <div style={{ display:'inline-flex', color:'var(--text-3)' }}><SvgIcon name="camera" size={42} /></div>
             <div style={{ marginTop: 12, fontWeight: 600, color: 'var(--text-2)' }}>Aucune photo dans cet album</div>
           </div>
         )}

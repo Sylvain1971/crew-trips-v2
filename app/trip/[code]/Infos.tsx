@@ -396,6 +396,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             <div style={{fontWeight:700,fontSize:14,display:'inline-flex',alignItems:'center',gap:8}}>
               <span style={{display:'inline-flex',width:26,height:26,borderRadius:7,background:'#16A34A',color:'#fff',alignItems:'center',justifyContent:'center'}}>{getCatSvg('lodge', 15, trip.type)}</span>
               {getLodgeLabel(trip.type).label}
+              <span style={{display:'inline-flex',alignItems:'center',padding:'2px 7px',borderRadius:6,fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'.05em',background:'rgba(22,163,74,.1)',color:'#16A34A',border:'1px solid rgba(22,163,74,.3)'}}>Principal</span>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               {isCreateur && (
@@ -412,7 +413,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         {/* Filtres */}
         <div style={{padding:'10px 14px'}}>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6,marginBottom:6}}>
-            <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')} color="#6B7280" icon={getCatSvg('all')}>Tout</FilterBtn>
+            <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')} color="#6B7280" activeColor="#1A4A1A" activeStyle="solid" icon={getCatSvg('all')}>Tout</FilterBtn>
             {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
               <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color} icon={getCatSvg(id, 16, trip.type)}>
                 {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:getPermisLabel(trip.type)}
@@ -668,20 +669,26 @@ function LodgeItem({icon,label,val,link}:{icon:React.ReactNode,label:string,val:
   )
 }
 
-function FilterBtn({active,onClick,color,icon,children}:{active:boolean,onClick:()=>void,color?:string,icon?:React.ReactNode,children:React.ReactNode}) {
+function FilterBtn({active,onClick,color,activeColor,activeStyle,icon,children}:{active:boolean,onClick:()=>void,color?:string,activeColor?:string,activeStyle?:'tinted'|'solid',icon?:React.ReactNode,children:React.ReactNode}) {
   const pillColor = color || 'var(--forest)'
+  // activeColor override pour la couleur d'état actif (ex: "Tout" a pastille grise mais état actif vert)
+  const selColor = activeColor || pillColor
+  const solid = activeStyle === 'solid'
   return (
     <button onClick={onClick} style={{
       padding:'7px 3px',borderRadius:14,
-      border:`${active?2:1.5}px solid ${active?pillColor:'var(--border)'}`,
-      background:active?`${pillColor}15`:'transparent',
-      color:active?pillColor:'var(--text-2)',fontSize:10,fontWeight:600,cursor:'pointer',
+      border:`${active?2:1.5}px solid ${active?selColor:'var(--border)'}`,
+      background: active ? (solid ? selColor : `${selColor}15`) : 'transparent',
+      color: active ? (solid ? '#fff' : selColor) : 'var(--text-2)',
+      fontSize:10,fontWeight:600,cursor:'pointer',
       display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,
       lineHeight:1.15,minWidth:0
     }}>
       {icon && (
         <span style={{
-          width:22,height:22,borderRadius:6,background:pillColor,color:'#fff',
+          width:22,height:22,borderRadius:6,
+          background: (active && solid) ? 'rgba(255,255,255,.2)' : pillColor,
+          color:'#fff',
           display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0
         }}>{icon}</span>
       )}

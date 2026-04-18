@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS } from '@/lib/utils'
+import { SvgIcon } from '@/lib/svgIcons'
 
 // Le code admin est défini dans .env.local :
 //   NEXT_PUBLIC_ADMIN_CODE=ton_code_secret
@@ -135,7 +136,9 @@ export default function AdminPage() {
         </div>
 
         <div className="card" style={{ padding: '16px', marginBottom: 20 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>🔑 Code de création de trip</div>
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, display:'inline-flex', alignItems:'center', gap:7 }}>
+            <span style={{display:'inline-flex',color:'#B45309'}}><SvgIcon name="key" size={16} /></span> Code de création de trip
+          </div>
           <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 12, lineHeight: 1.5 }}>Ce code est requis pour créer un nouveau trip.</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input className="input" type="text" placeholder="Définir un code secret…"
@@ -162,14 +165,14 @@ export default function AdminPage() {
                 <div style={{ fontSize: 28, flexShrink: 0 }}>{TRIP_ICONS[t.type] || '🏕'}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.nom}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
-                    {t.destination && <span>📍 {t.destination} · </span>}
-                    <span>👥 {t.membres_count} membre{(t.membres_count || 0) !== 1 ? 's' : ''}</span>
-                    {t.date_debut && <span> · 📅 {fmt(t.date_debut)}</span>}
+                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2, display:'inline-flex', alignItems:'center', flexWrap:'wrap', gap:4 }}>
+                    {t.destination && <><SvgIcon name="pin" size={11} /> <span>{t.destination}</span> <span>·</span> </>}
+                    <SvgIcon name="users" size={11} /> <span>{t.membres_count} membre{(t.membres_count || 0) !== 1 ? 's' : ''}</span>
+                    {t.date_debut && <> <span>·</span> <SvgIcon name="calendar" size={11} /> <span>{fmt(t.date_debut)}</span></>}
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
-                    {fmt(t.created_at)} · <code style={{ background: 'var(--sand)', padding: '1px 5px', borderRadius: 4 }}>{t.code}</code>
-                    {t.createur_tel && <span> · 📱 {t.createur_tel.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}</span>}
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2, display:'inline-flex', alignItems:'center', flexWrap:'wrap', gap:4 }}>
+                    <span>{fmt(t.created_at)}</span> <span>·</span> <code style={{ background: 'var(--sand)', padding: '1px 5px', borderRadius: 4 }}>{t.code}</code>
+                    {t.createur_tel && <> <span>·</span> <SvgIcon name="phone" size={11} /> <span>{t.createur_tel.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3')}</span></>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
