@@ -136,7 +136,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
   // Charger les cards
   useEffect(() => {
-    supabase.from('infos').select('id,trip_id,categorie,titre,contenu,lien,fichier_url,membre_prenom,created_at')
+    supabase.from('infos').select('id,trip_id,categorie,titre,contenu,lien,fichier_url,membre_prenom,created_at,is_prive,auteur_id')
       .eq('trip_id', trip.id)
       .order('created_at', {ascending:true})
       .then(({data, error}) => {
@@ -268,7 +268,10 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         fichier_url: fichier_url || undefined,
         membre_prenom: isCreateur ? undefined : membre.prenom,
         is_prive: editIsPrive,
-        // auteur_id conservé tel quel depuis editCard
+        // Garantit auteur_id défini : évite qu'une card privée disparaisse du filtre
+        // si l'auteur_id manquait du SELECT initial (cards créées avant la migration
+        // ou SELECT legacy). Si present sur editCard on le garde, sinon fallback sur membre courant.
+        auteur_id: editCard.auteur_id ?? membre.id,
       }
 
       // Appliquer immédiatement + fermer le sheet
