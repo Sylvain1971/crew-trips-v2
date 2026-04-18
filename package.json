@@ -22,5 +22,11 @@
     "@types/react-dom": "^19.2.3",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3"
-  }
+  },
+  "browserslist": [
+    "Chrome >= 93",
+    "Firefox >= 93",
+    "Safari >= 15",
+    "Edge >= 93"
+  ]
 }
