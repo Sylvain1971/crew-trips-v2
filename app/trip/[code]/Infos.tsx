@@ -443,18 +443,25 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
       {/* Filtres */}
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
-        <div className="filter-row" style={{marginBottom:6}}>
+        <div style={{display:'flex',gap:6,marginBottom:6}}>
           <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
-          {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+          {['itineraire','transport','lodge'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
             <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
-              {c.icon} {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:getPermisLabel(trip.type)}
+              {c.icon} {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':getLodgeLabel(trip.type).label}
             </FilterBtn>
           )})}
         </div>
-        <div className="filter-row">
-          {['equipement','infos','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+        <div style={{display:'flex',gap:6,marginBottom:6}}>
+          {['equipement','permis','infos'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
             <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
-              {c.icon} {id==='equipement'?'Équipements':id==='infos'?'Infos':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
+              {c.icon} {id==='equipement'?'Équipements':id==='permis'?getPermisLabel(trip.type):'Infos'}
+            </FilterBtn>
+          )})}
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          {['meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+            <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
+              {c.icon} {id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
             </FilterBtn>
           )})}
         </div>
@@ -641,10 +648,10 @@ function LodgeItem({icon,label,val,link}:{icon:string,label:string,val:string,li
 function FilterBtn({active,onClick,color,children}:{active:boolean,onClick:()=>void,color?:string,children:React.ReactNode}) {
   return (
     <button onClick={onClick} style={{
-      flexShrink:0,padding:'6px 10px',borderRadius:20,
+      flexShrink:0,padding:'8px 14px',borderRadius:22,
       border:`1.5px solid ${active?(color||'var(--forest)'):'var(--border)'}`,
       background:active?(color||'var(--forest)'):'transparent',
-      color:active?'#fff':'var(--text-2)',fontSize:11,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'
+      color:active?'#fff':'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',whiteSpace:'nowrap'
     }}>{children}</button>
   )
 }

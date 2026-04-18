@@ -364,9 +364,14 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       {!selectionMode && canPostPhotos && (
         <div style={{ padding: '8px 14px 0', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8 }}>
           <div style={{ justifySelf: 'start' }}>
-            <button onClick={() => setShareSheetOpen(true)}
+            <button onClick={() => setShareSheetOpen(true)} disabled={photos.length === 0}
               aria-label="Partager l'album"
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              style={{ background: 'transparent', border: 'none',
+                color: photos.length === 0 ? 'var(--text-3)' : 'var(--text-2)',
+                fontSize: 13, fontWeight: 600,
+                cursor: photos.length === 0 ? 'default' : 'pointer',
+                opacity: photos.length === 0 ? 0.5 : 1,
+                padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
                 <polyline points="16 6 12 2 8 6"/>
