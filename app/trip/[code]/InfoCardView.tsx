@@ -1,5 +1,5 @@
 'use client'
-import { getCat } from '@/lib/types'
+import { getCat, getCatSvg } from '@/lib/types'
 import { getYoutubeId, isPdf, getCatLabel } from '@/lib/utils'
 import type { InfoCard } from '@/lib/types'
 import CardContent from './CardContent'
@@ -55,10 +55,11 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
           onClick={collapsed && onCardClick ? onCardClick : undefined}
           style={{
             width: 36, height: 36, borderRadius: 9, background: c.bg, display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0,
+            alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            color: c.color,
             cursor: collapsed && onCardClick ? 'pointer' : undefined,
           }}>
-          {c.icon}
+          {getCatSvg(card.categorie, 20, tripType) || c.icon}
         </div>
 
         {/* Contenu principal */}

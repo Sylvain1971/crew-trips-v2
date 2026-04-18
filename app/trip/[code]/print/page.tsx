@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
-import { CATEGORIES, getCat } from '@/lib/types'
+import { CATEGORIES, getCat, getCatSvg } from '@/lib/types'
 import { getCatLabel, getLodgeLabel } from '@/lib/utils'
 import CardContent from '../CardContent'
 import type { Trip, InfoCard } from '@/lib/types'
@@ -222,7 +222,7 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           return (
             <div key={catId} className="section">
               <div className="section-title" style={{ color: def?.color || '#6b7280' }}>
-                <span>{cat.icon}</span>{getCatLabel(catId, '') || cat.label}
+                <span style={{ display:'inline-flex', verticalAlign:'middle', marginRight:6 }}>{getCatSvg(catId, 16, trip.type) || <span>{cat.icon}</span>}</span>{getCatLabel(catId, trip.type) || cat.label}
               </div>
               {catCards.map(card => (
                 <div key={card.id} className="card" style={{ borderLeftColor: def?.color || '#e5e7eb' }}>
