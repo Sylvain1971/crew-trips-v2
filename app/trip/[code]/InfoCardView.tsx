@@ -48,7 +48,7 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
 
   return (
     <div className="card" id={card.id}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 14px', paddingRight: (canEdit || canDelete) ? 46 : 14, position: 'relative' }}>
 
         {/* Icône catégorie — cliquable en mode "Tout" (navigue vers la catégorie) */}
         <div
@@ -122,19 +122,21 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
           )}
         </div>
 
-        {/* Actions édition/suppression */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, alignSelf: 'stretch' }}>
-          {canEdit && (
-            <button onClick={onEdit} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 2, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
-              {SVG.edit}
-            </button>
-          )}
-          {canDelete && (
-            <button onClick={onDelete} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: 20, cursor: 'pointer', padding: '0 2px', lineHeight: 1, fontWeight: 300 }}>
-              ×
-            </button>
-          )}
-        </div>
+        {/* Actions édition/suppression — ancrées en haut-droit pour éviter conflit avec le FAB */}
+        {(canEdit || canDelete) && (
+          <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', alignItems: 'center', gap: 2 }}>
+            {canEdit && (
+              <button onClick={onEdit} style={{ background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 4, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+                {SVG.edit}
+              </button>
+            )}
+            {canDelete && (
+              <button onClick={onDelete} style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: 20, cursor: 'pointer', padding: '0 6px', lineHeight: 1, fontWeight: 300 }}>
+                ×
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

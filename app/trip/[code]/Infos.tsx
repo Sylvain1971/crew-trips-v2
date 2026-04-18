@@ -445,16 +445,16 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
         <div style={{display:'flex',gap:6,marginBottom:6}}>
           <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
-          {['transport','lodge','permis','equipement'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+          {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
             <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
-              {c.icon} {id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:id==='permis'?getPermisLabel(trip.type):'Équipement'}
+              {c.icon} {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:getPermisLabel(trip.type)}
             </FilterBtn>
           )})}
         </div>
         <div style={{display:'flex',gap:6}}>
-          {['infos','itineraire','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
+          {['equipement','infos','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
             <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
-              {c.icon} {id==='infos'?'Infos':id==='itineraire'?'Itinéraire':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
+              {c.icon} {id==='equipement'?'Équipements':id==='infos'?'Infos':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}
             </FilterBtn>
           )})}
         </div>

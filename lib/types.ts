@@ -30,7 +30,7 @@ export const CATEGORIES = [
   { id: 'transport',  label: 'Vols & Transport',   icon: '✈️', color: '#2563EB', bg: '#EFF6FF' },
   { id: 'lodge',      label: 'Lodge & Séjour',      icon: '🏠', color: '#16A34A', bg: '#F0FDF4' },
   { id: 'permis',     label: 'Permis & Règlements', icon: '🪪', color: '#B45309', bg: '#FFFBEB' },
-  { id: 'equipement', label: 'Équipement',           icon: '⚙️', color: '#6B7280', bg: '#F9FAFB' },
+  { id: 'equipement', label: 'Équipements',          icon: '⚙️', color: '#6B7280', bg: '#F9FAFB' },
   { id: 'infos',      label: 'Informations',         icon: 'ℹ️', color: '#0EA5E9', bg: '#F0F9FF' },
   { id: 'itineraire', label: 'Itinéraire',            icon: '🗺️', color: '#0D9488', bg: '#F0FDFA' },
   { id: 'meteo',      label: 'Météo',                 icon: '🌤️', color: '#F59E0B', bg: '#FFFBEB' },
