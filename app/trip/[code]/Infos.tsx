@@ -233,28 +233,33 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     }
   }
 
+  // Ref miroir du state cards — permet a removeCard d'acceder au state
+  // courant sans passer par un updater React (qui peut etre rejoue en StrictMode).
+  const cardsRef = useRef<InfoCard[]>(cards)
+  useEffect(() => { cardsRef.current = cards }, [cards])
+
   // Supprimer une card — optimistic : la card disparaît immédiatement,
   // rollback (ré-insertion) si Supabase échoue.
   const removeCard = useCallback(async (id: string) => {
     if (!confirm('Supprimer cette info ? Cette action est irréversible.')) return
-    // Snapshot : la card + sa position d'origine pour rollback
-    let snapshot: { card: InfoCard, index: number } | null = null
-    setCards(p => {
-      const idx = p.findIndex(c => c.id === id)
-      if (idx === -1) return p
-      snapshot = { card: p[idx], index: idx }
-      return p.filter(c => c.id !== id)
-    })
-    if (!snapshot) return
+    // Capture synchrone depuis la ref — pas d'updater React, donc pas de double-run StrictMode
+    const currentCards = cardsRef.current
+    const idx = currentCards.findIndex(c => c.id === id)
+    if (idx === -1) return
+    const snapshotCard = currentCards[idx]
+    const snapshotIndex = idx
+
+    // Optimistic UI : retirer la card
+    setCards(p => p.filter(c => c.id !== id))
+
     try {
       const { error } = await withRetry(() => supabase.from('infos').delete().eq('id', id))
       if (error) throw error
     } catch (e: any) {
       // Rollback : ré-insérer la card à sa position
-      const snap = snapshot as unknown as { card: InfoCard, index: number }
       setCards(p => {
         const next = [...p]
-        next.splice(snap.index, 0, snap.card)
+        next.splice(snapshotIndex, 0, snapshotCard)
         return next
       })
       alert('Erreur lors de la suppression : ' + e.message)
