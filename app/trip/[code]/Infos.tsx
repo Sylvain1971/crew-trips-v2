@@ -6,6 +6,7 @@ import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPla
 import { useNavFiltre } from '@/lib/useNavFiltre'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
+import { SvgIcon } from '@/lib/svgIcons'
 
 const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
 // Ordre d'affichage des chips dans les sheets Ajouter/Modifier — même ordre que les filtres
@@ -382,7 +383,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         </div>
         {cd && (
           <div style={{marginTop:10,background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
-            ⏳ {cd}
+            <SvgIcon name="hourglass" size={14} /> {cd}
           </div>
         )}
       </div>
@@ -392,7 +393,10 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         {/* Header Lodge (toujours visible) */}
         <div style={{padding:'14px 16px',borderBottom:'1px solid var(--border-light, var(--border))'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',cursor:'pointer'}} onClick={()=>setLodgeOpen(o=>!o)}>
-            <div style={{fontWeight:700,fontSize:14}}>{getLodgeLabel(trip.type).icon} {getLodgeLabel(trip.type).label}</div>
+            <div style={{fontWeight:700,fontSize:14,display:'inline-flex',alignItems:'center',gap:8}}>
+              <span style={{display:'inline-flex',width:26,height:26,borderRadius:7,background:'#16A34A',color:'#fff',alignItems:'center',justifyContent:'center'}}>{getCatSvg('lodge', 15, trip.type)}</span>
+              {getLodgeLabel(trip.type).label}
+            </div>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               {isCreateur && (
                 <button onClick={e=>{e.stopPropagation();setEditLodge(!editLodge);setLodgeOpen(true)}}
@@ -400,7 +404,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                   {editLodge?'Fermer':haslodge?'Modifier':'+ Ajouter'}
                 </button>
               )}
-              <span style={{fontSize:18,color:'var(--text-3)',transition:'transform .2s',display:'inline-block',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}>⌄</span>
+              <span style={{color:'var(--text-3)',transition:'transform .2s',display:'inline-flex',alignItems:'center',transform:lodgeOpen?'rotate(180deg)':'rotate(0deg)'}}><SvgIcon name="chevronDown" size={18} /></span>
             </div>
           </div>
         </div>
@@ -434,8 +438,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
               {lodge.adresse && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>} label="Adresse" val={lodge.adresse} />}
               {lodge.tel && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>} label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
               {lodge.wifi && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>} label="WiFi" val={lodge.wifi} />}
-              {lodge.arrivee && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59 4.49s7.12-1.9 16.57-4.43c.81-.23 1.28-1.05 1.07-1.85z"/></svg>} label="Arrivée" val={lodge.arrivee} />}
-              {lodge.code && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19v-2zm16.84-8.84l1.41-1.41-2.83-2.83-1.79 1.8c-2.32-1.46-5.2-1.89-7.89-.89L1.66 4.8.25 6.21l7.06 2.35L5.29 9.96l-2.47-.43-1.06 1.06 3.18 2.12L13.6 9.43l-4.95 8.48 1.06 1.06 4.24-4.24 4.5 1.41c.86-2.3.43-4.93-1.11-6.98z"/></svg>} label="Départ" val={lodge.code} />}
+              {lodge.arrivee && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>} label="Arrivée" val={lodge.arrivee} />}
+              {lodge.code && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>} label="Départ" val={lodge.code} />}
             </div>
           )}
           {!editLodge && !haslodge && isCreateur && (
@@ -582,7 +586,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </button>
           )}
         </div>
-        {editUploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10}}>⏳ Upload en cours…</div>}
+        {editUploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%'}}><SvgIcon name="hourglass" size={14} /> Upload en cours…</div>}
         <button className="btn btn-primary" onClick={updateCard} disabled={savingEdit||!editTitre.trim()}>
           {savingEdit?(editUploading?'Upload…':'Sauvegarde…'):'Sauvegarder'}
         </button>
@@ -640,7 +644,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </button>
           )}
         </div>
-        {uploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10}}>⏳ Upload en cours…</div>}
+        {uploading && <div style={{textAlign:'center',fontSize:13,color:'var(--text-3)',marginBottom:12,padding:'10px',background:'var(--sand)',borderRadius:10,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%'}}><SvgIcon name="hourglass" size={14} /> Upload en cours…</div>}
         <button className="btn btn-primary" onClick={save} disabled={saving||!titre.trim()}>
           {saving?(uploading?'Upload…':'Ajout…'):'Ajouter'}
         </button>

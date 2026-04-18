@@ -5,6 +5,7 @@ import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import type { Message, Membre, Trip } from '@/lib/types'
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
+import { SvgIcon } from '@/lib/svgIcons'
 
 const MAX_PHOTOS = 100
 const WARN_THRESHOLD = 90
@@ -771,8 +772,9 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                 <button onClick={generateShareToken} disabled={generatingShare}
                   style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none',
                     background: generatingShare ? 'var(--border)' : 'var(--forest)',
-                    color: '#fff', fontWeight: 600, fontSize: 15, cursor: generatingShare ? 'default' : 'pointer' }}>
-                  {generatingShare ? 'Génération…' : '🔗 Générer un lien de partage'}
+                    color: '#fff', fontWeight: 600, fontSize: 15, cursor: generatingShare ? 'default' : 'pointer',
+                    display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6 }}>
+                  {generatingShare ? 'Génération…' : <><SvgIcon name="link" size={16} />Générer un lien de partage</>}
                 </button>
               </>
             )}
@@ -795,15 +797,17 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                   <button onClick={copyShareLink}
                     style={{ flex: 1, padding: '12px', borderRadius: 10, border: 'none',
                       background: shareCopied ? 'var(--green)' : 'var(--forest)',
-                      color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'background .2s' }}>
-                    {shareCopied ? '✓ Copié !' : '📋 Copier le lien'}
+                      color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'background .2s',
+                      display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6 }}>
+                    {shareCopied ? <><SvgIcon name="check" size={14} />Copié !</> : <><SvgIcon name="clipboard" size={14} />Copier le lien</>}
                   </button>
                   {membre.is_createur && (
                     <button onClick={regenerateShareToken} disabled={generatingShare}
                       style={{ padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border)',
                         background: '#fff', color: 'var(--text-2)', fontWeight: 600, fontSize: 14,
-                        cursor: generatingShare ? 'default' : 'pointer' }}>
-                      {generatingShare ? '…' : '🔄 Régénérer'}
+                        cursor: generatingShare ? 'default' : 'pointer',
+                        display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6 }}>
+                      {generatingShare ? '…' : <><SvgIcon name="refresh" size={14} />Régénérer</>}
                     </button>
                   )}
                 </div>

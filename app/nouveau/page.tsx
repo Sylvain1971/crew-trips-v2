@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS, getTripExamples } from '@/lib/utils'
 import { COULEURS_MEMBRES } from '@/lib/types'
+import { SvgIcon } from '@/lib/svgIcons'
 
 function genCode() {
   return Array.from({length:6},()=>'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random()*32)]).join('')
@@ -173,8 +174,9 @@ function NouveauInner() {
         <div style={{width:'100%',maxWidth:420}}>
           {isDuplicate && (
             <div style={{background:'rgba(255,255,255,.1)',borderRadius:10,padding:'10px 14px',
-              marginBottom:16,fontSize:13,color:'rgba(255,255,255,.75)',textAlign:'center'}}>
-              📋 Duplication — ajustez les dates et créez
+              marginBottom:16,fontSize:13,color:'rgba(255,255,255,.75)',textAlign:'center',
+              display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6,width:'100%',boxSizing:'border-box'}}>
+              <SvgIcon name="clipboard" size={14} /> Duplication — ajustez les dates et créez
             </div>
           )}
 

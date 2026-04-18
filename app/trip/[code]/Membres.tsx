@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
+import { SvgIcon } from '@/lib/svgIcons'
 
 const COULEURS_BG = ['#EFF6FF','#F0FDF4','#FFFBEB','#FFF1F2','#F5F3FF','#F0F9FF','#FFF7ED','#EEF2FF']
 
@@ -193,7 +194,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
     <div style={{padding:'16px 16px 100px'}}>
       {/* Inviter */}
       <div style={{background:'var(--forest)',borderRadius:18,padding:20,marginBottom:16,textAlign:'center'}}>
-        <div style={{fontSize:28,marginBottom:6}}>🔗</div>
+        <div style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:44,height:44,borderRadius:10,background:'#7C3AED',color:'#fff',marginBottom:6}}><SvgIcon name="link" size={24} /></div>
         <div style={{color:'#fff',fontWeight:700,fontSize:16,marginBottom:6}}>Inviter des participants</div>
         <div style={{color:'rgba(255,255,255,.55)',fontSize:13,marginBottom:14,lineHeight:1.5}}>
           Partagez ce lien — aucun compte requis.
@@ -221,7 +222,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
       <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editWhatsapp||trip.whatsapp_lien?10:0}}>
           <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-            💬 Groupe WhatsApp
+            <span style={{display:'inline-flex',color:'#25D366'}}><SvgIcon name="chat" size={16} /></span> Groupe WhatsApp
           </div>
           {isCreateur && (
             <button onClick={()=>setEditWhatsapp(!editWhatsapp)}
@@ -235,7 +236,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
           <a href={trip.whatsapp_lien} target="_blank" rel="noreferrer"
             style={{display:'flex',alignItems:'center',gap:10,background:'#F0FDF4',borderRadius:10,
               padding:'10px 14px',textDecoration:'none',border:'1px solid #BBF7D0'}}>
-            <span style={{fontSize:24}}>💬</span>
+            <span style={{display:'inline-flex',width:32,height:32,borderRadius:8,background:'#25D366',color:'#fff',alignItems:'center',justifyContent:'center'}}><SvgIcon name="chat" size={18} /></span>
             <div>
               <div style={{fontSize:13,fontWeight:700,color:'#15803D'}}>Rejoindre le groupe</div>
               <div style={{fontSize:11,color:'#166534',marginTop:1}}>WhatsApp ↗</div>
@@ -260,7 +261,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
       <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editSms||trip.sms_lien?10:0}}>
           <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-            💬 Groupe Messenger
+            <span style={{display:'inline-flex',color:'#0084FF'}}><SvgIcon name="chat" size={16} /></span> Groupe Messenger
           </div>
           {isCreateur && (
             <button onClick={()=>setEditSms(!editSms)}
@@ -274,7 +275,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
           <a href={trip.sms_lien} target="_blank" rel="noreferrer"
             style={{display:'flex',alignItems:'center',gap:10,background:'#EFF6FF',
               borderRadius:10,padding:'10px 14px',textDecoration:'none',border:'1px solid #BFDBFE'}}>
-            <span style={{fontSize:24}}>🔵</span>
+            <span style={{display:'inline-flex',width:32,height:32,borderRadius:8,background:'#0084FF',color:'#fff',alignItems:'center',justifyContent:'center'}}><SvgIcon name="chat" size={18} /></span>
             <div>
               <div style={{fontSize:13,fontWeight:700,color:'#1D4ED8'}}>Rejoindre le groupe</div>
               <div style={{fontSize:11,color:'#1E40AF',marginTop:1}}>Messenger ↗</div>
@@ -306,7 +307,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
         <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:trip.share_token?10:12}}>
             <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-              📸 Partager l&apos;album
+              <span style={{display:'inline-flex',color:'#E11D48'}}><SvgIcon name="camera" size={16} /></span> Partager l&apos;album
             </div>
           </div>
           {!trip.share_token && (
@@ -317,8 +318,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
               <button onClick={generateShareToken} disabled={generatingShare}
                 style={{width:'100%',padding:'11px',borderRadius:10,border:'none',
                   background:generatingShare?'var(--border)':'var(--forest)',
-                  color:'#fff',fontWeight:600,fontSize:14,cursor:generatingShare?'default':'pointer'}}>
-                {generatingShare?'Génération…':'🔗 Générer un lien de partage'}
+                  color:'#fff',fontWeight:600,fontSize:14,cursor:generatingShare?'default':'pointer',
+                  display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                {generatingShare?'Génération…':<><SvgIcon name="link" size={16} />Générer un lien de partage</>}
               </button>
             </>
           )}
@@ -336,14 +338,16 @@ export default function Membres({trip, membre, onTripUpdate}: {
                 <button onClick={copyShareLink}
                   style={{flex:1,padding:'10px',borderRadius:10,border:'none',
                     background:shareCopied?'var(--green)':'var(--forest)',
-                    color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',transition:'background .2s'}}>
-                  {shareCopied?'✓ Copié !':'📋 Copier le lien'}
+                    color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',transition:'background .2s',
+                    display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                  {shareCopied?<><SvgIcon name="check" size={14} />Copié !</>:<><SvgIcon name="clipboard" size={14} />Copier le lien</>}
                 </button>
                 <button onClick={regenerateShareToken} disabled={generatingShare}
                   style={{padding:'10px 14px',borderRadius:10,border:'1px solid var(--border)',
                     background:'#fff',color:'var(--text-2)',fontWeight:600,fontSize:13,
-                    cursor:generatingShare?'default':'pointer'}}>
-                  {generatingShare?'…':'🔄 Régénérer'}
+                    cursor:generatingShare?'default':'pointer',
+                    display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                  {generatingShare?'…':<><SvgIcon name="refresh" size={14} />Régénérer</>}
                 </button>
               </div>
             </>
@@ -354,7 +358,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
       {/* Participants autorisés — créateur seulement */}
       {isCreateur && (
         <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:4}}>🔒 Participants autorisés</div>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:4,display:'inline-flex',alignItems:'center',gap:7}}>
+            <span style={{display:'inline-flex',color:'#B45309'}}><SvgIcon name="lock" size={16} /></span> Participants autorisés
+          </div>
           <div style={{fontSize:12,color:'var(--text-3)',marginBottom:12,lineHeight:1.5}}>
             {autorises.length===0
               ? 'Liste vide — tout le monde peut entrer. Ajoutez des prénoms pour restreindre l\'accès.'
@@ -395,7 +401,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
       {/* Permissions — créateur seulement */}
       {isCreateur && (
         <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
-          <div style={{fontWeight:700,fontSize:14,marginBottom:12}}>⚙️ Permissions des participants</div>
+          <div style={{fontWeight:700,fontSize:14,marginBottom:12,display:'inline-flex',alignItems:'center',gap:7}}>
+            <span style={{display:'inline-flex',color:'#6B7280'}}><SvgIcon name="settings" size={16} /></span> Permissions des participants
+          </div>
           {([
             {key:'can_delete' as const, label:'Peuvent supprimer des cards', desc:'Les participants peuvent effacer des infos'},
             {key:'can_edit' as const,   label:'Peuvent modifier des cards',   desc:'Les participants peuvent éditer des infos'},
@@ -501,7 +509,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
             style={{width:'100%',padding:'12px',borderRadius:10,border:'1.5px solid var(--forest)',
               background:'transparent',color:'var(--forest)',fontWeight:600,fontSize:14,cursor:'pointer',
               display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-            📋 Dupliquer ce trip
+            <SvgIcon name="clipboard" size={16} /> Dupliquer ce trip
           </button>
         </div>
       )}
@@ -512,12 +520,15 @@ export default function Membres({trip, membre, onTripUpdate}: {
           {!showDelete ? (
             <button onClick={()=>setShowDelete(true)}
               style={{width:'100%',padding:'12px',borderRadius:10,border:'1.5px solid #FECACA',
-                background:'transparent',color:'#DC2626',fontWeight:600,fontSize:14,cursor:'pointer'}}>
-              🗑 Supprimer ce trip
+                background:'transparent',color:'#DC2626',fontWeight:600,fontSize:14,cursor:'pointer',
+                display:'inline-flex',alignItems:'center',justifyContent:'center',gap:8}}>
+              <SvgIcon name="trash" size={16} /> Supprimer ce trip
             </button>
           ) : (
             <div style={{background:'#FEF2F2',borderRadius:12,padding:16,border:'1.5px solid #FECACA'}}>
-              <div style={{fontWeight:700,fontSize:14,color:'#DC2626',marginBottom:4}}>⚠️ Supprimer ce trip ?</div>
+              <div style={{fontWeight:700,fontSize:14,color:'#DC2626',marginBottom:4,display:'inline-flex',alignItems:'center',gap:7}}>
+                <span style={{display:'inline-flex',color:'#DC2626'}}><SvgIcon name="alert" size={16} /></span> Supprimer ce trip ?
+              </div>
               <div style={{fontSize:13,color:'#B91C1C',marginBottom:12,lineHeight:1.5}}>
                 Cette action est irréversible. Tapez <strong>"{trip.nom}"</strong> pour confirmer.
               </div>
