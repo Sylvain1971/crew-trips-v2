@@ -819,7 +819,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                 contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <img
-                  src={currentLightboxPhoto.image_url!}
+                  src={thumbUrl(currentLightboxPhoto.image_url!, 1600)}
                   alt={currentLightboxPhoto.contenu || ''}
                   onClick={e => e.stopPropagation()}
                   draggable={false}
