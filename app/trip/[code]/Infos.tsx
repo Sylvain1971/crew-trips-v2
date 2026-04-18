@@ -343,8 +343,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             }} style={{background:'rgba(255,255,255,.1)',border:'none',color:'#fff',borderRadius:8,padding:'7px 12px',cursor:'pointer',fontSize:13,fontWeight:600}}>
               ← Retour
             </button>
-            <div style={{flex:1,fontSize:13,color:'#ccc',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>
-              📄 {pdfViewer.nom}
+            <div style={{flex:1,fontSize:13,color:'#ccc',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',display:'inline-flex',alignItems:'center',gap:6}}>
+              <SvgIcon name="fileText" size={14} /> {pdfViewer.nom}
             </div>
             <a href={pdfViewer.url} target="_blank" rel="noreferrer"
               style={{background:'rgba(255,255,255,.1)',border:'none',color:'#fff',borderRadius:8,padding:'7px 12px',fontSize:13,fontWeight:600,textDecoration:'none'}}>
@@ -368,8 +368,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
             )}
-            <button onClick={copyLink} style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer'}}>
-              {copied ? '✓' : '🔗 Inviter'}
+            <button onClick={copyLink} style={{background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 12px',color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',display:'inline-flex',alignItems:'center',gap:5}}>
+              {copied ? <SvgIcon name="check" size={13} /> : <><SvgIcon name="link" size={13} /> Inviter</>}
             </button>
             <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')} style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/><rect x="2" y="9" width="20" height="9" rx="2"/><circle cx="17" cy="13.5" r="1.2" fill="currentColor" stroke="none"/></svg>
@@ -382,8 +382,8 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           {tripDate && <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:5}}>{tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}</div>}
         </div>
         {cd && (
-          <div style={{marginTop:10,background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,display:'flex',alignItems:'center',gap:6}}>
-            <SvgIcon name="hourglass" size={14} /> {cd}
+          <div style={{marginTop:10,background:'rgba(255,255,255,.08)',borderRadius:8,padding:'8px 12px',fontSize:13,color:'rgba(255,255,255,.8)',fontWeight:600,textAlign:'center'}}>
+            {cd}
           </div>
         )}
       </div>
@@ -574,7 +574,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <input ref={editFileRef} type="file" accept="application/pdf,image/*" style={{display:'none'}} onChange={e=>setEditPdfFile(e.target.files?.[0]||null)} />
           {editCard?.fichier_url && !editPdfFile && !editFichierRemoved && (
             <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,padding:'10px 14px',border:'1.5px solid var(--border)',marginBottom:8}}>
-              <span style={{fontSize:20}}>{isPdf(editCard.fichier_url)?'📄':'🖼️'}</span>
+              <span style={{display:'inline-flex',color:'var(--text-2)'}}>{isPdf(editCard.fichier_url)?<SvgIcon name="fileText" size={20} />:<SvgIcon name="image" size={20} />}</span>
               <div style={{flex:1,fontSize:12,color:'var(--text-2)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>Fichier actuel</div>
               <button onClick={()=>editFileRef.current?.click()} style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer',flexShrink:0}}>Remplacer</button>
               <button onClick={()=>setEditFichierRemoved(true)} style={{background:'none',border:'1px solid #FCA5A5',borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:600,color:'#DC2626',cursor:'pointer',flexShrink:0}}>Supprimer</button>
@@ -582,7 +582,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           )}
           {editPdfFile ? (
             <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,padding:'10px 14px',border:'1.5px solid var(--border)'}}>
-              <span style={{fontSize:24}}>📄</span>
+              <span style={{display:'inline-flex',color:'var(--text-2)'}}><SvgIcon name="fileText" size={24} /></span>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{editPdfFile.name}</div>
                 <div style={{fontSize:11,color:'var(--text-3)'}}>{formatSize(editPdfFile.size)}</div>
@@ -591,7 +591,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </div>
           ) : !editCard?.fichier_url && (
             <button onClick={()=>editFileRef.current?.click()} style={{background:'transparent',border:'2px dashed var(--border)',color:'var(--text-2)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-              📎 Choisir un PDF ou une photo
+              <SvgIcon name="attachment" size={16} /> Choisir un PDF ou une photo
             </button>
           )}
         </div>
@@ -640,7 +640,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <input ref={fileRef} type="file" accept="application/pdf,image/*" style={{display:'none'}} onChange={e=>setPdfFile(e.target.files?.[0]||null)} />
           {pdfFile ? (
             <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--sand)',borderRadius:10,padding:'10px 14px',border:'1.5px solid var(--border)'}}>
-              <span style={{fontSize:24}}>📄</span>
+              <span style={{display:'inline-flex',color:'var(--text-2)'}}><SvgIcon name="fileText" size={24} /></span>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:13,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{pdfFile.name}</div>
                 <div style={{fontSize:11,color:'var(--text-3)'}}>{formatSize(pdfFile.size)}</div>
@@ -649,7 +649,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </div>
           ) : (
             <button onClick={()=>fileRef.current?.click()} style={{background:'transparent',border:'2px dashed var(--border)',color:'var(--text-2)',fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
-              📎 Choisir un PDF ou une photo
+              <SvgIcon name="attachment" size={16} /> Choisir un PDF ou une photo
             </button>
           )}
         </div>

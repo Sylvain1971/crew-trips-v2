@@ -125,7 +125,9 @@ export default function MesTripsPage() {
 
           {!loading && cherche && trips.length === 0 && (
             <div style={{textAlign:'center',padding:40}}>
-              <div style={{fontSize:40,marginBottom:12}}>📭</div>
+              <div style={{display:'inline-flex',width:72,height:72,borderRadius:16,background:'rgba(255,255,255,.08)',color:'rgba(255,255,255,.5)',alignItems:'center',justifyContent:'center',marginBottom:12}}>
+                <SvgIcon name="clipboard" size={36} />
+              </div>
               <div style={{color:'rgba(255,255,255,.5)',fontSize:14}}>Aucun trip trouvé pour ce numéro.</div>
               <button onClick={()=>router.push('/nouveau')}
                 style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:'#fff',

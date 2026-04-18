@@ -191,7 +191,9 @@ export default function AdminPage() {
         </div>
         {!loading && trips.length === 0 && (
           <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-3)' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>📭</div>
+            <div style={{display:'inline-flex',width:64,height:64,borderRadius:16,background:'rgba(107,114,128,.1)',color:'var(--text-3)',alignItems:'center',justifyContent:'center',marginBottom:12}}>
+              <SvgIcon name="clipboard" size={32} />
+            </div>
             Aucun trip actif.
           </div>
         )}
