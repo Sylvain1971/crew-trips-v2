@@ -40,6 +40,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   // Lightbox
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
   const [isZoomed, setIsZoomed] = useState(false)
+  const transformRef = useRef<ReactZoomPanPinchRef | null>(null)
 
   // Mode selection
   const [selectionMode, setSelectionMode] = useState(false)
@@ -160,6 +161,13 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Reset zoom quand on change de photo dans la lightbox (sans re-mount du TransformWrapper)
+  useEffect(() => {
+    if (lightboxIdx !== null && transformRef.current) {
+      transformRef.current.resetTransform()
+    }
+  }, [lightboxIdx])
 
   // --- Upload multi-photos ---
   function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
@@ -753,7 +761,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
               minHeight: 0, position: 'relative', overflow: 'hidden',
             }}>
             <TransformWrapper
-              key={lightboxIdx}
+              ref={transformRef}
               initialScale={1}
               minScale={1}
               maxScale={4}
