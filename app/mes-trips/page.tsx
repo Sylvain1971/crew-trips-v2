@@ -145,7 +145,7 @@ export default function MesTripsPage() {
                   <div style={{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
                   <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:20,flexShrink:0,
                     background:'rgba(0,0,0,.08)',color:'var(--text-3)',display:'inline-flex',alignItems:'center',gap:3}}>
-                    {t.role==='createur' ? <><SvgIcon name="star" size={10} />Administrateur</> : 'Participant'}
+                    {t.role==='createur' ? <><SvgIcon name="star" size={10} />Admin</> : 'Participant'}
                   </span>
                 </div>
                 {t.destination && <div style={{fontSize:12,color:'var(--text-3)',marginTop:2,display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="pin" size={11} /> {t.destination}</div>}
