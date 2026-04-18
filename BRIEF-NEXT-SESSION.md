@@ -1,208 +1,300 @@
 # Crew Trips v2 — Brief session suivante
 
-> **Dernière session : 18 avril 2026 (soir)** — 6 commits poussés : refonte Lodge card complète, fix navigation admin (SW), optimistic UI partout.
-> **État : stable, déployé, TypeScript clean (0 erreur).**
-> **Pas encore backupé** — créer un tag `backup-2026-04-18-evening` si besoin avant de reprendre.
+> **Dernière session : 18 avril 2026 (soir++)** — 14 commits poussés dans une grosse session.
+> **Mega audit perf Album (7 commits) + A11y/Bundle/next.config optim (5 commits) + UX flèches & partage (2 commits).**
+> **État : stable, déployé, TypeScript clean, build Next OK, Lighthouse 90/100/100/100.**
+> **Working tree clean, synchro avec origin/main.**
+
+---
+
+## 📊 Scores Lighthouse actuels (mesurés sur prod Vercel, mobile simulé 4G)
+
+| Catégorie | Score | Évolution |
+|---|---|---|
+| **Performance** | **90 / 100** | = (stable) |
+| **Accessibility** | **100 / 100** | +17 vs baseline 83 |
+| **Best Practices** | **100 / 100** | = |
+| **SEO** | **100 / 100** | = |
+
+**Core Web Vitals** : FCP 0.9s, LCP 3.6s, TBT 70ms, CLS 0, Speed Index 0.9s, TTI 3.6s.
+
+**LCP = seul point restant** (score 57). Le coupable : l'emoji 🏕 60px sur `/`.
+Fix définitif = intégrer un vrai logo PNG avec `next/image priority` → LCP 1.5s → Perf 95+.
 
 ---
 
 ## 🚀 Démarrage rapide
 
-**Avant de coder** — vérifier l'environnement :
-
 ```powershell
 cd C:\Users\sbergeron\crew-trips-v2
-git status                    # Doit être "working tree clean, up to date with origin/main"
-git log -3 --oneline          # Dernier commit: bcbbfc9 (optimistic UI partout)
+git status                    # Doit être clean, synchro origin/main
+git log -5 --oneline          # Dernier commit : f9927f9 (browserslist moderne)
 ```
 
 **Stack technique** :
-- Next.js 16.2.3 Turbopack + React 19 + TypeScript + Supabase
-- Librairies : `react-zoom-pan-pinch`, `jszip`
+- Next.js 16.2.3 Turbopack + React 19.2.4 + TypeScript 5.9.3 + Supabase 2.103
+- Librairies : `react-zoom-pan-pinch` 4.0.3, `jszip` 3.10.1, `browser-image-compression` 2.0.2
+- **browserslist moderne** (Chrome 93+, Safari 15+, FF 93+, Edge 93+) — polyfills legacy droppés
+- **next.config.ts** : AVIF/WebP images, optimizePackageImports, remotePatterns Supabase/YouTube
 - Déployé : `crew-trips-v2.vercel.app` (auto-deploy sur push main)
 - Supabase : projet `dnvzqsgwqwrvsgfjqqxn`
 - Local : `C:\Users\sbergeron\crew-trips-v2` (Windows user `sbergeron`)
 - Repo : `Sylvain1971/crew-trips-v2`
 
-**Backups disponibles** :
-- Branche/tag `backup-2026-04-18` (état matin avant cette session)
-- Pour revenir : `git checkout backup-2026-04-18`
-
 ---
 
-## 🎯 Features à faire — priorisées
+## 🎯 Prochaines features — priorisées
 
-### 🔴 Priorité 1 — Logo Crew Trips
+### 🔴 PRIORITÉ 1 — Logo Crew Trips (~20 min, impact énorme)
 
-**Statut** : Slogan changé ✅ ("Un seul lien. / Pour tout savoir." commit `36a7af4`)
-**Reste** : le visuel du logo hero (emoji 🏕 actuel) — Sylvain va magasiner un PNG/WebP 3D style Apple.
+**État actuel** : emoji 🏕 à 3 endroits + LCP 3.6s identifié comme le seul point restant.
 
 **Quand le logo est prêt** :
-1. Placer le fichier dans `public/logo-hero.png` (ou .webp), idéalement 512×512+ avec fond transparent
-2. Remplacer l'emoji 🏕 dans ces 3 fichiers :
-   - `app/page.tsx` ligne ~10 (home)
-   - `app/mes-trips/page.tsx` ligne ~110 (liste trips)
-   - `app/trip/[code]/created/page.tsx` (page succès création)
-3. Utiliser `next/image` avec `<Image src="/logo-hero.png" width={80} height={80} alt="Crew Trips" priority />`
-4. Tester sur fond sable (`/mes-trips`) ET fond foncé (`/`) — peut nécessiter 2 versions du logo
+1. Placer `public/logo-hero.png` (ou .webp), 512×512+ fond transparent
+2. Remplacer l'emoji 🏕 dans :
+   - `app/page.tsx` ligne ~10 (home, sur fond forest) — **c'est celui qui affecte le LCP**
+   - `app/mes-trips/page.tsx` ligne ~110 (liste trips, sur fond sand)
+   - `app/trip/[code]/created/page.tsx` (page succès)
+3. Utiliser `next/image` AVEC `priority` sur la home :
+   ```tsx
+   import Image from 'next/image'
+   <Image src="/logo-hero.png" width={80} height={80} alt="Crew Trips" priority />
+   ```
+4. **Important** : `priority` seulement sur la home (LCP critical). Sur les autres pages : `loading="lazy"` par défaut.
+5. Tester sur fond sable (`/mes-trips`) ET fond foncé (`/`) — peut nécessiter 2 versions du logo ou une version neutre.
 
-**Pistes si Sylvain ne trouve pas de logo** :
-- Fluent Emoji 3D Microsoft (GitHub open-source, pas de chalet parfait mais proche)
-- IA gen Midjourney/DALL-E avec prompt : `"3D rendered log cabin in the style of Apple emoji, isometric view, transparent background, glossy, soft lighting, warm wood tones"`
+**Impact attendu Lighthouse** : Perf 90 → 95-97, LCP 3.6s → ~1.5s.
+
+**Pistes si logo pas encore trouvé** :
+- Fluent Emoji 3D Microsoft (GitHub open-source)
+- IA Midjourney/DALL-E prompt : `"3D rendered log cabin in the style of Apple emoji, isometric view, transparent background, glossy, soft lighting, warm wood tones"`
 - Flaticon / Iconscout packs 3D (~$5-10)
 
-### 🟡 Priorité 2 — Perfs et stabilité (audit de la session précédente)
+### 🟡 PRIORITÉ 2 — Checklist tests manuels
 
-**Reste 6 axes du brief d'audit (l'axe Optimistic UI a été fait cette session ✅)** :
+Créer `TESTS-MANUELS.md` à la racine avec tous les flows à cocher avant release. Pas de code, juste de la doc. 10-15 min.
 
-1. **Perf Album N=100 photos** — lightbox re-mount au clic, realtime leak, memoization de la grille, lazy loading. Symptôme attendu : freeze lors de l'ouverture si +50 photos.
+Flows minimum à couvrir :
+- Créer un trip (via /nouveau avec code créateur)
+- Rejoindre un trip (via /rejoindre)
+- Upload photo (simple + batch + optimistic)
+- Ajouter/modifier/supprimer une info card (public + privée)
+- Modifier le Lodge + pin/unpin
+- Toggle permissions Membres
+- Partager album (Web Share API — une par une + toutes ensemble)
+- Télécharger ZIP
+- Sélectionner + supprimer photos
+- Navigation admin → Mes trips
+- PWA : installer, fermer, relancer depuis home screen
 
-2. **Perf Download ZIP mobile** — iOS Safari refuse les ZIP >50MB, parallélisation `p-limit` non utilisée, pas de progress feedback. Tester avec 80+ photos.
+### 🟡 PRIORITÉ 3 — RLS Supabase sanity check
 
-3. **Bundle size** — `.next/static/chunks/`, dynamic imports `jszip` et `react-zoom-pan-pinch` (utilisés que dans Album). À faire : `import('jszip')` lazy dans `lib/downloadAlbum.ts`.
+Créer 2 users dans un trip test, vérifier qu'un user ne peut rien modifier chez l'autre (surtout après l'ajout des cards privées : `is_prive boolean` + `auteur_id uuid` dans la table `infos`).
 
-4. **RLS Supabase sanity check** — validé phase B, à revérifier (surtout après l'ajout des cards privées). Créer un trip test avec 2 users, vérifier qu'un user ne peut rien modifier chez l'autre.
+### 🟢 PRIORITÉ 4 — Optims restantes (low urgency)
 
-5. **Service Worker robustesse** — cache PWA + ajouts cette session (referrer-based redirect). Tester : offline → online → lancement depuis icône home-screen → navigation /admin → retour. Vérifier qu'aucun scénario ne casse.
+- **Prefetch lightbox N±1** : dans `Lightbox.tsx`, pré-charger les photos prev/next en background pour un swipe instantané (~15 min)
+- **Escape key lightbox desktop** : `useEffect` keydown listener quand ouvert (~5 min)
+- **next/image partout** (Lodge map, avatars, InfoCard images) : remplacer les `<img>` bruts par `next/image` (sauf blob URLs optimistic). ~30 min.
+- **React Compiler** : reste en RC, skipper jusqu'à stable
+- **SW precache routes critiques** : ouvrirait la PWA offline plus vite
+- **Service Worker robustesse tests** : offline → online → PWA flows
+- **Perf Download ZIP mobile** : iOS Safari refuse ZIP >50MB, parallélisation `p-limit`, progress visible
 
-6. **Checklist tests manuels** — créer une grille markdown avec tous les flows utilisateur à cocher avant release. Au minimum : créer trip, rejoindre, upload photo, ajouter card, modifier Lodge, permissions, partage album, suppression trip.
+### 🟢 PRIORITÉ 5 — Cohérence visuelle low priority
 
-### 🟢 Priorité 3 — Cohérence visuelle restante (low priority)
-
-- **InstallBanner.tsx** : 1 emoji mineur restant (banner PWA install)
-- **Page `/nouveau`** : emoji 🏕 dans le select TRIP_ICONS (cohérence avec nouveau logo si changé)
-
----
-
-## ✅ Ce qui a été fait cette session (18 avril soir)
-
-Ordre chronologique des 6 commits :
-
-### `95f29e8` — Header épuré + card Lodge refactor
-- Bouton "Inviter" retiré du header trip
-- Crayon + imprimante harmonisés au style pâle miroir de "Mes trips"
-- Card Lodge : pin button (localStorage `crew-trips:lodge-pinned:{tripCode}`)
-- Chevron passé en carré vert 32×32 cohérent avec les autres boutons
-- Badge "Épinglée" (vert pâle match Principal) quand pin activé
-- LodgeItem : fontSize réduit (11→10 label, 13→12 val), padding 9×12→7×10
-- LodgeItem : téléphone en couleur normale (fini le vert qui tape à l'œil)
-- LodgeItem : label "WiFi" → "Wifi ou code" (affichage + edit sheet)
-- LodgeItem : `height: 100%` + grid `alignItems: stretch` = rangées alignées
-
-### `17073c9` — Crayon unifié, pin en punaise, auto-close scroll, liens
-- Icône `pin` dans `lib/svgIcons.tsx` : de map-pin (goutte) → punaise verticale classique
-- Crayon card Lodge remplacé par le même SVG inline que le header (rectangle+pencil)
-- **Auto-close Lodge changé** : scroll down dans le conteneur scrollable (seuil 8px) déclenche la fermeture, SAUF si `lodgePinned=true`
-- Sentinel `<div ref>` ajouté pour détecter le conteneur scrollable parent
-- Téléphone + Adresse : vert `#16A34A` (catégorie Lodge) avec flèche externe ↗
-- Adresse devient cliquable : `https://google.com/maps/search/?api=1&query=...` → Google Maps
-
-### `a1262f7` — Fix nav admin : retour → Mes trips
-- Admin page : bouton retour pointe sur `/mes-trips` au lieu de `/` (label "← Mes trips")
-- Admin login page : même changement
-- **Service Worker fix** : le SW interceptait TOUTES les navigations vers `/` et redirigeait sur le dernier trip. Maintenant il ne redirige QUE si le referrer est vide ou externe (vrai démarrage PWA depuis home-screen). Navigations internes depuis /admin, /mes-trips, /nouveau vers / passent normalement.
-- Version SW bumpée dans le header pour forcer la mise à jour chez les utilisateurs existants
-
-### `edf8534` — Adresse paste-friendly
-- Formulaire Lodge : champ Adresse en `<textarea>` pleine largeur (3 lignes, resize vertical)
-- Hint "Colle n'importe quel format" (vert discret) à droite du label
-- Réordre formulaire : Nom + Tél rangée 1, Adresse full width rangée 2, Wifi + Arrivée + Départ ensuite
-- **Normalisation à la sauvegarde** : retours ligne → virgules, espaces multiples → un espace, trim
-- Placeholder avec exemple complet "Ex: 3740 Cedar Key Avenue, Terrace, BC V8G 4M6"
-- LodgeItem affichage : `white-space: nowrap` + `text-overflow: ellipsis` = 1 ligne par cellule
-- `title` attr = adresse complète visible au hover/long-press
-- Grid parent : `grid-template-columns: minmax(0,1fr) minmax(0,1fr)` pour que l'ellipsis fonctionne
-
-### `36a7af4` — Nouveau slogan
-- `app/page.tsx` : "Tout ce que ton groupe a besoin de savoir. / Un seul lien." → **"Un seul lien. / Pour tout savoir."**
-
-### `bcbbfc9` — Optimistic UI partout (audit stabilité axe 1)
-
-**Pattern utilisé partout** : snapshot + update immédiat + rollback en cas d'erreur Supabase.
-
-**Membres.tsx** :
-- `togglePermission` : toggle instantané (plus d'attente du round-trip) — impact énorme UX
-- `saveWhatsapp` + `saveSms` : sheet ferme immédiatement, rollback si erreur
-- `generateShareToken` + `regenerateShareToken` : token visible tout de suite
-
-**Infos.tsx** :
-- `saveLodge` : adresse normalisée + sheet ferme immédiatement, rollback restaure les valeurs
-- `saveTrip` : nom/dates/destination mis à jour tout de suite, rollback si erreur
-
-**Album.tsx** (le gros morceau) :
-- `uploadAllPending` : photos apparaissent IMMÉDIATEMENT via `URL.createObjectURL(blob)`
-- Sheet d'envoi se ferme dès la compression (plus d'attente de l'upload séquentiel complet)
-- Chaque photo uploade en arrière-plan et remplace sa version temp par la vraie en DB
-- Si une photo échoue : retirée, les autres continuent, alert à la fin
-- Blob URLs révoquées après remplacement (pas de memory leak)
-- Overlay spinner sur photos `_pending` + clic/long-press bloqués pendant upload
-- `thumbUrl()` skippe la query-string transform pour les `blob:` URLs (sinon 404)
-- `generateShareToken` + `regenerateShareToken` Album : même pattern optimistic
-
-**globals.css** : `@keyframes crew-spin` ajouté pour le spinner upload
-
-**Type local ajouté** : `type AlbumPhoto = Message & { _pending?: boolean }` (flag local, pas en DB)
-
-**Fonctions qui étaient DÉJÀ optimistic avant cette session (inchangées)** :
-- `save()`, `updateCard()`, `removeCard()` dans Infos
-- `deleteSelected()` dans Album
-- `ajouterAutorise()`, `retirerAutorise()`, `retirerMembre()`, `savePrenom()` dans Membres
+- `InstallBanner.tsx` : 1 emoji mineur restant
+- Page `/nouveau` : emoji 🏕 dans le select TRIP_ICONS
 
 ---
 
-## 📦 Contexte pour reprendre
+## ✅ Ce qui a été fait cette session (18 avril soir++)
 
-### Système d'icônes SVG iOS Settings
+### 🎞️ Partie 1 — Perf Album refactor (commits A→E)
 
-**Helper central** : `lib/svgIcons.tsx` — 26 icônes en fill=currentColor :
-`link, chat, camera, clipboard, refresh, lock, settings, trash, alert, chevronDown,
-hourglass, pin, calendar, star, check, plane, key, phone, users, fileText, image,
-attachment, edit, close, plus`.
+Série complète d'optimisation du module Album. Chaque commit indépendant, rollback chirurgical possible.
 
-**Note : `pin` a changé cette session** — c'est maintenant une punaise verticale classique (path `M16 9V4h1a1 1 0 0 0 0-2H7...`), plus un map-pin (goutte).
+#### `1428476` — Lightbox sans re-mount au swipe (A)
+Remplace `key={lightboxIdx}` par un `ref` impératif + `resetTransform()`.
+Avant : chaque swipe prev/next démontait+remontait `react-zoom-pan-pinch` (recréait state, listeners, DOM).
+Après : 1 seul TransformWrapper monté pour toute la session lightbox.
 
-### Cards privées — fonctionnelles (fait session précédente)
+#### `de4f687` — PhotoTile memoize (B)
+Extrait la tuile de la grille en composant `memo()` dédié.
+Avant : à 100 photos, chaque setState re-rendait les 100 divs anonymes du `.map()`.
+Après : seule la tuile dont les props changent re-render. Toggle sélection passe de 100 re-renders à 1.
 
-**DB Supabase** (migration déjà exécutée) :
+#### `ab5d8de` — Fix leak blob URLs (C)
+Cleanup des blob URLs (previews upload + photos optimistic pending) passait par un `useEffect` avec `eslint-disable exhaustive-deps` qui capturait `pending=[]` au mount.
+Fix : `useRef<Set<string>>` via helpers `trackBlob()` / `revokeBlob()`, cleanup fiable au unmount.
+
+#### `d5aa628` — Lightbox charge 1600px au lieu du full-size (D)
+`thumbUrl(url, 1600)` au lieu de l'image_url brut. ~300-500 KB par photo au lieu de 2-4 MB.
+Scale jusqu'au maxScale=4 sans pixelisation visible.
+
+#### `9fb1562` — Dynamic import react-zoom-pan-pinch (E)
+Extraction complète de la lightbox dans `app/trip/[code]/Lightbox.tsx` (159 lignes) chargé via `next/dynamic` avec `ssr:false`.
+Gain bundle : -18 KB gzip du first load Album. La lib n'est fetchée que quand l'utilisateur ouvre une photo.
+
+### 🎯 Partie 2 — Fixes UX Album (P1, P2)
+
+#### `1a08304` — Hitbox prev/next 80×80 avec visuel 40×40 centré (P1)
+Avant : tap sur la photo pannable au lieu du bouton nav quand imprécis.
+Fix : button wrapper 80×80 transparent + span interne 40×40 avec `pointer-events:none`.
+
+#### `72968ec` — Bouton Partager en mode sélection (P2)
+Nouveau `lib/shareFiles.ts` avec :
+- `canShareFiles()` : feature detection Web Share API files
+- `shareAllTogether()` : un seul `navigator.share({ files: [...] })`
+- `shareOneByOne()` : sequence 1 fichier à la fois (plus fiable sur iOS avec iMessage)
+
+UX : bouton "Partager N" apparaît dans la barre sélection dès qu'au moins 1 photo sélectionnée (même celles des autres). Si 2+ photos : sheet de choix "Toutes ensemble" / "Une par une". Si 1 photo : direct. Fallback alert si pas supporté.
+
+### ♿ Partie 3 — A11y + Bundle + next.config (5 commits)
+
+Audit Lighthouse a révélé : Perf 90, **A11y 83**, BP 100, SEO 100. Ces 5 commits ont porté A11y de 83 à 100.
+
+#### `6d0371b` — Viewport userScalable=true (#1)
+`app/layout.tsx` : `maximumScale: 1 → 5` et `userScalable: false → true`.
+Permet le zoom pinch iOS pour les malvoyants. Anti-pattern WCAG corrigé.
+
+#### `9cd9d0c` — Contraste + aria-label page.tsx (#2)
+- Sous-texte "Créer un trip" : `rgba(255,255,255,.45) → .7`
+- Chevron `>` : `.3 → .55`
+- Footer `.2 → .5`
+- `<a href="/admin">` : ajout `aria-label="Administration"`
+- Bonus : `aria-label` dynamique sur le bouton Partager Album
+
+#### `2afe361` — Dynamic import jszip (#3)
+`import JSZip from 'jszip'` → `const { default: JSZip } = await import('jszip')`
+Seulement quand l'utilisateur clique "Télécharger tout". -40 KB gzip du first load.
+
+#### `ec771ae` — next.config AVIF/WebP + optimizePackageImports (#5)
+`next.config.ts` était vide. Ajout :
+- `compress: true`
+- `images.formats: ['image/avif', 'image/webp']`
+- `images.remotePatterns` pour `*.supabase.co` et YouTube thumbnails
+- `experimental.optimizePackageImports: ['@supabase/supabase-js', 'react-zoom-pan-pinch']`
+
+#### `f9927f9` — browserslist moderne (#8)
+`package.json` : ajout champ `browserslist` ciblant Chrome/FF/Edge 93+ et Safari 15+ (couverture >98%).
+Drop les polyfills legacy (async/await, class fields, optional chaining natifs).
+Lighthouse identifiait "Legacy JavaScript - 900ms".
+
+---
+
+## 📋 Tous les 14 commits de cette session (chronologique)
+
+| # | Commit | Description |
+|---|---|---|
+| 1 | `1428476` | Perf Album: lightbox sans re-mount au swipe |
+| 2 | `de4f687` | Perf Album: PhotoTile memoize pour éviter 100 re-renders |
+| 3 | `ab5d8de` | Perf Album: fix leak blob URLs sur unmount |
+| 4 | `d5aa628` | Perf Album: lightbox charge version 1600px au lieu du full-size |
+| 5 | `9fb1562` | Perf Album: dynamic import react-zoom-pan-pinch via Lightbox séparée |
+| 6 | `1a08304` | Lightbox: agrandit la hitbox prev/next à 80x80, visuel reste 40x40 |
+| 7 | `72968ec` | Album: bouton Partager en mode sélection (Web Share API) |
+| 8 | `6d0371b` | A11y: permet le zoom utilisateur (max 5x, userScalable=true) |
+| 9 | `9cd9d0c` | A11y: fix contraste page d'accueil + aria-label liens/boutons |
+| 10 | `2afe361` | Perf: dynamic import jszip (~40 KB gzip hors bundle initial) |
+| 11 | `ec771ae` | Perf: next.config - AVIF/WebP images + optimizePackageImports |
+| 12 | `f9927f9` | Perf: browserslist moderne, drop polyfills legacy |
+
+Tous pushés sur `origin/main`. Tree clean.
+
+---
+
+## 📦 Contexte technique pour reprendre
+
+### Fichiers modifiés cette session
+
+**Nouveaux fichiers** :
+- `app/trip/[code]/Lightbox.tsx` (159 lignes) — composant lightbox dynamique
+- `lib/shareFiles.ts` (85 lignes) — helpers Web Share API
+
+**Fichiers modifiés** :
+- `app/trip/[code]/Album.tsx` — refactor profond (−129/+~100 lignes net sur plusieurs commits)
+- `app/layout.tsx` — viewport
+- `app/page.tsx` — contraste + aria-label
+- `lib/downloadAlbum.ts` — dynamic import
+- `next.config.ts` — 4 sections ajoutées
+- `package.json` — browserslist
+
+### Config Next actuelle
+
+```ts
+// next.config.ts
+{
+  compress: true,
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+    ],
+  },
+  experimental: {
+    optimizePackageImports: ['@supabase/supabase-js', 'react-zoom-pan-pinch'],
+  },
+}
+```
+
+### Architecture Album actuelle
+
+**`Album.tsx`** (composant principal, gère les photos, upload, sélection) :
+- Types : `AlbumPhoto = Message & { _pending?: boolean }`, `PendingPhoto = { file; preview }`
+- Blob URLs trackés dans `useRef<Set<string>>` pour cleanup fiable
+- Lightbox importée dynamiquement (ne charge `react-zoom-pan-pinch` qu'au premier clic)
+- `PhotoTile` memoize (composant séparé dans le même fichier)
+
+**`Lightbox.tsx`** (dynamically loaded) :
+- Contient TransformWrapper/Component de `react-zoom-pan-pinch`
+- `ref` impératif pour `resetTransform()` au changement de photo
+- Hitbox 80×80 / visuel 40×40 pour prev/next
+- Charge `thumbUrl(url, 1600)` au lieu du full-size
+
+**`lib/shareFiles.ts`** :
+- `canShareFiles()` feature detection
+- `shareAllTogether()` batch
+- `shareOneByOne()` séquentiel iOS-friendly
+
+### Cards privées — toujours fonctionnel
+
+**DB Supabase** (migration déjà exécutée, ne pas refaire) :
 ```sql
 ALTER TABLE infos
   ADD COLUMN is_prive boolean DEFAULT false,
   ADD COLUMN auteur_id uuid REFERENCES membres(id) ON DELETE SET NULL;
 ```
 
-### Service Worker — version critique
+### Service Worker
 
 **Fichier** : `public/sw.js`
-**Comportement actuel (après le fix de cette session)** :
+**Comportement (inchangé cette session)** :
 - Au démarrage PWA (referrer vide OU externe) → redirige vers `/trip/{lastTripCode}` si trip en cache
-- Navigation interne vers `/` (depuis /admin, /mes-trips, etc.) → laisse passer normalement
-- Met à jour le cache `last-trip-code` à chaque visite d'un trip
+- Navigation interne vers `/` → laisse passer normalement
+- Met à jour le cache `last-trip-code` à chaque visite
 
-**Important** : bumper la version en commentaire en haut du fichier quand on modifie le SW, sinon les utilisateurs restent sur l'ancienne version (les SW sont cachés agressivement).
+**Important** : bumper la version en commentaire en haut du fichier quand on modifie le SW (cache agressif).
 
 ### Optimistic UI pattern (référence)
 
-Template du pattern utilisé partout :
 ```ts
 async function actionXYZ() {
   const snapshot = /* valeur actuelle */
-  const newValue = /* nouvelle valeur */
-  
-  // 1. Optimistic : appliquer localement TOUT DE SUITE
-  setState(newValue)
-  
+  setState(/* nouvelle valeur */)  // optimistic
   try {
     const { error } = await supabase.from('...').update(...).eq('id', ...)
     if (error) throw error
   } catch (e) {
-    // 2. Rollback : restaurer snapshot
-    setState(snapshot)
+    setState(snapshot)  // rollback
     alert('Erreur : ' + e.message)
   }
 }
 ```
 
-Pour les uploads de fichier (Album), on utilise `URL.createObjectURL(file)` comme preview en attendant l'URL Supabase réelle, puis remplacement à la réception.
+Pour les uploads (Album) : `URL.createObjectURL(file)` comme preview en attendant l'URL Supabase réelle, puis remplacement à la réception. Blob URLs trackées pour cleanup.
 
 ---
 
@@ -212,43 +304,47 @@ Pour les uploads de fichier (Album), on utilise `URL.createObjectURL(file)` comm
 Les crochets cassent PowerShell. **Toujours utiliser `-LiteralPath`** :
 ```powershell
 Get-Content -LiteralPath "app\trip\[code]\Infos.tsx"
+Select-String -LiteralPath "app\trip\[code]\Album.tsx" -Pattern "..."
 ```
 `Desktop Commander:edit_block` gère automatiquement les brackets.
-
 **`str_replace` natif NE GÈRE PAS les brackets** — toujours utiliser `Desktop Commander:edit_block` pour les fichiers sous `app/trip/[code]/`.
 
 ### Git commits avec accents/emoji
-- Ne **pas** utiliser `git commit -m "message"` directement (caractères cassés)
-- Écrire le message dans `_m.txt` via `Desktop Commander:write_file` avec `-Encoding UTF8`
+- Ne **pas** utiliser `git commit -m "message"` directement (caractères cassés en PowerShell)
+- Écrire le message dans `_m.txt` via `Desktop Commander:write_file`
 - Puis `git commit -F _m.txt; Remove-Item _m.txt`
 
+### Git add avec brackets
+```powershell
+git add app/trip/`[code`]/Album.tsx  # backtick-escape obligatoire
+```
+
 ### Création de fichiers
-- `create_file` écrit dans le **conteneur Claude**, PAS sur Windows
+- `create_file` de Claude écrit dans le **conteneur Claude**, PAS sur Windows
 - **Utiliser `Desktop Commander:write_file`** pour écrire dans `C:\Users\sbergeron\...`
 - `Desktop Commander:edit_block` pour les modifications
 
 ### PowerShell séparateurs
 - `&&` NE FONCTIONNE PAS en PowerShell — utiliser `;` à la place
-- `cd path; command1; command2` OK, `cd path && command1` KO
 
-### NODE_ENV
-- `NODE_ENV=production` global par défaut sur la machine
-- Avant `npx tsc --noEmit` ou `npm run build` :
-```powershell
-$env:NODE_ENV='development'
-npx tsc --noEmit
-```
+### NODE_ENV attention !
+- Sylvain a `NODE_ENV=production` global sur la machine
+- **Avant `npm run build`** : `Remove-Item Env:\NODE_ENV` (sinon warning + comportements subtils)
+- Avant `npx tsc --noEmit` : `$env:NODE_ENV='development'` (le warning Next n'apparaît pas sur tsc seul, mais safe de mettre dev)
+
+### Build local vs Vercel
+- `npm run build` local fonctionne MAINTENANT (bug `/_global-error` disparu avec la nouvelle config)
+- Build ~3-4s compile + 4s TypeScript — rapide
+- Vercel auto-deploy sur push main, 1-2 min
 
 ### Supabase gotchas
 - `.single().catch()` chaining = **invalide** en Supabase JS (throw, ne chain pas)
-- Inputs React Supabase bloquent l'injection programmatique (utiliser flux .env pour Vercel)
-- Subscription realtime : le check `prev.some(x => x.id === newPhoto.id)` évite les doublons si on fait des inserts optimistic locaux (matcher l'id DB dans le replace)
+- Subscription realtime : check `prev.some(x => x.id === newPhoto.id)` évite les doublons optimistic
+- Les inputs React contrôlés par Supabase bloquent l'injection programmatique (utiliser flux .env pour Vercel)
 
-### Bug connu à surveiller
-- `npm run build` local échoue sur `/_global-error` (TypeError Cannot read properties of null reading useContext)
-- **Pré-existant**, pas causé par les changements de cette session
-- TypeScript reste clean (`npx tsc --noEmit` OK)
-- Vercel peut reproduire — à surveiller sur le dashboard
+### Headers pattern path-to-regexp (next.config)
+`/:path*.png` est **invalide** ("Can not repeat path without prefix and suffix").
+`/_next/static/:path*` est **valide** (suffix vide = OK).
 
 ---
 
@@ -266,7 +362,7 @@ npx tsc --noEmit
 --border       #E0D8C8
 ```
 
-### Palette couleurs catégories (pastilles)
+### Palette catégories
 ```
 all          #6B7280   gris
 itineraire   #0D9488   teal
@@ -280,32 +376,17 @@ resto        #E11D48   rose/rouge
 liens        #7C3AED   violet
 ```
 
-### Conventions UX établies
+### Conventions UX (mémo)
 - **Mobile-first** — Linear / Arc Browser aesthetic
 - **Pastilles catégorie** : fond couleur plein + SVG blanc 20-36px
-- **Boutons Lodge card** : carrés 32×32 vert pâle (bg `rgba(22,163,74,.1)`, border `rgba(22,163,74,.3)`, color `#16A34A`)
-- **Boutons header trip** : même style que "Mes trips" pâle (bg `rgba(255,255,255,.1)`, color `rgba(255,255,255,.75)`)
-- **Pin activé** (inversion) : fond plein `#16A34A` + icône blanche
-- **Liens cliquables LodgeItem** : couleur `#16A34A` (vert Lodge) + flèche externe ↗ à 60% d'opacité
-- **Filtres actifs** : fond teinté 15% + bordure 2px (sauf "Tout" = fond plein forest-mid)
-- **Empty states** : grosse pastille 64×64 + SVG blanc 32px
-- **Toggles** : switch 44×24 avec thumb 20×20 (iOS style)
-- **Badges** : pill arrondie 6px, fontSize 9-10px, letterSpacing .04-.06em
-- **Eyebrow cards** : 10px bold uppercase, couleur catégorie
+- **Boutons Lodge card** : carrés 32×32 vert pâle `rgba(22,163,74,.1)` bg + `rgba(22,163,74,.3)` border
+- **Pin activé** : inversion fond plein `#16A34A` + icône blanche
+- **Liens cliquables** : couleur `#16A34A` + flèche externe ↗ à 60% opacity
+- **Toggles** : switch 44×24 thumb 20×20 iOS style
+- **Eyebrow cards** : 10px bold uppercase couleur catégorie
 - **Titres cards** : 14px bold letter-spacing -.01em
-
----
-
-## 📋 Commits de cette session (chronologique)
-
-| Commit | Description |
-|---|---|
-| `95f29e8` | Header épuré + card Lodge avec pin + détails compacts |
-| `17073c9` | Crayon unifié, pin en punaise, auto-close scroll, liens cliquables |
-| `a1262f7` | Fix retour admin → Mes trips + SW ne redirige plus navs internes |
-| `edf8534` | Adresse paste-friendly (textarea + normalisation + ellipsis) |
-| `36a7af4` | Nouveau slogan "Un seul lien. Pour tout savoir." |
-| `bcbbfc9` | **Optimistic UI partout (Album + Infos + Membres)** |
+- **A11y** : contraste minimum `rgba(255,255,255,.5)` sur fond `--forest`, `.7` pour sous-textes sur fond `.08`
+- **Hitbox minimum** : 44×44 Apple HIG (ici 80×80 pour flèches lightbox)
 
 ---
 
@@ -314,32 +395,45 @@ liens        #7C3AED   violet
 ```
 crew-trips-v2/
 ├── app/
-│   ├── page.tsx                    # Home (logo 🏕 + 2 CTA) — slogan changé ce session
-│   ├── mes-trips/page.tsx          # Liste trips par tel (logo 🏕)
-│   ├── nouveau/page.tsx            # Création trip (TRIP_ICONS select)
+│   ├── page.tsx                    # Home : 🏕 + 2 CTA + lien admin (aria-label OK)
+│   ├── layout.tsx                  # viewport userScalable=true, maximumScale=5
+│   ├── mes-trips/page.tsx          # Liste trips (🏕 à remplacer aussi)
+│   ├── nouveau/page.tsx            # Création trip
 │   ├── rejoindre/page.tsx          # Rejoindre par code
-│   ├── admin/page.tsx              # Admin trips — retour → Mes trips depuis ce session
+│   ├── admin/page.tsx              # Admin trips
 │   ├── album/[token]/page.tsx      # Album public partagé
-│   ├── globals.css                 # + @keyframes crew-spin ajouté ce session
+│   ├── globals.css                 # @keyframes crew-spin
 │   └── trip/[code]/
 │       ├── page.tsx                # Layout 3 tabs (Infos/Chat/Membres)
 │       ├── Infos.tsx               # 🎯 MAIN FILE (Lodge + cards + filtres)
-│       ├── InfoCardView.tsx        # Card individuelle (edit/delete) — inchangé
-│       ├── CardContent.tsx         # Rendering contenu card (liens/images)
-│       ├── Album.tsx               # Onglet Chat (photos) — optimistic upload ajouté
-│       ├── Membres.tsx             # Onglet Membres + permissions — optimistic partout
-│       ├── JoinScreen.tsx          # Écran rejoindre (prénom+tel)
-│       ├── created/page.tsx        # Page succès création
+│       ├── InfoCardView.tsx        # Card individuelle
+│       ├── CardContent.tsx         # Rendering contenu card
+│       ├── Album.tsx               # Onglet Chat (photos)
+│       │                           # - PhotoTile memo
+│       │                           # - Lightbox dynamic import
+│       │                           # - Bouton Partager mode sélection
+│       │                           # - Blob URLs trackées useRef<Set>
+│       ├── Lightbox.tsx            # 🆕 Composant lightbox (chargé dynamiquement)
+│       │                           # - Hitbox 80×80 prev/next
+│       │                           # - thumbUrl 1600px
+│       │                           # - ref resetTransform
+│       ├── Membres.tsx             # Onglet Membres + permissions
+│       ├── JoinScreen.tsx          # Écran rejoindre
+│       ├── created/page.tsx        # Page succès création (🏕 à remplacer)
 │       └── print/page.tsx          # Vue impression
 ├── lib/
 │   ├── types.tsx                   # InfoCard, CATEGORIES, Message, getCatSvg
 │   ├── utils.tsx                   # TRIP_ICONS, countdown, getYoutubeId, isPdf
-│   ├── svgIcons.tsx                # 26 icônes — `pin` changé en punaise ce session
+│   ├── svgIcons.tsx                # 26 icônes
 │   ├── supabase.ts                 # Client Supabase
-│   └── downloadAlbum.ts            # ZIP download (candidat dynamic import)
-└── public/
-    ├── manifest.json               # PWA config
-    └── sw.js                       # Service Worker — fix referrer ce session
+│   ├── downloadAlbum.ts            # ZIP download (jszip dynamic import)
+│   ├── shareFiles.ts               # 🆕 Web Share API (canShare, together, one-by-one)
+│   └── imageCompression.ts         # browser-image-compression wrapper
+├── public/
+│   ├── manifest.json               # PWA config
+│   └── sw.js                       # Service Worker
+├── next.config.ts                  # AVIF/WebP + optimizePackageImports + remotePatterns
+└── package.json                    # browserslist moderne
 ```
 
 ---
@@ -350,65 +444,48 @@ Colle au début de la conversation :
 
 > "Salut Claude, on reprend Crew Trips v2. Lis `C:/Users/sbergeron/crew-trips-v2/BRIEF-NEXT-SESSION.md` pour le contexte complet. On va travailler sur [LE SUJET]."
 
-**Les 3 sujets les plus probables pour la prochaine fois** :
+**Les 3 sujets les plus probables** :
 
-1. **Logo Crew Trips** — Sylvain arrive avec un PNG/WebP du logo, intégration rapide sur Home + Mes trips + created (~20 min)
+1. **🔥 Logo Crew Trips** (+LCP win) — Sylvain arrive avec son PNG/WebP, intégration `next/image priority` sur Home + Mes trips + created. ~20 min pour le code, mesure Lighthouse après. **Impact attendu : Perf 90 → 95-97.**
 
-2. **Perf Album 100 photos** — lightbox memoization, realtime leak check, lazy loading grille. Tester avec un trip qui a beaucoup de photos. Impact visible sur mobile iOS Safari surtout.
+2. **Checklist tests manuels** — créer `TESTS-MANUELS.md` avec tous les flows à cocher avant release. ~15 min, zero code.
 
-3. **Checklist tests manuels** — créer `TESTS-MANUELS.md` avec tous les flows à cocher avant release. Pas de code à changer, juste de la doc.
+3. **Prefetch lightbox + Escape desktop** — petites améliorations UX Album (~20 min total).
 
-**Sujets secondaires** (si temps) :
-- Bundle size + dynamic imports `jszip` + `react-zoom-pan-pinch`
-- RLS Supabase sanity check (créer un trip test avec 2 users)
-- Perf Download ZIP mobile (iOS 50MB+)
-- Service Worker robustesse (tester offline → online → PWA flows)
+**Sujets secondaires** :
+- RLS Supabase sanity check (créer 2 users dans un trip test)
+- next/image pour les `<img>` restants (avatars, thumbnails YouTube dans cards)
+- Service Worker robustesse tests
+- Perf Download ZIP mobile iOS
 
 ---
 
-## 🧪 Pour valider les changements de cette session
+## 🧪 Tests rapides post-déploiement (pour cette session)
 
-**À tester sur `crew-trips-v2.vercel.app`** (après déploiement Vercel ~1-2 min) :
+### Sur `crew-trips-v2.vercel.app` (attendre 1-2 min après push) :
 
-### Header + Card Lodge
-- [ ] Plus de bouton "Inviter" dans le header trip
-- [ ] Crayon + imprimante au même style pâle que "Mes trips"
-- [ ] Card Lodge fermée par défaut
-- [ ] Clic sur la card → ouvre avec chevron qui tourne
-- [ ] Scroll down → card se ferme automatiquement
-- [ ] Pin (punaise) activé → card reste ouverte même au scroll
-- [ ] Pin persiste après refresh (localStorage)
-- [ ] Badge "Épinglée" apparaît quand pin activé
+**Album perf** :
+- [ ] Ouvrir une photo → swipe prev/next très rapide → pas de freeze
+- [ ] Mode sélection : taper sur 10 photos d'affilée → instantané
+- [ ] Upload 5 photos d'un coup → apparaissent immédiatement avec spinner
 
-### Liens cliquables
-- [ ] Téléphone est vert avec flèche ↗, tap → appel téléphone
-- [ ] Adresse est verte avec flèche ↗, tap → Google Maps
-- [ ] Long-press sur adresse tronquée → affiche l'intégrale (tooltip)
+**Hitbox prev/next** :
+- [ ] Taper juste à côté du rond ‹ ou › → navigation déclenchée (pas pan)
 
-### Formulaire Lodge
-- [ ] Champ Adresse est un textarea pleine largeur
-- [ ] Hint "Colle n'importe quel format" visible en vert
-- [ ] Copier-coller depuis Google Maps fonctionne (retours ligne normalisés en virgules)
+**Partage** :
+- [ ] Sélectionner 1 photo → "Partager 1" → sheet native directe
+- [ ] Sélectionner 3 photos → sheet choix "ensemble / une par une"
+- [ ] Tester AirDrop (batch) et iMessage (une par une si batch refuse)
 
-### Fix navigation admin
-- [ ] Mes trips → ouvrir un trip → aller à /admin → retour → revient à Mes trips (pas au trip)
-- [ ] Le lien affiche "← Mes trips" (pas "← Accueil")
+**A11y** :
+- [ ] Sur la home `/`, pincer pour zoomer → fonctionne (avant c'était bloqué)
+- [ ] Le bouton ⚙ admin en bas à droite est accessible via lecteur d'écran
+- [ ] Contraste texte "Créer un trip pour votre groupe" plus lisible
 
-### Nouveau slogan
-- [ ] Page home `/` affiche "Un seul lien. / Pour tout savoir."
-
-### Optimistic UI
-- [ ] Ajouter une card info → apparaît instantanément
-- [ ] Supprimer une card → disparaît instantanément
-- [ ] Toggle permission dans Membres → switch bouge immédiatement
-- [ ] Sauvegarder Lodge → sheet ferme tout de suite
-- [ ] **Upload photos** : sélectionner 5 photos → envoyer → elles apparaissent immédiatement avec spinner, se "figent" progressivement à mesure que l'upload finit
-- [ ] Si désactiver le réseau avant un upload → rollback propre (photos disparaissent + alert)
-
-**Cas limite Service Worker** : si le comportement de navigation admin reste buggé sur un appareil particulier, c'est que l'ancien SW est encore en cache. Solutions :
-- Chrome DevTools → Application → Service Workers → Unregister
-- Safari iOS : fermer complètement la PWA (swipe up) et relancer
-- Firefox : Ctrl+Shift+Delete → Vider cache
+**Build/deploy** :
+- [ ] `npm run build` local passe sans erreur
+- [ ] Vercel deploy vert
+- [ ] Lighthouse sur prod : Perf 90, A11y 100, BP 100, SEO 100
 
 ---
 
