@@ -424,7 +424,9 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
 
         {!loading && photos.length === 0 && (
           <div className="empty" style={{ padding: '60px 20px', textAlign: 'center' }}>
-            <span className="empty-icon" style={{ fontSize: 42 }}>📷</span>
+            <span style={{display:'inline-flex',width:64,height:64,borderRadius:16,background:'#E11D48',color:'#fff',alignItems:'center',justifyContent:'center',marginBottom:12}}>
+              <SvgIcon name="camera" size={32} />
+            </span>
             <div style={{ marginTop: 12, fontWeight: 600, color: 'var(--text-2)' }}>Album vide</div>
             {canPostPhotos && (
               <div style={{ marginTop: 6, fontSize: 13, color: 'var(--text-3)' }}>

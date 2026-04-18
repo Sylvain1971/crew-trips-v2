@@ -478,8 +478,16 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       <div style={{padding:'14px 14px 100px',display:'flex',flexDirection:'column',gap:10}}>
         {filtered.length === 0 ? (
           <div className="empty">
-            {filtre==='all' ? <span className="empty-icon">📋</span> : <span className="empty-icon">{getCat(filtre).icon}</span>}
-            Aucune info ici pour l'instant.<br/>Appuyez sur <strong>+</strong> pour ajouter.
+            {filtre==='all' ? (
+              <span style={{display:'inline-flex',width:64,height:64,borderRadius:16,background:'#1A4A1A',color:'#fff',alignItems:'center',justifyContent:'center',marginBottom:14}}>
+                <SvgIcon name="clipboard" size={32} />
+              </span>
+            ) : (
+              <span style={{display:'inline-flex',width:64,height:64,borderRadius:16,background:getCat(filtre).color,color:'#fff',alignItems:'center',justifyContent:'center',marginBottom:14}}>
+                {getCatSvg(filtre, 32, trip.type)}
+              </span>
+            )}
+            <div>Aucune info ici pour l&apos;instant.<br/>Appuyez sur <strong>+</strong> pour ajouter.</div>
           </div>
         ) : filtered.map(card => (
           <InfoCardView key={card.id} card={card}
