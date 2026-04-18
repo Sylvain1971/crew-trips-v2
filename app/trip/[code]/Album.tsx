@@ -481,20 +481,43 @@ export default function Album({ tripId, trip, membre }: { tripId: string, trip: 
           )}
 
           {/* Champ legende (s'applique a la photo active) */}
-          <div style={{ padding: '8px 12px 16px', flexShrink: 0 }}>
-            <input
-              type="text"
-              placeholder={pending.length > 1 ? `Légende pour la photo ${pendingIdx + 1} (optionnel)…` : 'Légende (optionnel)…'}
+          <div style={{ padding: '10px 14px 16px', flexShrink: 0, background: 'rgba(0,0,0,.35)' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: 6,
+            }}>
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.95)',
+              }}>
+                <span style={{ fontSize: 14 }}>✏️</span>
+                {pending.length > 1 ? `Légende — photo ${pendingIdx + 1}` : 'Légende'}
+                <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,.55)' }}>
+                  (optionnel)
+                </span>
+              </label>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,.55)', flexShrink: 0 }}>
+                {pendingCaption.length}/200
+              </span>
+            </div>
+            <textarea
+              placeholder="Ajoute une légende pour cette photo…"
               value={pendingCaption}
               onChange={e => setPendingCaption(e.target.value)}
               disabled={sending}
               maxLength={200}
+              rows={2}
               style={{
-                width: '100%', padding: '11px 14px',
-                borderRadius: 10, border: 'none',
-                background: 'rgba(255,255,255,.15)', color: '#fff',
-                fontSize: 14, outline: 'none',
+                width: '100%', padding: '12px 14px',
+                borderRadius: 12, border: '1.5px solid rgba(255,255,255,.25)',
+                background: 'rgba(255,255,255,.12)', color: '#fff',
+                fontSize: 15, fontFamily: 'inherit', lineHeight: 1.4,
+                outline: 'none', resize: 'none',
+                minHeight: 56, maxHeight: 120,
+                boxSizing: 'border-box',
               }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(255,255,255,.55)' }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,.25)' }}
             />
           </div>
         </div>
