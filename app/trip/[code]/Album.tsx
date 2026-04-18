@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageCompression'
+import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import type { Message, Membre, Trip } from '@/lib/types'
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 
@@ -79,6 +80,30 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     if (!trip.share_token) return
     navigator.clipboard.writeText(`${window.location.origin}/album/${trip.share_token}`)
     setShareCopied(true); setTimeout(() => setShareCopied(false), 3000)
+  }
+
+  // Download tout en ZIP
+  const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(null)
+
+  async function downloadAll() {
+    if (photos.length === 0) return
+    if (downloadProgress) return // deja en cours
+    const estMB = Math.round(photos.length * 0.4) // estimation ~400KB/photo compressee
+    const confirmMsg = `Télécharger ${photos.length} photo${photos.length > 1 ? 's' : ''} en ZIP ?\n\nTaille estimée : ~${estMB} MB\n\nLe téléchargement peut prendre quelques minutes selon ta connexion.`
+    if (!confirm(confirmMsg)) return
+
+    setDownloadProgress({ done: 0, total: photos.length })
+    try {
+      await downloadAlbumAsZip(
+        photos,
+        trip.nom,
+        (done, total) => setDownloadProgress({ done, total })
+      )
+    } catch (e: unknown) {
+      alert('Erreur lors du téléchargement : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setDownloadProgress(null)
+    }
   }
 
   // Chargement initial : toutes les photos (max 100, order desc pour avoir les + recentes en haut)
@@ -335,27 +360,59 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
         </div>
       )}
 
-      {/* Toolbar haut : Partager (createur) + Selectionner (hors mode selection) */}
-      {!selectionMode && (membre.is_createur || photos.length > 0) && (
-        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          {membre.is_createur ? (
-            <button onClick={() => setShareSheetOpen(true)}
-              aria-label="Partager l'album"
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+      {/* Toolbar haut : Telecharger tout + Partager (createur) + Selectionner */}
+      {!selectionMode && photos.length > 0 && (
+        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+            <button onClick={downloadAll} disabled={!!downloadProgress}
+              aria-label="Télécharger tout"
+              style={{ background: 'transparent', border: 'none',
+                color: downloadProgress ? 'var(--text-3)' : 'var(--text-2)',
+                fontSize: 13, fontWeight: 600,
+                cursor: downloadProgress ? 'default' : 'pointer',
+                padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                <polyline points="16 6 12 2 8 6"/>
-                <line x1="12" y1="2" x2="12" y2="15"/>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Partager
+              {downloadProgress
+                ? `${downloadProgress.done}/${downloadProgress.total}…`
+                : 'Télécharger'}
             </button>
-          ) : <span />}
-          {photos.length > 0 && (
-            <button onClick={() => enterSelectionMode()}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
-              Sélectionner
-            </button>
-          )}
+            {membre.is_createur && (
+              <button onClick={() => setShareSheetOpen(true)}
+                aria-label="Partager l'album"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                  <polyline points="16 6 12 2 8 6"/>
+                  <line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+                Partager
+              </button>
+            )}
+          </div>
+          <button onClick={() => enterSelectionMode()}
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
+            Sélectionner
+          </button>
+        </div>
+      )}
+
+      {/* Toolbar createur sans photos : juste Partager */}
+      {!selectionMode && photos.length === 0 && membre.is_createur && (
+        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'flex-start' }}>
+          <button onClick={() => setShareSheetOpen(true)}
+            aria-label="Partager l'album"
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            Partager
+          </button>
         </div>
       )}
 

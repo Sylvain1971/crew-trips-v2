@@ -1,8 +1,0 @@
-feat(album): bouton Partager dans l'onglet Album (createur only)
-
-- Ajout d'un bouton "Partager" dans la toolbar de l'album,
-  aligne avec "Selectionner" (createur only)
-- Ouvre une bottom sheet avec la meme logique que la carte
-  dans l'onglet Groupe : generer / copier / regenerer
-- La carte dans Membres.tsx reste (panneau de controle)
-- Album recoit maintenant onTripUpdate pour persister share_token

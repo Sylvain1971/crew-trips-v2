@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import type { Message, Trip } from '@/lib/types'
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 
@@ -17,6 +18,26 @@ export default function AlbumPublicPage({ params }: { params: Promise<{ token: s
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
   const [isZoomed, setIsZoomed] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState<{ done: number; total: number } | null>(null)
+
+  async function downloadAll() {
+    if (photos.length === 0 || downloadProgress) return
+    const estMB = Math.round(photos.length * 0.4)
+    const confirmMsg = `Télécharger ${photos.length} photo${photos.length > 1 ? 's' : ''} en ZIP ?\n\nTaille estimée : ~${estMB} MB\n\nLe téléchargement peut prendre quelques minutes selon ta connexion.`
+    if (!confirm(confirmMsg)) return
+    setDownloadProgress({ done: 0, total: photos.length })
+    try {
+      await downloadAlbumAsZip(
+        photos,
+        trip?.nom || 'album',
+        (done, total) => setDownloadProgress({ done, total })
+      )
+    } catch (e: unknown) {
+      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setDownloadProgress(null)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -122,11 +143,34 @@ export default function AlbumPublicPage({ params }: { params: Promise<{ token: s
           color: 'rgba(255,255,255,.6)', textTransform: 'uppercase', marginBottom: 2 }}>
           Album partagé
         </div>
-        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.01em' }}>
-          {trip?.nom}
-        </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,.55)', marginTop: 3 }}>
-          {photos.length} photo{photos.length > 1 ? 's' : ''} · lecture seule
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, justifyContent: 'space-between' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-.01em',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {trip?.nom}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.55)', marginTop: 3 }}>
+              {photos.length} photo{photos.length > 1 ? 's' : ''} · lecture seule
+            </div>
+          </div>
+          {photos.length > 0 && (
+            <button onClick={downloadAll} disabled={!!downloadProgress}
+              aria-label="Télécharger tout"
+              style={{ height: 34, padding: '0 12px', borderRadius: 17,
+                border: '1px solid rgba(255,255,255,.25)',
+                background: downloadProgress ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.15)',
+                color: '#fff', fontSize: 12, fontWeight: 600,
+                cursor: downloadProgress ? 'default' : 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+                whiteSpace: 'nowrap' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              {downloadProgress ? `${downloadProgress.done}/${downloadProgress.total}` : 'Tout'}
+            </button>
+          )}
         </div>
       </div>
 
