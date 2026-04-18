@@ -8,6 +8,8 @@ import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
 
 const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
+// Ordre d'affichage des chips dans les sheets Ajouter/Modifier — même ordre que les filtres
+const CHIP_ORDER = ['itineraire','transport','lodge','permis','equipement','infos','meteo','resto','liens']
 
 function formatSize(b: number) {
   if (b < 1024) return `${b} B`
@@ -406,7 +408,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         {/* Filtres */}
         <div style={{padding:'10px 14px'}}>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6,marginBottom:6}}>
-            <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')} icon={getCatSvg('all')}>Tout</FilterBtn>
+            <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')} color="#6B7280" icon={getCatSvg('all')}>Tout</FilterBtn>
             {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
               <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color} icon={getCatSvg(id, 16, trip.type)}>
                 {id==='itineraire'?'Itinéraire':id==='transport'?'Vols':id==='lodge'?getLodgeLabel(trip.type).label:getPermisLabel(trip.type)}
@@ -428,12 +430,12 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'14px 16px'}}>
           {!editLodge && haslodge && (
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-              {lodge.nom && <LodgeItem icon="🏠" label="Nom" val={lodge.nom} />}
-              {lodge.adresse && <LodgeItem icon="📍" label="Adresse" val={lodge.adresse} />}
-              {lodge.tel && <LodgeItem icon="📞" label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
-              {lodge.wifi && <LodgeItem icon="📶" label="WiFi" val={lodge.wifi} />}
-              {lodge.arrivee && <LodgeItem icon="🛬" label="Arrivée" val={lodge.arrivee} />}
-              {lodge.code && <LodgeItem icon="🛫" label="Départ" val={lodge.code} />}
+              {lodge.nom && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L2 12h3v8h5v-6h4v6h5v-8h3L12 3z"/></svg>} label="Nom" val={lodge.nom} />}
+              {lodge.adresse && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>} label="Adresse" val={lodge.adresse} />}
+              {lodge.tel && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>} label="Téléphone" val={lodge.tel} link={`tel:${lodge.tel}`} />}
+              {lodge.wifi && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>} label="WiFi" val={lodge.wifi} />}
+              {lodge.arrivee && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19v-2zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 10l-6.9-6.43-1.93.51 4.14 7.17-4.97 1.33-1.97-1.54-1.45.39 2.59 4.49s7.12-1.9 16.57-4.43c.81-.23 1.28-1.05 1.07-1.85z"/></svg>} label="Arrivée" val={lodge.arrivee} />}
+              {lodge.code && <LodgeItem icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19v-2zm16.84-8.84l1.41-1.41-2.83-2.83-1.79 1.8c-2.32-1.46-5.2-1.89-7.89-.89L1.66 4.8.25 6.21l7.06 2.35L5.29 9.96l-2.47-.43-1.06 1.06 3.18 2.12L13.6 9.43l-4.95 8.48 1.06 1.06 4.24-4.24 4.5 1.41c.86-2.3.43-4.93-1.11-6.98z"/></svg>} label="Départ" val={lodge.code} />}
             </div>
           )}
           {!editLodge && !haslodge && isCreateur && (
@@ -529,16 +531,20 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         <div className="sheet-handle" />
         <div className="sheet-title">Modifier</div>
         <div className="field"><label>Catégorie</label>
-          <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
-            {CATEGORIES.map(c=>(
-              <button key={c.id} onClick={()=>setEditCat(c.id)}
-                style={{padding:'7px 12px',borderRadius:20,border:`1.5px solid ${editCat===c.id?c.color:'var(--border)'}`,
-                  background:editCat===c.id?c.bg:'transparent',color:editCat===c.id?c.color:'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',
-                  display:'inline-flex',alignItems:'center',gap:6}}>
-                <span style={{display:'inline-flex',color:editCat===c.id?c.color:'var(--text-3)'}}>{getCatSvg(c.id, 14, trip.type)}</span>
-                {getCatLabel(c.id, trip.type) || c.label}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6}}>
+            {CHIP_ORDER.map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;const active=editCat===c.id;return(
+              <button key={c.id} onClick={()=>setEditCat(c.id)} style={{
+                padding:'7px 3px',borderRadius:14,
+                border:`${active?2:1.5}px solid ${active?c.color:'var(--border)'}`,
+                background:active?`${c.color}15`:'transparent',
+                color:active?c.color:'var(--text-2)',fontSize:10,fontWeight:600,cursor:'pointer',
+                display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,
+                lineHeight:1.15,minWidth:0
+              }}>
+                <span style={{width:22,height:22,borderRadius:6,background:c.color,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{getCatSvg(c.id, 13, trip.type)}</span>
+                <span style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{getChipLabel(c.id, trip.type)}</span>
               </button>
-            ))}
+            )})}
           </div>
         </div>
         <div className="field"><label>Titre</label>
@@ -589,16 +595,22 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         <div className="sheet-handle" />
         <div className="sheet-title">Ajouter une info</div>
         <div className="field"><label>Catégorie</label>
-          <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
-            {CATEGORIES.map(c=>(
-              <button key={c.id} onClick={()=>setCat(c.id)}
-                style={{padding:'7px 12px',borderRadius:20,border:`1.5px solid ${cat===c.id?c.color:'var(--border)'}`,
-                  background:cat===c.id?c.bg:'transparent',color:cat===c.id?c.color:'var(--text-2)',fontSize:13,fontWeight:600,cursor:'pointer',
-                  display:'inline-flex',alignItems:'center',gap:6}}>
-                <span style={{display:'inline-flex',color:cat===c.id?c.color:'var(--text-3)'}}>{getCatSvg(c.id, 14, trip.type)}</span>
-                {getCatLabel(c.id, trip.type) || c.label}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6}}>
+            {/* Case vide en première position (haut-gauche) pour rythme visuel */}
+            <div style={{visibility:'hidden'}} aria-hidden="true" />
+            {CHIP_ORDER.map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;const active=cat===c.id;return(
+              <button key={c.id} onClick={()=>setCat(c.id)} style={{
+                padding:'7px 3px',borderRadius:14,
+                border:`${active?2:1.5}px solid ${active?c.color:'var(--border)'}`,
+                background:active?`${c.color}15`:'transparent',
+                color:active?c.color:'var(--text-2)',fontSize:10,fontWeight:600,cursor:'pointer',
+                display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,
+                lineHeight:1.15,minWidth:0
+              }}>
+                <span style={{width:22,height:22,borderRadius:6,background:c.color,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{getCatSvg(c.id, 13, trip.type)}</span>
+                <span style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{getChipLabel(c.id, trip.type)}</span>
               </button>
-            ))}
+            )})}
           </div>
         </div>
         <div className="field"><label>Titre</label>
@@ -638,10 +650,13 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
   )
 }
 
-function LodgeItem({icon,label,val,link}:{icon:string,label:string,val:string,link?:string}) {
+function LodgeItem({icon,label,val,link}:{icon:React.ReactNode,label:string,val:string,link?:string}) {
   return (
     <div style={{background:'var(--sand)',borderRadius:10,padding:'9px 12px'}}>
-      <div style={{fontSize:11,color:'var(--text-3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3}}>{icon} {label}</div>
+      <div style={{fontSize:11,color:'var(--text-3)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:3,display:'inline-flex',alignItems:'center',gap:5}}>
+        <span style={{display:'inline-flex',alignItems:'center',color:'var(--text-3)'}}>{icon}</span>
+        {label}
+      </div>
       {link
         ? <a href={link} style={{fontSize:13,fontWeight:600,color:'var(--green)',textDecoration:'none'}}>{val}</a>
         : <div style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{val}</div>}
@@ -650,17 +665,50 @@ function LodgeItem({icon,label,val,link}:{icon:string,label:string,val:string,li
 }
 
 function FilterBtn({active,onClick,color,icon,children}:{active:boolean,onClick:()=>void,color?:string,icon?:React.ReactNode,children:React.ReactNode}) {
+  const pillColor = color || 'var(--forest)'
   return (
     <button onClick={onClick} style={{
-      padding:'8px 4px',borderRadius:14,
-      border:`1.5px solid ${active?(color||'var(--forest)'):'var(--border)'}`,
-      background:active?(color||'var(--forest)'):'transparent',
-      color:active?'#fff':'var(--text-2)',fontSize:10,fontWeight:600,cursor:'pointer',
-      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:3,
+      padding:'7px 3px',borderRadius:14,
+      border:`${active?2:1.5}px solid ${active?pillColor:'var(--border)'}`,
+      background:active?`${pillColor}15`:'transparent',
+      color:active?pillColor:'var(--text-2)',fontSize:10,fontWeight:600,cursor:'pointer',
+      display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,
       lineHeight:1.15,minWidth:0
     }}>
-      {icon && <span style={{display:'flex',alignItems:'center',justifyContent:'center',color:active?'#fff':(color||'var(--text-3)')}}>{icon}</span>}
+      {icon && (
+        <span style={{
+          width:22,height:22,borderRadius:6,background:pillColor,color:'#fff',
+          display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0
+        }}>{icon}</span>
+      )}
       <span style={{whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:'100%'}}>{children}</span>
     </button>
   )
+}
+
+// Label court pour les chips verticales des sheets (Ajouter/Modifier)
+function getChipLabel(id: string, tripType?: string): string {
+  switch (id) {
+    case 'itineraire': return 'Itinéraire'
+    case 'transport':  return 'Vols'
+    case 'lodge':
+      switch (tripType) {
+        case 'ski': case 'velo': return 'Hôtel'
+        case 'hike': return 'Refuge'
+        case 'yoga': case 'soleil': return 'Resort'
+        default: return 'Lodge'
+      }
+    case 'permis':
+      switch (tripType) {
+        case 'ski': return 'Billets'
+        case 'peche': return 'Permis'
+        default: return 'Accès'
+      }
+    case 'equipement': return 'Équip.'
+    case 'infos':      return 'Infos'
+    case 'meteo':      return 'Météo'
+    case 'resto':      return 'Restos'
+    case 'liens':      return 'Liens'
+    default: return ''
+  }
 }

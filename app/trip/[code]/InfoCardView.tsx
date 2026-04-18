@@ -54,12 +54,12 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
         <div
           onClick={collapsed && onCardClick ? onCardClick : undefined}
           style={{
-            width: 36, height: 36, borderRadius: 9, background: c.bg, display: 'flex',
+            width: 36, height: 36, borderRadius: 9, background: c.color, display: 'flex',
             alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            color: c.color,
+            color: '#fff',
             cursor: collapsed && onCardClick ? 'pointer' : undefined,
           }}>
-          {getCatSvg(card.categorie, 20, tripType) || c.icon}
+          {getCatSvg(card.categorie, 20, tripType) || <span style={{fontSize:18}}>{c.icon}</span>}
         </div>
 
         {/* Contenu principal */}
