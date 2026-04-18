@@ -127,3 +127,9 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 .nav-tab.active { color: var(--forest); }
 .nav-tab svg, .nav-tab .nav-icon { font-size: 22px; line-height: 1; }
+
+
+/* Spinner pour upload photos optimistic */
+@keyframes crew-spin {
+  to { transform: rotate(360deg); }
+}

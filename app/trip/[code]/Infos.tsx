@@ -329,7 +329,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     }
   }, [])
 
-  // Sauvegarder Lodge
+  // Sauvegarder Lodge — optimistic : sheet se ferme immédiatement
   async function saveLodge() {
     setSavingLodge(true)
     try {
@@ -343,35 +343,60 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         .replace(/\s*,\s*/g, ', ')
         .replace(/\s{2,}/g, ' ')
         .trim()
-      const { error } = await withRetry(() => supabase.from('trips').update({
-        lodge_nom: lodge.nom||null, lodge_adresse: adresseCleaned||null,
-        lodge_tel: lodge.tel||null, lodge_wifi: lodge.wifi||null,
-        lodge_code: lodge.code||null, lodge_arrivee: lodge.arrivee||null,
-      }).eq('id', trip.id))
-      if (error) throw error
-      // Mettre à jour le state local avec l'adresse nettoyée pour cohérence immédiate
+      // Snapshot pour rollback
+      const snapshotLodge = { ...lodge }
+      const snapshotWasEditing = true
+
+      // Optimistic : adresse nettoyée + fermer la sheet tout de suite
       setLodge(p => ({...p, adresse: adresseCleaned}))
       setEditLodge(false)
-    } catch (e: any) {
-      alert('Erreur sauvegarde lodge : ' + e.message)
+
+      try {
+        const { error } = await withRetry(() => supabase.from('trips').update({
+          lodge_nom: lodge.nom||null, lodge_adresse: adresseCleaned||null,
+          lodge_tel: lodge.tel||null, lodge_wifi: lodge.wifi||null,
+          lodge_code: lodge.code||null, lodge_arrivee: lodge.arrivee||null,
+        }).eq('id', trip.id))
+        if (error) throw error
+      } catch (e: any) {
+        // Rollback : restaurer la sheet avec les anciennes valeurs
+        setLodge(snapshotLodge)
+        if (snapshotWasEditing) setEditLodge(true)
+        alert('Erreur sauvegarde lodge : ' + e.message)
+      }
     } finally {
       setSavingLodge(false)
     }
   }
 
-  // Modifier trip
+  // Modifier trip — optimistic : sheet se ferme immédiatement
   async function saveTrip() {
     if (!editNom.trim()) return
     setSavingTrip(true)
+    const snapshotTrip = { nom: trip.nom, destination: trip.destination, date_debut: trip.date_debut, date_fin: trip.date_fin }
+    const newValues = {
+      nom: editNom.trim(),
+      destination: editDest.trim() || undefined,
+      date_debut: editD1 || undefined,
+      date_fin: editD2 || undefined,
+    }
+
+    // Optimistic : appliquer localement + fermer sheet tout de suite
+    onTripUpdate?.(newValues)
+    setEditTrip(false)
+
     try {
       const { error } = await withRetry(() => supabase.from('trips').update({
-        nom: editNom.trim(), destination: editDest.trim()||null,
-        date_debut: editD1||null, date_fin: editD2||null,
+        nom: newValues.nom,
+        destination: newValues.destination || null,
+        date_debut: newValues.date_debut || null,
+        date_fin: newValues.date_fin || null,
       }).eq('id', trip.id))
       if (error) throw error
-      onTripUpdate?.({ nom: editNom.trim(), destination: editDest.trim()||undefined, date_debut: editD1||undefined, date_fin: editD2||undefined })
-      setEditTrip(false)
     } catch (e: any) {
+      // Rollback
+      onTripUpdate?.(snapshotTrip)
+      setEditTrip(true)
       alert('Erreur sauvegarde trip : ' + e.message)
     } finally {
       setSavingTrip(false)

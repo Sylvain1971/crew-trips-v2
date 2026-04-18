@@ -82,24 +82,56 @@ export default function Membres({trip, membre, onTripUpdate}: {
   }
 
   async function togglePermission(key: 'can_delete'|'can_edit'|'can_post_photos') {
-    const newVal = !trip[key]
-    await supabase.from('trips').update({[key]:newVal}).eq('id',trip.id)
+    const oldVal = trip[key]
+    const newVal = !oldVal
+    // Optimistic : on met à jour l'UI tout de suite
     onTripUpdate({[key]:newVal})
+    try {
+      const { error } = await supabase.from('trips').update({[key]:newVal}).eq('id',trip.id)
+      if (error) throw error
+    } catch (e: unknown) {
+      // Rollback
+      onTripUpdate({[key]:oldVal})
+      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    }
   }
 
   async function saveWhatsapp() {
-    await supabase.from('trips').update({whatsapp_lien:whatsapp||null}).eq('id',trip.id)
-    onTripUpdate({whatsapp_lien:whatsapp||undefined})
+    const oldVal = trip.whatsapp_lien
+    const newVal = whatsapp || null
+    // Optimistic : fermer le sheet + mettre à jour tout de suite
+    onTripUpdate({whatsapp_lien: newVal || undefined})
     setEditWhatsapp(false)
+    try {
+      const { error } = await supabase.from('trips').update({whatsapp_lien: newVal}).eq('id', trip.id)
+      if (error) throw error
+    } catch (e: unknown) {
+      // Rollback
+      onTripUpdate({whatsapp_lien: oldVal})
+      setWhatsapp(oldVal || '')
+      setEditWhatsapp(true)
+      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    }
   }
 
   async function saveSms() {
+    const oldVal = trip.sms_lien
     const val = sms.trim()
-    const lien = val || null
-    await supabase.from('trips').update({sms_lien: lien}).eq('id', trip.id)
-    onTripUpdate({sms_lien: lien||undefined})
-    setSms(lien||'')
+    const newVal = val || null
+    // Optimistic : fermer le sheet + mettre à jour tout de suite
+    onTripUpdate({sms_lien: newVal || undefined})
+    setSms(newVal || '')
     setEditSms(false)
+    try {
+      const { error } = await supabase.from('trips').update({sms_lien: newVal}).eq('id', trip.id)
+      if (error) throw error
+    } catch (e: unknown) {
+      // Rollback
+      onTripUpdate({sms_lien: oldVal})
+      setSms(oldVal || '')
+      setEditSms(true)
+      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    }
   }
 
   async function savePrenom() {
@@ -122,13 +154,17 @@ export default function Membres({trip, membre, onTripUpdate}: {
 
   async function generateShareToken() {
     if (generatingShare) return
+    const oldToken = trip.share_token
+    const newToken = crypto.randomUUID()
+    // Optimistic
     setGeneratingShare(true)
+    onTripUpdate({ share_token: newToken })
     try {
-      const token = crypto.randomUUID()
-      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
       if (error) throw error
-      onTripUpdate({ share_token: token })
     } catch (e: unknown) {
+      // Rollback
+      onTripUpdate({ share_token: oldToken })
       alert('Erreur lors de la génération du lien : ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setGeneratingShare(false)
@@ -138,13 +174,17 @@ export default function Membres({trip, membre, onTripUpdate}: {
   async function regenerateShareToken() {
     if (!confirm('Régénérer le lien ? L\'ancien lien ne fonctionnera plus et toute personne qui l\'a reçu perdra l\'accès.')) return
     if (generatingShare) return
+    const oldToken = trip.share_token
+    const newToken = crypto.randomUUID()
+    // Optimistic : mettre à jour tout de suite
     setGeneratingShare(true)
+    onTripUpdate({ share_token: newToken })
     try {
-      const token = crypto.randomUUID()
-      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
       if (error) throw error
-      onTripUpdate({ share_token: token })
     } catch (e: unknown) {
+      // Rollback
+      onTripUpdate({ share_token: oldToken })
       alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setGeneratingShare(false)

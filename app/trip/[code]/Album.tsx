@@ -12,16 +12,22 @@ const WARN_THRESHOLD = 90
 const LONG_PRESS_MS = 500
 
 // Transformation Supabase : thumbnail pour la grille (perf)
-const thumbUrl = (url: string, w = 600) =>
-  url.includes('?') ? url : `${url}?width=${w}&quality=75`
+const thumbUrl = (url: string, w = 600) => {
+  // Skip pour blob: URLs (photos optimistes pending upload) — leur query-string casserait le blob
+  if (url.startsWith('blob:')) return url
+  return url.includes('?') ? url : `${url}?width=${w}&quality=75`
+}
 
 type PendingPhoto = { file: File; preview: string }
+
+// Type local étendu : Message + flag optimistic pending
+type AlbumPhoto = Message & { _pending?: boolean }
 
 export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: string, trip: Trip, membre: Membre, onTripUpdate: (t: Partial<Trip>) => void }) {
   // can_post_photos: default true si undefined (retrocompat)
   const canPostPhotos = membre.is_createur || trip.can_post_photos !== false
 
-  const [photos, setPhotos] = useState<Message[]>([])
+  const [photos, setPhotos] = useState<AlbumPhoto[]>([])
   const [loading, setLoading] = useState(true)
 
   // Upload state
@@ -48,13 +54,16 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
 
   async function generateShareToken() {
     if (generatingShare) return
+    const oldToken = trip.share_token
+    const newToken = crypto.randomUUID()
+    // Optimistic
     setGeneratingShare(true)
+    onTripUpdate({ share_token: newToken })
     try {
-      const token = crypto.randomUUID()
-      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
       if (error) throw error
-      onTripUpdate({ share_token: token })
     } catch (e: unknown) {
+      onTripUpdate({ share_token: oldToken })
       alert('Erreur lors de la génération du lien : ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setGeneratingShare(false)
@@ -64,13 +73,16 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   async function regenerateShareToken() {
     if (!confirm("Régénérer le lien ? L'ancien lien ne fonctionnera plus et toute personne qui l'a reçu perdra l'accès.")) return
     if (generatingShare) return
+    const oldToken = trip.share_token
+    const newToken = crypto.randomUUID()
+    // Optimistic
     setGeneratingShare(true)
+    onTripUpdate({ share_token: newToken })
     try {
-      const token = crypto.randomUUID()
-      const { error } = await supabase.from('trips').update({ share_token: token }).eq('id', trip.id)
+      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
       if (error) throw error
-      onTripUpdate({ share_token: token })
     } catch (e: unknown) {
+      onTripUpdate({ share_token: oldToken })
       alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setGeneratingShare(false)
@@ -194,36 +206,79 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   async function uploadAllPending() {
     if (pending.length === 0 || sending) return
     setSending(true)
-    try {
-      // Compression parallele
-      const compressed = await Promise.all(pending.map(p => compressImage(p.file)))
 
-      // Upload + insert sequentiel (evite rate limit Supabase et garde l'ordre)
+    // Snapshot des pending files + captions avant reset
+    const pendingSnapshot = pending.map((p, i) => ({
+      file: p.file,
+      caption: i === pendingIdx ? pendingCaption.trim() : '',
+      preview: p.preview, // URL.createObjectURL déjà créée dans pending
+    }))
+
+    try {
+      // Compression parallèle
+      const compressed = await Promise.all(pendingSnapshot.map(p => compressImage(p.file)))
+
+      // Créer les photos optimistes immédiatement + fermer la sheet
+      const tempPhotos: AlbumPhoto[] = compressed.map((file, i) => ({
+        id: `temp-upload-${Date.now()}-${i}`,
+        trip_id: tripId,
+        contenu: pendingSnapshot[i].caption || undefined,
+        image_url: URL.createObjectURL(file),
+        membre_id: membre.id,
+        membre_prenom: membre.prenom,
+        membre_couleur: membre.couleur,
+        created_at: new Date().toISOString(),
+        _pending: true,
+      }))
+
+      // Optimistic : ajouter en tête + fermer la sheet d'envoi
+      setPhotos(prev => [...tempPhotos.slice().reverse(), ...prev])
+      cancelPending()
+
+      // Upload + insert séquentiel en arrière-plan (garde l'ordre + évite rate limit)
+      const failedIndexes: number[] = []
       for (let i = 0; i < compressed.length; i++) {
         const file = compressed[i]
-        const caption = i === pendingIdx ? pendingCaption.trim() : ''
+        const caption = pendingSnapshot[i].caption
+        const tempId = tempPhotos[i].id
+        const blobUrl = tempPhotos[i].image_url
         const ext = file.name.split('.').pop() || 'jpg'
         const path = `${tripId}/album/${Date.now()}-${i}-${membre.prenom.toLowerCase().replace(/\s/g, '')}.${ext}`
 
-        const { error: upErr } = await supabase.storage.from('trip-photos').upload(path, file, {
-          contentType: file.type || 'image/jpeg',
-        })
-        if (upErr) throw upErr
+        try {
+          const { error: upErr } = await supabase.storage.from('trip-photos').upload(path, file, {
+            contentType: file.type || 'image/jpeg',
+          })
+          if (upErr) throw upErr
 
-        const image_url = supabase.storage.from('trip-photos').getPublicUrl(path).data.publicUrl
+          const image_url = supabase.storage.from('trip-photos').getPublicUrl(path).data.publicUrl
 
-        const { error } = await supabase.from('messages').insert({
-          trip_id: tripId,
-          contenu: caption || null,
-          image_url,
-          membre_id: membre.id,
-          membre_prenom: membre.prenom,
-          membre_couleur: membre.couleur,
-        })
-        if (error) throw error
+          const { data, error } = await supabase.from('messages').insert({
+            trip_id: tripId,
+            contenu: caption || null,
+            image_url,
+            membre_id: membre.id,
+            membre_prenom: membre.prenom,
+            membre_couleur: membre.couleur,
+          }).select().single()
+          if (error) throw error
+
+          // Remplacer la temp par la vraie photo (avec vraie URL)
+          setPhotos(prev => prev.map(p => p.id === tempId ? (data as Message) : p))
+          // Libérer la blob URL
+          try { URL.revokeObjectURL(blobUrl) } catch {}
+        } catch (e) {
+          console.error('Upload failed for photo', i, e)
+          failedIndexes.push(i)
+          // Retirer la temp qui a échoué
+          setPhotos(prev => prev.filter(p => p.id !== tempId))
+          try { URL.revokeObjectURL(blobUrl) } catch {}
+        }
       }
 
-      cancelPending()
+      if (failedIndexes.length > 0) {
+        alert(`Erreur lors de l'envoi de ${failedIndexes.length} photo${failedIndexes.length > 1 ? 's' : ''} sur ${compressed.length}.`)
+      }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       alert("Erreur lors de l'envoi : " + msg)
@@ -447,11 +502,11 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
               const isMine = p.membre_id === membre.id
               return (
                 <div key={p.id}
-                  onPointerDown={() => onPhotoPointerDown(p.id)}
+                  onPointerDown={() => { if (!p._pending) onPhotoPointerDown(p.id) }}
                   onPointerUp={clearLongPress}
                   onPointerLeave={clearLongPress}
                   onPointerCancel={clearLongPress}
-                  onClick={() => onPhotoClick(p, idx)}
+                  onClick={() => { if (!p._pending) onPhotoClick(p, idx) }}
                   style={{
                     position: 'relative',
                     aspectRatio: '1 / 1',
@@ -495,6 +550,22 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                       background: p.membre_couleur || 'var(--forest)',
                       boxShadow: '0 0 0 1.5px rgba(255,255,255,.9)',
                     }} />
+                  )}
+                  {/* Overlay upload en cours (optimistic UI) */}
+                  {p._pending && (
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,.35)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      pointerEvents: 'none',
+                    }}>
+                      <div style={{
+                        width: 22, height: 22, borderRadius: '50%',
+                        border: '2.5px solid rgba(255,255,255,.35)',
+                        borderTopColor: '#fff',
+                        animation: 'crew-spin 0.8s linear infinite',
+                      }} />
+                    </div>
                   )}
                 </div>
               )
