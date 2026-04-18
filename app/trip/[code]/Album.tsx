@@ -361,29 +361,28 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       )}
 
       {/* Toolbar haut : Partager (gauche, createur) + Telecharger (centre) + Selectionner (droite) */}
-      {!selectionMode && photos.length > 0 && (
+      {!selectionMode && canPostPhotos && (
         <div style={{ padding: '8px 14px 0', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8 }}>
           <div style={{ justifySelf: 'start' }}>
-            {membre.is_createur && (
-              <button onClick={() => setShareSheetOpen(true)}
-                aria-label="Partager l'album"
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                  <polyline points="16 6 12 2 8 6"/>
-                  <line x1="12" y1="2" x2="12" y2="15"/>
-                </svg>
-                Partager
-              </button>
-            )}
+            <button onClick={() => setShareSheetOpen(true)}
+              aria-label="Partager l'album"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+              Partager
+            </button>
           </div>
           <div style={{ justifySelf: 'center' }}>
-            <button onClick={downloadAll} disabled={!!downloadProgress}
+            <button onClick={downloadAll} disabled={!!downloadProgress || photos.length === 0}
               aria-label="Télécharger tout"
               style={{ background: 'transparent', border: 'none',
-                color: downloadProgress ? 'var(--text-3)' : 'var(--text-2)',
+                color: (downloadProgress || photos.length === 0) ? 'var(--text-3)' : 'var(--text-2)',
                 fontSize: 13, fontWeight: 600,
-                cursor: downloadProgress ? 'default' : 'pointer',
+                cursor: (downloadProgress || photos.length === 0) ? 'default' : 'pointer',
+                opacity: photos.length === 0 ? 0.5 : 1,
                 padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -396,27 +395,16 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
             </button>
           </div>
           <div style={{ justifySelf: 'end' }}>
-            <button onClick={() => enterSelectionMode()}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
+            <button onClick={() => enterSelectionMode()} disabled={photos.length === 0}
+              style={{ background: 'transparent', border: 'none',
+                color: photos.length === 0 ? 'var(--text-3)' : 'var(--text-2)',
+                fontSize: 13, fontWeight: 600,
+                cursor: photos.length === 0 ? 'default' : 'pointer',
+                opacity: photos.length === 0 ? 0.5 : 1,
+                padding: '6px 10px' }}>
               Sélectionner
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Toolbar createur sans photos : juste Partager a gauche */}
-      {!selectionMode && photos.length === 0 && membre.is_createur && (
-        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'flex-start' }}>
-          <button onClick={() => setShareSheetOpen(true)}
-            aria-label="Partager l'album"
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-            Partager
-          </button>
         </div>
       )}
 
@@ -765,7 +753,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           <div className="sheet open" onClick={e => e.stopPropagation()} style={{ zIndex: 71 }}>
             <div className="sheet-handle" />
             <div className="sheet-title">Partager l&apos;album</div>
-            {!trip.share_token && (
+            {!trip.share_token && membre.is_createur && (
               <>
                 <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.5 }}>
                   Génère un lien public en lecture seule. Toute personne avec ce lien pourra voir les photos sans avoir à rejoindre le trip.
@@ -777,6 +765,11 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                   {generatingShare ? 'Génération…' : '🔗 Générer un lien de partage'}
                 </button>
               </>
+            )}
+            {!trip.share_token && !membre.is_createur && (
+              <div style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.5 }}>
+                Le créateur du trip n&apos;a pas encore activé le partage public de l&apos;album.
+              </div>
             )}
             {trip.share_token && (
               <>
@@ -795,12 +788,14 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                       color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer', transition: 'background .2s' }}>
                     {shareCopied ? '✓ Copié !' : '📋 Copier le lien'}
                   </button>
-                  <button onClick={regenerateShareToken} disabled={generatingShare}
-                    style={{ padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border)',
-                      background: '#fff', color: 'var(--text-2)', fontWeight: 600, fontSize: 14,
-                      cursor: generatingShare ? 'default' : 'pointer' }}>
-                    {generatingShare ? '…' : '🔄 Régénérer'}
-                  </button>
+                  {membre.is_createur && (
+                    <button onClick={regenerateShareToken} disabled={generatingShare}
+                      style={{ padding: '12px 16px', borderRadius: 10, border: '1px solid var(--border)',
+                        background: '#fff', color: 'var(--text-2)', fontWeight: 600, fontSize: 14,
+                        cursor: generatingShare ? 'default' : 'pointer' }}>
+                      {generatingShare ? '…' : '🔄 Régénérer'}
+                    </button>
+                  )}
                 </div>
               </>
             )}

@@ -443,7 +443,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
 
       {/* Filtres */}
       <div style={{background:'#fff',borderBottom:'1px solid var(--border)',padding:'10px 14px',position:'sticky',top:0,zIndex:20}}>
-        <div style={{display:'flex',gap:6,marginBottom:6}}>
+        <div className="filter-row" style={{marginBottom:6}}>
           <FilterBtn active={filtre==='all'} onClick={()=>setFiltre('all')}>Tout</FilterBtn>
           {['itineraire','transport','lodge','permis'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
             <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
@@ -451,7 +451,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </FilterBtn>
           )})}
         </div>
-        <div style={{display:'flex',gap:6}}>
+        <div className="filter-row">
           {['equipement','infos','meteo','resto','liens'].map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;return(
             <FilterBtn key={id} active={filtre===id} onClick={()=>setFiltre(id)} color={c.color}>
               {c.icon} {id==='equipement'?'Équipements':id==='infos'?'Infos':id==='meteo'?'Météo':id==='resto'?'Restos':'Liens'}

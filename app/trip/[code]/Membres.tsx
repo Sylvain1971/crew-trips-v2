@@ -399,7 +399,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
           {([
             {key:'can_delete' as const, label:'Peuvent supprimer des cards', desc:'Les participants peuvent effacer des infos'},
             {key:'can_edit' as const,   label:'Peuvent modifier des cards',   desc:'Les participants peuvent éditer des infos'},
-            {key:'can_post_photos' as const, label:'Peuvent envoyer des photos', desc:'Les participants peuvent partager des photos dans le chat'},
+            {key:'can_post_photos' as const, label:"Peuvent gérer l'album", desc:"Les participants peuvent ajouter, partager et télécharger les photos"},
           ]).map(p=>(
             <div key={p.key} style={{display:'flex',alignItems:'center',justifyContent:'space-between',
               padding:'10px 0',borderBottom:'1px solid var(--border-light)'}}>

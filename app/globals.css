@@ -127,3 +127,13 @@ input[type="date"]::-webkit-date-and-time-value {
 }
 .nav-tab.active { color: var(--forest); }
 .nav-tab svg, .nav-tab .nav-icon { font-size: 22px; line-height: 1; }
+
+/* Scroll horizontal sans barre visible (pour les lignes de filtres) */
+.filter-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
