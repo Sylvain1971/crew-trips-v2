@@ -41,18 +41,18 @@ export default function Home() {
           </div>
           <div>
             <div style={{fontSize:16,fontWeight:700}}>Nouveau trip</div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,.45)',fontWeight:400,marginTop:2}}>Créer un trip pour votre groupe</div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,.7)',fontWeight:400,marginTop:2}}>Créer un trip pour votre groupe</div>
           </div>
-          <div style={{marginLeft:'auto',fontSize:20,color:'rgba(255,255,255,.3)'}}>›</div>
+          <div style={{marginLeft:'auto',fontSize:20,color:'rgba(255,255,255,.55)'}}>›</div>
         </button>
 
       </div>
 
-      <p style={{fontSize:11,color:'rgba(255,255,255,.2)',marginTop:40,textAlign:'center'}}>
+      <p style={{fontSize:11,color:'rgba(255,255,255,.5)',marginTop:40,textAlign:'center'}}>
         crew-trips-v2.vercel.app
       </p>
 
-      <a href="/admin" style={{position:'fixed',bottom:24,right:20,
+      <a href="/admin" aria-label="Administration" style={{position:'fixed',bottom:24,right:20,
         background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.15)',
         borderRadius:'50%',width:40,height:40,display:'flex',alignItems:'center',justifyContent:'center',
         textDecoration:'none',color:'rgba(255,255,255,.4)'}}>
