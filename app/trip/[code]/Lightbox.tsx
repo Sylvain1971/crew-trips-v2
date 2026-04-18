@@ -115,12 +115,20 @@ export default function Lightbox({
             onClick={e => { e.stopPropagation(); onPrev() }}
             aria-label="Précédente"
             style={{
-              position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-              width: 40, height: 40, borderRadius: '50%', border: 'none',
-              background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
+              position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+              width: 80, height: 80, borderRadius: 0, border: 'none',
+              background: 'transparent', padding: 0,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               zIndex: 5,
-            }}>‹</button>
+              WebkitTapHighlightColor: 'transparent',
+            }}>
+            <span style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}>‹</span>
+          </button>
         )}
 
         {/* Fleche suivante : cachee quand zoome */}
@@ -129,12 +137,20 @@ export default function Lightbox({
             onClick={e => { e.stopPropagation(); onNext() }}
             aria-label="Suivante"
             style={{
-              position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-              width: 40, height: 40, borderRadius: '50%', border: 'none',
-              background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
+              position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)',
+              width: 80, height: 80, borderRadius: 0, border: 'none',
+              background: 'transparent', padding: 0,
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               zIndex: 5,
-            }}>›</button>
+              WebkitTapHighlightColor: 'transparent',
+            }}>
+            <span style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,.15)', color: '#fff', fontSize: 22,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              pointerEvents: 'none',
+            }}>›</span>
+          </button>
         )}
       </div>
 
