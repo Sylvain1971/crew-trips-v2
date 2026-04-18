@@ -4,10 +4,10 @@ import { TRIP_ICONS } from '@/lib/utils'
 import { useTripSession } from '@/lib/useTripSession'
 import JoinScreen from './JoinScreen'
 import Infos from './Infos'
-import Chat from './Chat'
+import Album from './Album'
 import Membres from './Membres'
 
-type Tab = 'infos' | 'chat' | 'membres'
+type Tab = 'infos' | 'album' | 'membres'
 
 function NavIcon({ tab }: { tab: Tab }) {
   if (tab === 'infos') return (
@@ -16,9 +16,10 @@ function NavIcon({ tab }: { tab: Tab }) {
       <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
     </svg>
   )
-  if (tab === 'chat') return (
+  if (tab === 'album') return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
     </svg>
   )
   return (
@@ -98,17 +99,17 @@ export default function TripPage({ params: paramsPromise }: { params: Promise<{ 
         </div>
       )}
 
-      <div style={{ flex: 1, overflow: tab === 'chat' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: 1, overflow: tab === 'album' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
         {tab === 'infos' && <Infos trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
-        {tab === 'chat' && <Chat tripId={trip.id} trip={trip} membre={membre} />}
+        {tab === 'album' && <Album tripId={trip.id} trip={trip} membre={membre} />}
         {tab === 'membres' && <Membres trip={trip} membre={membre} onTripUpdate={onTripUpdate} />}
       </div>
 
       <nav className="bottom-nav">
-        {(['infos', 'chat', 'membres'] as Tab[]).map(t => (
+        {(['infos', 'album', 'membres'] as Tab[]).map(t => (
           <button key={t} className={`nav-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
             <NavIcon tab={t} />
-            {t === 'infos' ? 'Infos' : t === 'chat' ? 'Chat' : 'Groupe'}
+            {t === 'infos' ? 'Infos' : t === 'album' ? 'Album' : 'Groupe'}
           </button>
         ))}
       </nav>
