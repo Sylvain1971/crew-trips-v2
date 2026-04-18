@@ -360,10 +360,24 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
         </div>
       )}
 
-      {/* Toolbar haut : Telecharger tout + Partager (createur) + Selectionner */}
+      {/* Toolbar haut : Partager (gauche, createur) + Telecharger (centre) + Selectionner (droite) */}
       {!selectionMode && photos.length > 0 && (
-        <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <div style={{ padding: '8px 14px 0', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8 }}>
+          <div style={{ justifySelf: 'start' }}>
+            {membre.is_createur && (
+              <button onClick={() => setShareSheetOpen(true)}
+                aria-label="Partager l'album"
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                  <polyline points="16 6 12 2 8 6"/>
+                  <line x1="12" y1="2" x2="12" y2="15"/>
+                </svg>
+                Partager
+              </button>
+            )}
+          </div>
+          <div style={{ justifySelf: 'center' }}>
             <button onClick={downloadAll} disabled={!!downloadProgress}
               aria-label="Télécharger tout"
               style={{ background: 'transparent', border: 'none',
@@ -380,27 +394,17 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
                 ? `${downloadProgress.done}/${downloadProgress.total}…`
                 : 'Télécharger'}
             </button>
-            {membre.is_createur && (
-              <button onClick={() => setShareSheetOpen(true)}
-                aria-label="Partager l'album"
-                style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                  <polyline points="16 6 12 2 8 6"/>
-                  <line x1="12" y1="2" x2="12" y2="15"/>
-                </svg>
-                Partager
-              </button>
-            )}
           </div>
-          <button onClick={() => enterSelectionMode()}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
-            Sélectionner
-          </button>
+          <div style={{ justifySelf: 'end' }}>
+            <button onClick={() => enterSelectionMode()}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '6px 10px' }}>
+              Sélectionner
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Toolbar createur sans photos : juste Partager */}
+      {/* Toolbar createur sans photos : juste Partager a gauche */}
       {!selectionMode && photos.length === 0 && membre.is_createur && (
         <div style={{ padding: '8px 14px 0', display: 'flex', justifyContent: 'flex-start' }}>
           <button onClick={() => setShareSheetOpen(true)}
