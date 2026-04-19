@@ -11,10 +11,10 @@ export default function Home() {
         <Image
           src="/logo-hero.webp"
           alt="Crew Trips"
-          width={120}
-          height={120}
+          width={180}
+          height={180}
           priority
-          style={{marginBottom:16}}
+          style={{marginBottom:20}}
         />
         <h1 style={{fontSize:34,fontWeight:800,color:'#fff',letterSpacing:'-.04em',lineHeight:1.1,margin:0}}>Crew Trips</h1>
         <p style={{fontSize:15,color:'rgba(255,255,255,.5)',marginTop:12,lineHeight:1.6}}>
