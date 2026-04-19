@@ -13,12 +13,12 @@ export default function Home() {
         <Image
           src="/logo-hero.webp"
           alt="Crew Trips"
-          width={180}
-          height={180}
+          width={192}
+          height={192}
           priority
-          style={{marginBottom:-18}}
+          style={{marginBottom:8}}
         />
-        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:32,fontWeight:700,color:'#fff',letterSpacing:'-.02em',lineHeight:1,margin:'0 0 10px'}}>Crew Trips</h1>
+        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:29,fontWeight:700,color:'#fff',letterSpacing:'-.02em',lineHeight:1,margin:'0 0 10px'}}>Crew Trips</h1>
         <p style={{fontSize:9,color:'rgba(255,255,255,.5)',margin:0,lineHeight:1.4,letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
           Un seul lien · Pour tout savoir
         </p>
