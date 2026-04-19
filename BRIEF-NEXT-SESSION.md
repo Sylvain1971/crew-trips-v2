@@ -1,140 +1,120 @@
 # Crew Trips v2 — Brief session suivante
-# Crew Trips v2 — Brief session suivante
 
-> **Dernière session : 18 avril 2026 (fin de soirée ++)** — 11 commits supplémentaires après la session d'optim.
-> **Logo Crew Trips intégré + PWA icons complets + Fraunces serif + signature marque unifiée.**
-> **État : stable, déployé, TypeScript clean, build Next OK.**
-> **Working tree clean, synchro avec origin/main.**
+> **Dernière session : 18 avril 2026 (soirée marathon)** — 15 commits poussés + cleanup DB.
+> **Bugs critiques fixés (cards privées) + UX (zoom parasite, lightbox) + Logo hero complet + Fraunces serif + signature marque unifiée.**
+> **État : stable, déployé, TypeScript clean, build Next OK, working tree clean.**
 
 ---
 
-## 🎯 PROCHAINE SESSION — 2 priorités principales
+## 🎯 PROCHAINE SESSION — 3 priorités
 
-### 🔴 PRIORITÉ 1 — Icône PWA écran d'accueil (~15 min)
+### 🔴 PRIORITÉ 1 — Icône PWA écran d'accueil (~20 min)
 
-**État** : actuellement `apple-touch-icon.png` 180×180 avec fond forest plein et le logo-hero (silhouettes + montagne brumeuse) dedans. Rendu à cette taille : détails se perdent, illisible à 60×60 sur home screen iOS.
+**Problème** : le logo-hero (silhouettes + montagne brumeuse) est magnifique à 180px sur la home, mais devient bouillie à 60×60 sur le home screen iOS quand l'app est installée.
 
-**À faire** : créer une version simplifiée de l'icône pour le home screen iOS/Android :
-- Garder uniquement la montagne centrale + halo lunaire (pas les silhouettes qui deviennent bouillie à 60px)
-- Ou : monogramme stylisé "CT" en serif Fraunces sur fond forest
-- Ou : silhouettes très simplifiées avec moins de détails
-- Tester à 60, 80, 120, 180px pour valider la lisibilité
-- Regénérer aussi icon-192.png, icon-512.png, icon-maskable-512.png avec le même design
-- Considérer une version spécifique pour maskable (padding safe zone 15%)
+**À faire** : créer une icône PWA dédiée, simplifiée pour rester lisible à petite taille.
 
-Fichiers actuels à remplacer :
-- `public/apple-touch-icon.png` (180×180, fond forest)
-- `public/icon-192.png` (Android PWA)
-- `public/icon-512.png` (Android PWA)
-- `public/icon-maskable-512.png` (avec padding)
-- `public/favicon.ico` + `public/favicon-32.png`
+**Options de design à explorer** :
+- Monogramme "CT" en Fraunces serif blanc sur fond forest `#0F2D0F`
+- Juste la montagne + halo lunaire du logo-hero (sans les silhouettes)
+- Silhouettes très simplifiées (2-3 persos au lieu de 6)
+- Symbole abstrait style Apple/Notion (initiales stylisées dans une forme organique)
 
-### 🟡 PRIORITÉ 2 — Icônes types de trip (TRIP_ICONS refactor ~45 min)
+Sylvain va probablement demander à ChatGPT une version spécifique "icône app 512×512". Pour bien lui cadrer la commande, prompt suggéré :
 
-**État** : `lib/utils.ts` définit `TRIP_ICONS` avec des emojis 🎣⛷🗻🥾🚵🫎🧘☀️🏕. Utilisés dans 5 endroits :
-- `app/nouveau/page.tsx` (select type + preview header)
-- `app/trip/[code]/page.tsx` (header small)
-- `app/trip/[code]/JoinScreen.tsx`
-- `app/trip/[code]/created/page.tsx`
-- `app/mes-trips/page.tsx` (liste trips — probablement)
-
-**À faire** :
-1. Sylvain revient avec 9 SVG monochrome séparés (stroke currentColor) — il va demander à ChatGPT avec un prompt strict "mode code brut"
-2. Créer `lib/tripIcons.tsx` avec les 9 composants SVG
-3. Transformer `TRIP_ICONS` en map de React components au lieu de strings emoji
-4. Adapter tous les call sites (5 fichiers) pour utiliser `<TripIcon type={trip.type} />` au lieu de `{TRIP_ICONS[trip.type]}`
-5. Tests : chaque type de trip doit bien afficher son icône + fallback "autre"
-6. Vérifier que les select HTML supportent bien les SVG (spoiler : non, faut faire custom dropdown ou garder emoji juste dans `<option>`)
-
-**Note** : pour le `<select>` dans `/nouveau`, probablement garder les emojis dans les options HTML (ne supporte pas SVG) mais afficher SVG dans le header preview. Ou refaire un custom dropdown (chantier plus gros).
-
-### 🟢 PRIORITÉ 3 — Finaliser signature sur les autres pages
-
-L'harmonisation typographique (Fraunces + uppercase letter-spacé) n'a été faite que sur `/` et `/mes-trips`. Les autres pages ont toujours l'ancien style :
-- `app/nouveau/page.tsx` (header "Crew Trips" + sous-titre)
-- `app/trip/[code]/JoinScreen.tsx` (branding "Crew Trips")
-- `app/trip/[code]/created/page.tsx` (page succès)
-
-Appliquer la même recette : logo 84px avec `marginBottom: -10`, Fraunces 22px, "XXX" en uppercase letter-spacing .22em 9px.
-
----
-
-## 📦 Ce qui a été fait cette session (bilan)
-
-### Bugs critiques fixés
-- `48a1633` Cards privées : fix SELECT incomplet + optimistic manquant auteur_id
-- `c5026ae` Cards orphelines : adopte auteur_id si manquant
-- `6e3c74f` Zoom parasite : retire user-scalable=true (compromis A11y accepté)
-- **SQL migration** : 3 cards orphelines du trip Winter Steelhead récupérées avec UUID Sylvain `cdb50338-1b42-4a4a-b5c5-5a6f8201176c`
-
-### UX / Features
-- `543e755` Lightbox : prefetch N±1 + Escape + flèches clavier desktop
-- `2e474ad` Docs : `TESTS-MANUELS.md` 273 lignes, 14 sections
-
-### Logo & Branding
-- `7dd3d76` Assets logo-hero PNG + WebP
-- `2ea383d` Intégration logo sur home + mes-trips + tous assets PWA
-- `c3e8059` Agrandissement logo 120→180px home, 56→84px mes-trips
-- `8a611ff` Police de marque **Fraunces serif** via `next/font/google`
-- `3f44f7e` Retrait filet blanc (erreur d'attribution)
-- `d2b05a7` Rééquilibre titre 40→32px + harmonisation mes-trips
-- `b86af2b` / `6b5c631` Layout hero + margin négatif pour coller logo-titre
-- **Dernier commit** : symétrie padding haut/bas pour centrage parfait
-
----
-
-## 🎨 Design system actualisé
-
-### Police de marque
-- **Fraunces serif 700** via `next/font/google` avec CSS variable `--font-brand`
-- Utilisée uniquement pour "Crew Trips" hero title
-- Le reste de l'app reste en system font (SF Pro iOS / Roboto Android)
-
-### Signature marque (recette reproductible)
-```tsx
-<Image src="/logo-hero.webp" width={180} height={180} priority
-  style={{marginBottom: -18}} />  // negatif pour coller titre sous halo
-<h1 style={{
-  fontFamily: 'var(--font-brand), Georgia, serif',
-  fontSize: 32, fontWeight: 700,
-  letterSpacing: '-.02em', lineHeight: 1,
-  color: '#fff', margin: '0 0 10px'
-}}>Crew Trips</h1>
-<p style={{
-  fontSize: 9, color: 'rgba(255,255,255,.5)',
-  letterSpacing: '.22em', textTransform: 'uppercase',
-  fontWeight: 500, margin: 0
-}}>Un seul lien · Pour tout savoir</p>
+```
+Crée-moi un icône d'app mobile 512×512 pour Crew Trips.
+Contraintes :
+- Fond forest #0F2D0F pleine couleur (pas transparent — iOS ignore la transparence)
+- Sujet centré occupant 60-70% du cadre
+- Lisible et reconnaissable même réduit à 60×60 pixels
+- Cohérent visuellement avec mon logo-hero actuel (illustration éditoriale
+  avec montagne brumeuse et halo lunaire, palette vert sépia) mais SIMPLIFIÉ
+- Maximum 3 éléments visuels (ex: montagne stylisée + lune/soleil + sol)
+- Style "silhouette éditoriale" comme mon logo, pas cartoon flat
 ```
 
-### Proportions entre pages
-| Element | Home | Mes trips |
-|---|---|---|
-| Logo | 180px | 84px (×0.47) |
-| Logo marginBottom | -18 | -10 |
-| "Crew Trips" font-size | 32 | 22 |
-| Slogan letter-spacing | .22em | .22em |
-| Slogan font-size | 9 | 9 |
+**Fichiers à regénérer après validation** (script Sharp déjà écrit dans une session précédente, refaire pareil) :
+- `public/apple-touch-icon.png` (180×180 iOS, fond forest plein)
+- `public/icon-192.png` (192×192 Android PWA)
+- `public/icon-512.png` (512×512 Android PWA + splash)
+- `public/icon-maskable-512.png` (avec padding safe zone 15% pour Android adaptive)
+- `public/favicon.ico` + `public/favicon-32.png`
 
----
+Le `public/manifest.json` référence déjà les bons chemins, pas à modifier.
 
+### 🟡 PRIORITÉ 2 — Icônes types de trip — TRIP_ICONS refactor (~45-60 min)
 
+**État actuel** : `lib/utils.ts` définit `TRIP_ICONS` avec des emojis `🎣⛷🗻🥾🚵🫎🧘☀️🏕`. Utilisés à 5 endroits :
+- `app/nouveau/page.tsx` — select type + preview header
+- `app/trip/[code]/page.tsx` — header small
+- `app/trip/[code]/JoinScreen.tsx` — branding type
+- `app/trip/[code]/created/page.tsx` — page succès
+- `app/mes-trips/page.tsx` — liste trips
 
----
+**Blocage à résoudre** : Sylvain a essayé 2 fois de faire générer les 9 icônes par ChatGPT, résultat désastreux (ChatGPT fusionne tout en une image unique au lieu de 9 fichiers séparés). Prompt ultra-strict à utiliser :
 
-## 📊 Scores Lighthouse actuels (mesurés sur prod Vercel, mobile simulé 4G)
+```
+Je veux 9 icônes SVG pour une app web React.
+INSTRUCTION CRITIQUE : Pas d'image. Pas de DALL-E. Écris du CODE SVG BRUT
+dans 9 code blocks markdown distincts.
 
-| Catégorie | Score | Évolution |
-|---|---|---|
-| **Performance** | **90 / 100** | = (stable) |
-| **Accessibility** | **100 / 100** | +17 vs baseline 83 |
-| **Best Practices** | **100 / 100** | = |
-| **SEO** | **100 / 100** | = |
+Format obligatoire pour chaque icône :
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+     stroke="currentColor" stroke-width="2" stroke-linecap="round"
+     stroke-linejoin="round" width="24" height="24">
+  <!-- paths ici -->
+</svg>
+```
 
-**Core Web Vitals** : FCP 0.9s, LCP 3.6s, TBT 70ms, CLS 0, Speed Index 0.9s, TTI 3.6s.
+Style : viewBox 24x24, stroke currentColor, width 2px, style Lucide Icons.
 
-**LCP = seul point restant** (score 57). Le coupable : l'emoji 🏕 60px sur `/`.
-Fix définitif = intégrer un vrai logo PNG avec `next/image priority` → LCP 1.5s → Perf 95+.
+Les 9 icônes :
+1. peche — canne à pêche avec ligne et leurre
+2. ski — deux skis croisés en X avec bâtons
+3. motoneige — silhouette de motoneige vue de côté
+4. hike — chaussure de randonnée vue de profil
+5. velo — VTT vue de côté
+6. chasse — bois de cerf (panache)
+7. yoga — personne en position lotus vue de face
+8. soleil — soleil couchant sur horizon
+9. autre — boussole (cercle + aiguille)
+
+Livre en 9 code blocks ```svg séparés.
+```
+
+**Plan d'intégration** :
+1. Créer `lib/tripIcons.tsx` avec 9 composants React `<TripIcon type="peche" />`
+2. Transformer `TRIP_ICONS` : `Record<string, string>` → `Record<string, React.ComponentType>`
+3. Adapter les 5 call sites
+4. Cas particulier du `<select>` HTML dans `/nouveau` : HTML ne supporte pas SVG dans `<option>`. Soit garder les emojis dans le select et SVG ailleurs, soit refaire custom dropdown (chantier plus gros — probablement garder emojis pour cette session)
+
+### 🟢 PRIORITÉ 3 — Finaliser signature typographique sur les autres pages (~20 min)
+
+L'harmonisation Fraunces serif + slogan uppercase letter-spacé a été appliquée UNIQUEMENT sur `/` et `/mes-trips`. Pages restantes avec ancien style :
+- `app/nouveau/page.tsx` — header "Crew Trips" + sous-titre "Nouveau trip"
+- `app/trip/[code]/JoinScreen.tsx` — branding "Crew Trips"
+- `app/trip/[code]/created/page.tsx` — page succès
+
+**Recette à appliquer** (cohérente avec mes-trips/page.tsx) :
+```tsx
+<div style={{marginBottom: -10}}>
+  <Image src="/logo-hero.webp" alt="Crew Trips" width={84} height={84} />
+</div>
+<div style={{
+  fontFamily: 'var(--font-brand), Georgia, serif',
+  fontWeight: 700, fontSize: 22, color: '#fff',
+  letterSpacing: '-.02em', lineHeight: 1, marginBottom: 6
+}}>Crew Trips</div>
+<div style={{
+  fontSize: 9, color: 'rgba(255,255,255,.5)',
+  letterSpacing: '.22em', textTransform: 'uppercase',
+  fontWeight: 500
+}}>XXX</div>
+```
+
+Remplacer "XXX" par : "NOUVEAU TRIP" / "REJOIGNEZ LE TRIP" / "TRIP CRÉÉ" selon la page.
 
 ---
 
@@ -143,331 +123,31 @@ Fix définitif = intégrer un vrai logo PNG avec `next/image priority` → LCP 1
 ```powershell
 cd C:\Users\sbergeron\crew-trips-v2
 git status                    # Doit être clean, synchro origin/main
-git log -5 --oneline          # Dernier commit : f9927f9 (browserslist moderne)
+git log -5 --oneline          # Dernier commit : 9e56d4e (UX remonte signature)
 ```
 
-**Stack technique** :
-- Next.js 16.2.3 Turbopack + React 19.2.4 + TypeScript 5.9.3 + Supabase 2.103
-- Librairies : `react-zoom-pan-pinch` 4.0.3, `jszip` 3.10.1, `browser-image-compression` 2.0.2
-- **browserslist moderne** (Chrome 93+, Safari 15+, FF 93+, Edge 93+) — polyfills legacy droppés
+---
+
+## 📦 Stack technique
+
+- **Next.js 16.2.3** Turbopack + React 19.2.4 + TypeScript 5.9.3 + Supabase 2.103
+- **Librairies** : `react-zoom-pan-pinch` 4.0.3, `jszip` 3.10.1, `browser-image-compression` 2.0.2, `sharp` (via Next/Image)
+- **Police de marque** : Fraunces serif 700 via `next/font/google`, exposée via CSS var `--font-brand`
+- **browserslist moderne** (Chrome 93+, Safari 15+, FF 93+, Edge 93+)
 - **next.config.ts** : AVIF/WebP images, optimizePackageImports, remotePatterns Supabase/YouTube
-- Déployé : `crew-trips-v2.vercel.app` (auto-deploy sur push main)
-- Supabase : projet `dnvzqsgwqwrvsgfjqqxn`
-- Local : `C:\Users\sbergeron\crew-trips-v2` (Windows user `sbergeron`)
-- Repo : `Sylvain1971/crew-trips-v2`
+- **Déployé** : `crew-trips-v2.vercel.app` (auto-deploy sur push main)
+- **Supabase** : projet `dnvzqsgwqwrvsgfjqqxn`
+- **Local** : `C:\Users\sbergeron\crew-trips-v2` (Windows user `sbergeron`)
+- **Repo** : `Sylvain1971/crew-trips-v2`
+- **Sylvain membre.id dans trip Winter Steelhead** : `cdb50338-1b42-4a4a-b5c5-5a6f8201176c`
 
 ---
 
-## 🎯 Prochaines features — priorisées
-
-### 🔴 PRIORITÉ 1 — Logo Crew Trips (~20 min, impact énorme)
-
-**État actuel** : emoji 🏕 à 3 endroits + LCP 3.6s identifié comme le seul point restant.
-
-**Quand le logo est prêt** :
-1. Placer `public/logo-hero.png` (ou .webp), 512×512+ fond transparent
-2. Remplacer l'emoji 🏕 dans :
-   - `app/page.tsx` ligne ~10 (home, sur fond forest) — **c'est celui qui affecte le LCP**
-   - `app/mes-trips/page.tsx` ligne ~110 (liste trips, sur fond sand)
-   - `app/trip/[code]/created/page.tsx` (page succès)
-3. Utiliser `next/image` AVEC `priority` sur la home :
-   ```tsx
-   import Image from 'next/image'
-   <Image src="/logo-hero.png" width={80} height={80} alt="Crew Trips" priority />
-   ```
-4. **Important** : `priority` seulement sur la home (LCP critical). Sur les autres pages : `loading="lazy"` par défaut.
-5. Tester sur fond sable (`/mes-trips`) ET fond foncé (`/`) — peut nécessiter 2 versions du logo ou une version neutre.
-
-**Impact attendu Lighthouse** : Perf 90 → 95-97, LCP 3.6s → ~1.5s.
-
-**Pistes si logo pas encore trouvé** :
-- Fluent Emoji 3D Microsoft (GitHub open-source)
-- IA Midjourney/DALL-E prompt : `"3D rendered log cabin in the style of Apple emoji, isometric view, transparent background, glossy, soft lighting, warm wood tones"`
-- Flaticon / Iconscout packs 3D (~$5-10)
-
-### 🟡 PRIORITÉ 2 — Checklist tests manuels
-
-Créer `TESTS-MANUELS.md` à la racine avec tous les flows à cocher avant release. Pas de code, juste de la doc. 10-15 min.
-
-Flows minimum à couvrir :
-- Créer un trip (via /nouveau avec code créateur)
-- Rejoindre un trip (via /rejoindre)
-- Upload photo (simple + batch + optimistic)
-- Ajouter/modifier/supprimer une info card (public + privée)
-- Modifier le Lodge + pin/unpin
-- Toggle permissions Membres
-- Partager album (Web Share API — une par une + toutes ensemble)
-- Télécharger ZIP
-- Sélectionner + supprimer photos
-- Navigation admin → Mes trips
-- PWA : installer, fermer, relancer depuis home screen
-
-### 🟡 PRIORITÉ 3 — RLS Supabase sanity check
-
-Créer 2 users dans un trip test, vérifier qu'un user ne peut rien modifier chez l'autre (surtout après l'ajout des cards privées : `is_prive boolean` + `auteur_id uuid` dans la table `infos`).
-
-### 🟢 PRIORITÉ 4 — Optims restantes (low urgency)
-
-- **Prefetch lightbox N±1** : dans `Lightbox.tsx`, pré-charger les photos prev/next en background pour un swipe instantané (~15 min)
-- **Escape key lightbox desktop** : `useEffect` keydown listener quand ouvert (~5 min)
-- **next/image partout** (Lodge map, avatars, InfoCard images) : remplacer les `<img>` bruts par `next/image` (sauf blob URLs optimistic). ~30 min.
-- **React Compiler** : reste en RC, skipper jusqu'à stable
-- **SW precache routes critiques** : ouvrirait la PWA offline plus vite
-- **Service Worker robustesse tests** : offline → online → PWA flows
-- **Perf Download ZIP mobile** : iOS Safari refuse ZIP >50MB, parallélisation `p-limit`, progress visible
-
-### 🟢 PRIORITÉ 5 — Cohérence visuelle low priority
-
-- `InstallBanner.tsx` : 1 emoji mineur restant
-- Page `/nouveau` : emoji 🏕 dans le select TRIP_ICONS
-
----
-
-## ✅ Ce qui a été fait cette session (18 avril soir++)
-
-### 🎞️ Partie 1 — Perf Album refactor (commits A→E)
-
-Série complète d'optimisation du module Album. Chaque commit indépendant, rollback chirurgical possible.
-
-#### `1428476` — Lightbox sans re-mount au swipe (A)
-Remplace `key={lightboxIdx}` par un `ref` impératif + `resetTransform()`.
-Avant : chaque swipe prev/next démontait+remontait `react-zoom-pan-pinch` (recréait state, listeners, DOM).
-Après : 1 seul TransformWrapper monté pour toute la session lightbox.
-
-#### `de4f687` — PhotoTile memoize (B)
-Extrait la tuile de la grille en composant `memo()` dédié.
-Avant : à 100 photos, chaque setState re-rendait les 100 divs anonymes du `.map()`.
-Après : seule la tuile dont les props changent re-render. Toggle sélection passe de 100 re-renders à 1.
-
-#### `ab5d8de` — Fix leak blob URLs (C)
-Cleanup des blob URLs (previews upload + photos optimistic pending) passait par un `useEffect` avec `eslint-disable exhaustive-deps` qui capturait `pending=[]` au mount.
-Fix : `useRef<Set<string>>` via helpers `trackBlob()` / `revokeBlob()`, cleanup fiable au unmount.
-
-#### `d5aa628` — Lightbox charge 1600px au lieu du full-size (D)
-`thumbUrl(url, 1600)` au lieu de l'image_url brut. ~300-500 KB par photo au lieu de 2-4 MB.
-Scale jusqu'au maxScale=4 sans pixelisation visible.
-
-#### `9fb1562` — Dynamic import react-zoom-pan-pinch (E)
-Extraction complète de la lightbox dans `app/trip/[code]/Lightbox.tsx` (159 lignes) chargé via `next/dynamic` avec `ssr:false`.
-Gain bundle : -18 KB gzip du first load Album. La lib n'est fetchée que quand l'utilisateur ouvre une photo.
-
-### 🎯 Partie 2 — Fixes UX Album (P1, P2)
-
-#### `1a08304` — Hitbox prev/next 80×80 avec visuel 40×40 centré (P1)
-Avant : tap sur la photo pannable au lieu du bouton nav quand imprécis.
-Fix : button wrapper 80×80 transparent + span interne 40×40 avec `pointer-events:none`.
-
-#### `72968ec` — Bouton Partager en mode sélection (P2)
-Nouveau `lib/shareFiles.ts` avec :
-- `canShareFiles()` : feature detection Web Share API files
-- `shareAllTogether()` : un seul `navigator.share({ files: [...] })`
-- `shareOneByOne()` : sequence 1 fichier à la fois (plus fiable sur iOS avec iMessage)
-
-UX : bouton "Partager N" apparaît dans la barre sélection dès qu'au moins 1 photo sélectionnée (même celles des autres). Si 2+ photos : sheet de choix "Toutes ensemble" / "Une par une". Si 1 photo : direct. Fallback alert si pas supporté.
-
-### ♿ Partie 3 — A11y + Bundle + next.config (5 commits)
-
-Audit Lighthouse a révélé : Perf 90, **A11y 83**, BP 100, SEO 100. Ces 5 commits ont porté A11y de 83 à 100.
-
-#### `6d0371b` — Viewport userScalable=true (#1)
-`app/layout.tsx` : `maximumScale: 1 → 5` et `userScalable: false → true`.
-Permet le zoom pinch iOS pour les malvoyants. Anti-pattern WCAG corrigé.
-
-#### `9cd9d0c` — Contraste + aria-label page.tsx (#2)
-- Sous-texte "Créer un trip" : `rgba(255,255,255,.45) → .7`
-- Chevron `>` : `.3 → .55`
-- Footer `.2 → .5`
-- `<a href="/admin">` : ajout `aria-label="Administration"`
-- Bonus : `aria-label` dynamique sur le bouton Partager Album
-
-#### `2afe361` — Dynamic import jszip (#3)
-`import JSZip from 'jszip'` → `const { default: JSZip } = await import('jszip')`
-Seulement quand l'utilisateur clique "Télécharger tout". -40 KB gzip du first load.
-
-#### `ec771ae` — next.config AVIF/WebP + optimizePackageImports (#5)
-`next.config.ts` était vide. Ajout :
-- `compress: true`
-- `images.formats: ['image/avif', 'image/webp']`
-- `images.remotePatterns` pour `*.supabase.co` et YouTube thumbnails
-- `experimental.optimizePackageImports: ['@supabase/supabase-js', 'react-zoom-pan-pinch']`
-
-#### `f9927f9` — browserslist moderne (#8)
-`package.json` : ajout champ `browserslist` ciblant Chrome/FF/Edge 93+ et Safari 15+ (couverture >98%).
-Drop les polyfills legacy (async/await, class fields, optional chaining natifs).
-Lighthouse identifiait "Legacy JavaScript - 900ms".
-
----
-
-## 📋 Tous les 14 commits de cette session (chronologique)
-
-| # | Commit | Description |
-|---|---|---|
-| 1 | `1428476` | Perf Album: lightbox sans re-mount au swipe |
-| 2 | `de4f687` | Perf Album: PhotoTile memoize pour éviter 100 re-renders |
-| 3 | `ab5d8de` | Perf Album: fix leak blob URLs sur unmount |
-| 4 | `d5aa628` | Perf Album: lightbox charge version 1600px au lieu du full-size |
-| 5 | `9fb1562` | Perf Album: dynamic import react-zoom-pan-pinch via Lightbox séparée |
-| 6 | `1a08304` | Lightbox: agrandit la hitbox prev/next à 80x80, visuel reste 40x40 |
-| 7 | `72968ec` | Album: bouton Partager en mode sélection (Web Share API) |
-| 8 | `6d0371b` | A11y: permet le zoom utilisateur (max 5x, userScalable=true) |
-| 9 | `9cd9d0c` | A11y: fix contraste page d'accueil + aria-label liens/boutons |
-| 10 | `2afe361` | Perf: dynamic import jszip (~40 KB gzip hors bundle initial) |
-| 11 | `ec771ae` | Perf: next.config - AVIF/WebP images + optimizePackageImports |
-| 12 | `f9927f9` | Perf: browserslist moderne, drop polyfills legacy |
-
-Tous pushés sur `origin/main`. Tree clean.
-
----
-
-## 📦 Contexte technique pour reprendre
-
-### Fichiers modifiés cette session
-
-**Nouveaux fichiers** :
-- `app/trip/[code]/Lightbox.tsx` (159 lignes) — composant lightbox dynamique
-- `lib/shareFiles.ts` (85 lignes) — helpers Web Share API
-
-**Fichiers modifiés** :
-- `app/trip/[code]/Album.tsx` — refactor profond (−129/+~100 lignes net sur plusieurs commits)
-- `app/layout.tsx` — viewport
-- `app/page.tsx` — contraste + aria-label
-- `lib/downloadAlbum.ts` — dynamic import
-- `next.config.ts` — 4 sections ajoutées
-- `package.json` — browserslist
-
-### Config Next actuelle
-
-```ts
-// next.config.ts
-{
-  compress: true,
-  images: {
-    formats: ['image/avif', 'image/webp'],
-    remotePatterns: [
-      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
-      { protocol: 'https', hostname: 'img.youtube.com' },
-      { protocol: 'https', hostname: 'i.ytimg.com' },
-    ],
-  },
-  experimental: {
-    optimizePackageImports: ['@supabase/supabase-js', 'react-zoom-pan-pinch'],
-  },
-}
-```
-
-### Architecture Album actuelle
-
-**`Album.tsx`** (composant principal, gère les photos, upload, sélection) :
-- Types : `AlbumPhoto = Message & { _pending?: boolean }`, `PendingPhoto = { file; preview }`
-- Blob URLs trackés dans `useRef<Set<string>>` pour cleanup fiable
-- Lightbox importée dynamiquement (ne charge `react-zoom-pan-pinch` qu'au premier clic)
-- `PhotoTile` memoize (composant séparé dans le même fichier)
-
-**`Lightbox.tsx`** (dynamically loaded) :
-- Contient TransformWrapper/Component de `react-zoom-pan-pinch`
-- `ref` impératif pour `resetTransform()` au changement de photo
-- Hitbox 80×80 / visuel 40×40 pour prev/next
-- Charge `thumbUrl(url, 1600)` au lieu du full-size
-
-**`lib/shareFiles.ts`** :
-- `canShareFiles()` feature detection
-- `shareAllTogether()` batch
-- `shareOneByOne()` séquentiel iOS-friendly
-
-### Cards privées — toujours fonctionnel
-
-**DB Supabase** (migration déjà exécutée, ne pas refaire) :
-```sql
-ALTER TABLE infos
-  ADD COLUMN is_prive boolean DEFAULT false,
-  ADD COLUMN auteur_id uuid REFERENCES membres(id) ON DELETE SET NULL;
-```
-
-### Service Worker
-
-**Fichier** : `public/sw.js`
-**Comportement (inchangé cette session)** :
-- Au démarrage PWA (referrer vide OU externe) → redirige vers `/trip/{lastTripCode}` si trip en cache
-- Navigation interne vers `/` → laisse passer normalement
-- Met à jour le cache `last-trip-code` à chaque visite
-
-**Important** : bumper la version en commentaire en haut du fichier quand on modifie le SW (cache agressif).
-
-### Optimistic UI pattern (référence)
-
-```ts
-async function actionXYZ() {
-  const snapshot = /* valeur actuelle */
-  setState(/* nouvelle valeur */)  // optimistic
-  try {
-    const { error } = await supabase.from('...').update(...).eq('id', ...)
-    if (error) throw error
-  } catch (e) {
-    setState(snapshot)  // rollback
-    alert('Erreur : ' + e.message)
-  }
-}
-```
-
-Pour les uploads (Album) : `URL.createObjectURL(file)` comme preview en attendant l'URL Supabase réelle, puis remplacement à la réception. Blob URLs trackées pour cleanup.
-
----
-
-## ⚠️ Règles d'environnement — à connaître absolument
-
-### Paths Windows avec brackets `[code]`
-Les crochets cassent PowerShell. **Toujours utiliser `-LiteralPath`** :
-```powershell
-Get-Content -LiteralPath "app\trip\[code]\Infos.tsx"
-Select-String -LiteralPath "app\trip\[code]\Album.tsx" -Pattern "..."
-```
-`Desktop Commander:edit_block` gère automatiquement les brackets.
-**`str_replace` natif NE GÈRE PAS les brackets** — toujours utiliser `Desktop Commander:edit_block` pour les fichiers sous `app/trip/[code]/`.
-
-### Git commits avec accents/emoji
-- Ne **pas** utiliser `git commit -m "message"` directement (caractères cassés en PowerShell)
-- Écrire le message dans `_m.txt` via `Desktop Commander:write_file`
-- Puis `git commit -F _m.txt; Remove-Item _m.txt`
-
-### Git add avec brackets
-```powershell
-git add app/trip/`[code`]/Album.tsx  # backtick-escape obligatoire
-```
-
-### Création de fichiers
-- `create_file` de Claude écrit dans le **conteneur Claude**, PAS sur Windows
-- **Utiliser `Desktop Commander:write_file`** pour écrire dans `C:\Users\sbergeron\...`
-- `Desktop Commander:edit_block` pour les modifications
-
-### PowerShell séparateurs
-- `&&` NE FONCTIONNE PAS en PowerShell — utiliser `;` à la place
-
-### NODE_ENV attention !
-- Sylvain a `NODE_ENV=production` global sur la machine
-- **Avant `npm run build`** : `Remove-Item Env:\NODE_ENV` (sinon warning + comportements subtils)
-- Avant `npx tsc --noEmit` : `$env:NODE_ENV='development'` (le warning Next n'apparaît pas sur tsc seul, mais safe de mettre dev)
-
-### Build local vs Vercel
-- `npm run build` local fonctionne MAINTENANT (bug `/_global-error` disparu avec la nouvelle config)
-- Build ~3-4s compile + 4s TypeScript — rapide
-- Vercel auto-deploy sur push main, 1-2 min
-
-### Supabase gotchas
-- `.single().catch()` chaining = **invalide** en Supabase JS (throw, ne chain pas)
-- Subscription realtime : check `prev.some(x => x.id === newPhoto.id)` évite les doublons optimistic
-- Les inputs React contrôlés par Supabase bloquent l'injection programmatique (utiliser flux .env pour Vercel)
-
-### Headers pattern path-to-regexp (next.config)
-`/:path*.png` est **invalide** ("Can not repeat path without prefix and suffix").
-`/_next/static/:path*` est **valide** (suffix vide = OK).
-
----
-
-## 🎨 Design system — palette et conventions (inchangé)
+## 🎨 Design system actualisé
 
 ### Couleurs CSS variables
 ```css
---forest       #0F2D0F   /* Header vert foncé */
+--forest       #0F2D0F   /* Header vert foncé + home bg */
 --forest-mid   #1A4A1A   /* Bouton "Tout" actif, badge Lodge Principal */
 --green        #2D6A2D
 --green-light  #4A9A4A
@@ -491,17 +171,63 @@ resto        #E11D48   rose/rouge
 liens        #7C3AED   violet
 ```
 
-### Conventions UX (mémo)
-- **Mobile-first** — Linear / Arc Browser aesthetic
-- **Pastilles catégorie** : fond couleur plein + SVG blanc 20-36px
-- **Boutons Lodge card** : carrés 32×32 vert pâle `rgba(22,163,74,.1)` bg + `rgba(22,163,74,.3)` border
-- **Pin activé** : inversion fond plein `#16A34A` + icône blanche
-- **Liens cliquables** : couleur `#16A34A` + flèche externe ↗ à 60% opacity
-- **Toggles** : switch 44×24 thumb 20×20 iOS style
-- **Eyebrow cards** : 10px bold uppercase couleur catégorie
-- **Titres cards** : 14px bold letter-spacing -.01em
-- **A11y** : contraste minimum `rgba(255,255,255,.5)` sur fond `--forest`, `.7` pour sous-textes sur fond `.08`
-- **Hitbox minimum** : 44×44 Apple HIG (ici 80×80 pour flèches lightbox)
+### Signature marque (recette reproductible)
+
+**Version HERO** (page `/` home, logo grand) :
+```tsx
+<Image src="/logo-hero.webp" width={180} height={180} priority
+  style={{marginBottom: -18}} />
+<h1 style={{
+  fontFamily: 'var(--font-brand), Georgia, serif',
+  fontSize: 32, fontWeight: 700,
+  letterSpacing: '-.02em', lineHeight: 1,
+  color: '#fff', margin: '0 0 10px'
+}}>Crew Trips</h1>
+<p style={{
+  fontSize: 9, color: 'rgba(255,255,255,.5)',
+  letterSpacing: '.22em', textTransform: 'uppercase',
+  fontWeight: 500, margin: 0
+}}>Un seul lien · Pour tout savoir</p>
+```
+
+**Version COMPACTE** (headers des autres pages, logo petit) :
+```tsx
+<Image src="/logo-hero.webp" width={84} height={84}
+  style={{marginBottom: -10}} />
+<div style={{
+  fontFamily: 'var(--font-brand), Georgia, serif',
+  fontSize: 22, fontWeight: 700,
+  letterSpacing: '-.02em', lineHeight: 1, marginBottom: 6,
+  color: '#fff'
+}}>Crew Trips</div>
+<div style={{
+  fontSize: 9, color: 'rgba(255,255,255,.5)',
+  letterSpacing: '.22em', textTransform: 'uppercase',
+  fontWeight: 500
+}}>[LABEL PAGE]</div>
+```
+
+### Proportions clés
+
+| Element | Home hero | Headers compacts |
+|---|---|---|
+| Logo | 180px | 84px (×0.47) |
+| Logo marginBottom | -18 | -10 |
+| "Crew Trips" font-size | 32 | 22 |
+| Slogan/label letter-spacing | .22em | .22em |
+| Slogan/label font-size | 9 | 9 |
+
+### Layout home actuel (validé par Sylvain)
+- `padding: '56px 20px 40px'` (signature ancrée à 56px du haut, pas centrage mathématique)
+- `marginBottom: 80` sur la signature → gros air avant les boutons
+- `position: absolute bottom: 24` pour le footer "crew-trips-v2.vercel.app"
+- Bouton admin `position: fixed bottom: 24 right: 20`
+
+### Conventions UX
+- Mobile-first, Linear / Arc Browser aesthetic
+- Hitbox minimum 44×44 Apple HIG (80×80 pour flèches lightbox)
+- **Viewport bloqué** : `userScalable: false, maximumScale: 1` (évite zoom parasite, compromis A11y accepté)
+- Service Worker PWA : cache agressif, bumper la version en commentaire en haut de `public/sw.js` quand modifié
 
 ---
 
@@ -510,98 +236,128 @@ liens        #7C3AED   violet
 ```
 crew-trips-v2/
 ├── app/
-│   ├── page.tsx                    # Home : 🏕 + 2 CTA + lien admin (aria-label OK)
-│   ├── layout.tsx                  # viewport userScalable=true, maximumScale=5
-│   ├── mes-trips/page.tsx          # Liste trips (🏕 à remplacer aussi)
-│   ├── nouveau/page.tsx            # Création trip
-│   ├── rejoindre/page.tsx          # Rejoindre par code
-│   ├── admin/page.tsx              # Admin trips
-│   ├── album/[token]/page.tsx      # Album public partagé
-│   ├── globals.css                 # @keyframes crew-spin
+│   ├── layout.tsx                  # Fraunces via next/font, viewport bloqué
+│   ├── page.tsx                    # Home : logo 180px + Fraunces 32 + slogan UPPERCASE
+│   ├── mes-trips/page.tsx          # Logo 84 + Fraunces 22 + "MES TRIPS" UPPERCASE
+│   ├── nouveau/page.tsx            # PAS ENCORE harmonisé (P3)
+│   ├── rejoindre/page.tsx
+│   ├── admin/page.tsx
+│   ├── album/[token]/page.tsx
+│   ├── globals.css
 │   └── trip/[code]/
 │       ├── page.tsx                # Layout 3 tabs (Infos/Chat/Membres)
-│       ├── Infos.tsx               # 🎯 MAIN FILE (Lodge + cards + filtres)
-│       ├── InfoCardView.tsx        # Card individuelle
-│       ├── CardContent.tsx         # Rendering contenu card
-│       ├── Album.tsx               # Onglet Chat (photos)
-│       │                           # - PhotoTile memo
-│       │                           # - Lightbox dynamic import
-│       │                           # - Bouton Partager mode sélection
-│       │                           # - Blob URLs trackées useRef<Set>
-│       ├── Lightbox.tsx            # 🆕 Composant lightbox (chargé dynamiquement)
-│       │                           # - Hitbox 80×80 prev/next
-│       │                           # - thumbUrl 1600px
-│       │                           # - ref resetTransform
-│       ├── Membres.tsx             # Onglet Membres + permissions
-│       ├── JoinScreen.tsx          # Écran rejoindre
-│       ├── created/page.tsx        # Page succès création (🏕 à remplacer)
-│       └── print/page.tsx          # Vue impression
+│       ├── Infos.tsx               # MAIN FILE cards + lodge + filtres
+│       ├── InfoCardView.tsx
+│       ├── CardContent.tsx
+│       ├── Album.tsx               # Onglet Chat (photos) - PhotoTile memo, Lightbox dynamic
+│       ├── Lightbox.tsx            # Lightbox dynamique + prefetch N±1 + clavier
+│       ├── Membres.tsx             # Permissions + invite + nom editable
+│       ├── JoinScreen.tsx          # PAS ENCORE harmonisé (P3)
+│       ├── created/page.tsx        # PAS ENCORE harmonisé (P3)
+│       └── print/page.tsx
 ├── lib/
-│   ├── types.tsx                   # InfoCard, CATEGORIES, Message, getCatSvg
-│   ├── utils.tsx                   # TRIP_ICONS, countdown, getYoutubeId, isPdf
-│   ├── svgIcons.tsx                # 26 icônes
-│   ├── supabase.ts                 # Client Supabase
-│   ├── downloadAlbum.ts            # ZIP download (jszip dynamic import)
-│   ├── shareFiles.ts               # 🆕 Web Share API (canShare, together, one-by-one)
-│   └── imageCompression.ts         # browser-image-compression wrapper
+│   ├── types.tsx                   # InfoCard, CATEGORIES, getCatSvg
+│   ├── utils.tsx                   # TRIP_ICONS emoji (À REFACTORER en SVG - P2)
+│   ├── svgIcons.tsx                # 26 icônes UI
+│   ├── supabase.ts
+│   ├── downloadAlbum.ts            # ZIP dynamic import jszip
+│   ├── shareFiles.ts               # Web Share API
+│   └── imageCompression.ts
 ├── public/
-│   ├── manifest.json               # PWA config
+│   ├── logo-hero.png               # 200 KB, 1024x1024, fond transparent
+│   ├── logo-hero.webp              # 124 KB (servi par next/image)
+│   ├── favicon.ico + favicon-32.png
+│   ├── icon-192.png + icon-512.png # À REGÉNÉRER (P1)
+│   ├── icon-maskable-512.png       # À REGÉNÉRER (P1)
+│   ├── apple-touch-icon.png        # À REGÉNÉRER (P1)
+│   ├── manifest.json
 │   └── sw.js                       # Service Worker
 ├── next.config.ts                  # AVIF/WebP + optimizePackageImports + remotePatterns
-└── package.json                    # browserslist moderne
+├── package.json                    # browserslist moderne
+├── TESTS-MANUELS.md                # 273 lignes, 14 sections
+└── BRIEF-NEXT-SESSION.md           # Ce fichier
 ```
 
 ---
 
-## 💡 Pour démarrer la prochaine session
+## ✅ Ce qui a été fait cette session (18 avril 2026 soirée)
 
-Colle au début de la conversation :
+### Bugs critiques
+- `48a1633` Fix cards privées disparaissent/réapparaissent (SELECT incomplet + optimistic)
+- `c5026ae` Fix adopte auteur_id sur cards orphelines (pre-migration)
+- `6e3c74f` Fix bloque zoom parasite double-tap + pinch (compromis A11y)
+- **SQL cleanup** : 3 cards orphelines du trip Winter Steelhead récupérées avec membre.id Sylvain
 
-> "Salut Claude, on reprend Crew Trips v2. Lis `C:/Users/sbergeron/crew-trips-v2/BRIEF-NEXT-SESSION.md` pour le contexte complet. On va travailler sur [LE SUJET]."
+### UX & Features
+- `543e755` Lightbox prefetch N±1 + Escape + flèches clavier desktop
+- `2e474ad` Docs TESTS-MANUELS.md (273 lignes, 14 sections)
 
-**Les 3 sujets les plus probables** :
+### Logo & Branding
+- `7dd3d76` Assets logo-hero PNG + WebP
+- `2ea383d` Intégration logo sur home + mes-trips + assets PWA complets
+- `c3e8059` Agrandissement logo 120→180px home, 56→84px mes-trips
+- `8a611ff` Police Fraunces serif via next/font/google
+- `3f44f7e` Retrait filet blanc (erreur d'attribution)
+- `d2b05a7` Rééquilibre titre 40→32px + harmonisation mes-trips
+- `b86af2b` Layout hero (tentative centrage)
+- `6b5c631` marginBottom négatif pour coller logo↔titre (absorbe halo)
+- `9003c90` Padding symétrique + update brief
+- `9e56d4e` Ancrage signature haut (56px padding) + 80px air avant boutons ← **DERNIER COMMIT**
 
-1. **🔥 Logo Crew Trips** (+LCP win) — Sylvain arrive avec son PNG/WebP, intégration `next/image priority` sur Home + Mes trips + created. ~20 min pour le code, mesure Lighthouse après. **Impact attendu : Perf 90 → 95-97.**
+---
 
-2. **Checklist tests manuels** — créer `TESTS-MANUELS.md` avec tous les flows à cocher avant release. ~15 min, zero code.
+## ⚠️ Règles d'environnement — à connaître absolument
 
-3. **Prefetch lightbox + Escape desktop** — petites améliorations UX Album (~20 min total).
+### Paths Windows avec brackets `[code]`
+```powershell
+Get-Content -LiteralPath "app\trip\[code]\Infos.tsx"
+git add app/trip/`[code`]/Album.tsx  # backtick-escape obligatoire pour git
+```
+`Desktop Commander:edit_block` gère automatiquement les brackets.
 
-**Sujets secondaires** :
-- RLS Supabase sanity check (créer 2 users dans un trip test)
-- next/image pour les `<img>` restants (avatars, thumbnails YouTube dans cards)
-- Service Worker robustesse tests
-- Perf Download ZIP mobile iOS
+### Git commits avec accents/emoji
+Écrire le message dans `_m.txt` via `Desktop Commander:write_file`, puis `git commit -F _m.txt; Remove-Item _m.txt`.
+
+### PowerShell
+- `&&` ne fonctionne pas → utiliser `;`
+- `$env:VAR` pas `$VAR`
+- Variables `$` mangées par le shell parent → passer par un script `.ps1` file
+
+### NODE_ENV
+Sylvain a `NODE_ENV=production` global sur la machine.
+- Avant `npm run build` : `Remove-Item Env:\NODE_ENV`
+- Avant `npx tsc --noEmit` : `$env:NODE_ENV='development'`
+
+### Supabase gotchas
+- `.single().catch()` chaining = **invalide** (throw, ne chain pas)
+- Subscription realtime : check `prev.some(x => x.id === newPhoto.id)` pour éviter doublons optimistic
+- RLS bloque l'accès aux cards privées où `auteur_id ≠ membre.id` (bien)
+- **Clé ANON uniquement disponible dans .env.local**, pas de SERVICE_ROLE_KEY → écritures DB passent par UI ou SQL Editor Supabase
+- Supabase project : `dnvzqsgwqwrvsgfjqqxn`
+
+### Création de fichiers
+- `create_file` de Claude écrit dans le **conteneur Claude**, PAS sur Windows
+- **Utiliser `Desktop Commander:write_file`** pour écrire dans `C:\Users\sbergeron\...`
+- `Desktop Commander:edit_block` pour les modifications
 
 ---
 
-## 🧪 Tests rapides post-déploiement (pour cette session)
+## 🧪 Tests à faire avant release
 
-### Sur `crew-trips-v2.vercel.app` (attendre 1-2 min après push) :
-
-**Album perf** :
-- [ ] Ouvrir une photo → swipe prev/next très rapide → pas de freeze
-- [ ] Mode sélection : taper sur 10 photos d'affilée → instantané
-- [ ] Upload 5 photos d'un coup → apparaissent immédiatement avec spinner
-
-**Hitbox prev/next** :
-- [ ] Taper juste à côté du rond ‹ ou › → navigation déclenchée (pas pan)
-
-**Partage** :
-- [ ] Sélectionner 1 photo → "Partager 1" → sheet native directe
-- [ ] Sélectionner 3 photos → sheet choix "ensemble / une par une"
-- [ ] Tester AirDrop (batch) et iMessage (une par une si batch refuse)
-
-**A11y** :
-- [ ] Sur la home `/`, pincer pour zoomer → fonctionne (avant c'était bloqué)
-- [ ] Le bouton ⚙ admin en bas à droite est accessible via lecteur d'écran
-- [ ] Contraste texte "Créer un trip pour votre groupe" plus lisible
-
-**Build/deploy** :
-- [ ] `npm run build` local passe sans erreur
-- [ ] Vercel deploy vert
-- [ ] Lighthouse sur prod : Perf 90, A11y 100, BP 100, SEO 100
+Voir `TESTS-MANUELS.md` racine du repo — 14 sections couvrant tous les flows critiques. Utiliser le "regression quick-check" (section 14) pour validation express ~5 min avant merge.
 
 ---
+
+## 💡 Pour démarrer la prochaine conversation
+
+Colle EXACTEMENT ce prompt :
+
+> "Salut Claude, on reprend Crew Trips v2. Lis `C:/Users/sbergeron/crew-trips-v2/BRIEF-NEXT-SESSION.md` pour le contexte complet. On va travailler sur [SUJET]."
+
+**Sujets probables** :
+
+1. **🔴 Icône PWA écran d'accueil** — simplifier le logo pour 60-80px, regénérer les 5 assets (favicon, icon-192, icon-512, maskable, apple-touch-icon)
+2. **🟡 Refactor TRIP_ICONS en SVG** — Sylvain arrive avec 9 SVG de ChatGPT, on crée `lib/tripIcons.tsx` et on adapte 5 call sites
+3. **🟢 Finaliser signature typographique** sur `/nouveau`, `JoinScreen.tsx`, `/created` (appliquer la recette Fraunces compacte)
 
 Bonne session 🌲
