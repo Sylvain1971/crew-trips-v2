@@ -96,11 +96,12 @@ export default function MesTripsPage() {
           style={{position:'absolute',top:16,left:20,background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
           ← Retour
         </button>
-        <div style={{marginBottom:6}}>
+        <div style={{marginBottom:2}}>
           <Image src="/logo-hero.webp" alt="Crew Trips" width={84} height={84} />
         </div>
-        <div style={{fontWeight:800,fontSize:22,color:'#fff',letterSpacing:'-.03em'}}>Crew Trips</div>
-        <div style={{fontWeight:600,fontSize:15,color:'rgba(255,255,255,.6)',marginTop:4}}>Mes trips</div>
+        <div style={{fontFamily:'var(--font-brand), Georgia, serif',fontWeight:700,fontSize:26,color:'#fff',letterSpacing:'-.025em',lineHeight:1}}>Crew Trips</div>
+        <div style={{width:36,height:1,background:'rgba(255,255,255,.3)',margin:'8px 0'}} aria-hidden="true" />
+        <div style={{fontSize:10,color:'rgba(255,255,255,.55)',letterSpacing:'.18em',textTransform:'uppercase',fontWeight:500}}>Mes trips</div>
       </div>
 
       <div style={{flex:1,padding:'16px 20px 40px'}}>

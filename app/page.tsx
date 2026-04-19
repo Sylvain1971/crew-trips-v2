@@ -7,18 +7,19 @@ export default function Home() {
   const router = useRouter()
   return (
     <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'32px 20px'}}>
-      <div style={{textAlign:'center',marginBottom:48}}>
+      <div style={{textAlign:'center',marginBottom:48,display:'flex',flexDirection:'column',alignItems:'center'}}>
         <Image
           src="/logo-hero.webp"
           alt="Crew Trips"
           width={180}
           height={180}
           priority
-          style={{marginBottom:20}}
+          style={{marginBottom:4}}
         />
-        <h1 style={{fontSize:34,fontWeight:800,color:'#fff',letterSpacing:'-.04em',lineHeight:1.1,margin:0}}>Crew Trips</h1>
-        <p style={{fontSize:15,color:'rgba(255,255,255,.5)',marginTop:12,lineHeight:1.6}}>
-          Un seul lien.<br/>Pour tout savoir.
+        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:40,fontWeight:700,color:'#fff',letterSpacing:'-.025em',lineHeight:.95,margin:0}}>Crew Trips</h1>
+        <div style={{width:42,height:1,background:'rgba(255,255,255,.35)',margin:'10px 0 10px'}} aria-hidden="true" />
+        <p style={{fontSize:10,color:'rgba(255,255,255,.55)',margin:0,lineHeight:1.4,letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
+          Un seul lien · Pour tout savoir
         </p>
       </div>
 

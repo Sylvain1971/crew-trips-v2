@@ -1,6 +1,18 @@
 import type { Metadata, Viewport } from 'next'
+import { Fraunces } from 'next/font/google'
 import './globals.css'
 import InstallBanner from './InstallBanner'
+
+// Police de marque : Fraunces serif editorial, utilisee pour les titres hero
+// uniquement (Crew Trips en brand signature). Pour tout le reste de l'app
+// (UI, body, boutons) on garde les system fonts pour rester natif iOS/Android.
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  weight: ['700'],
+  style: ['normal'],
+  display: 'swap',
+  variable: '--font-brand',
+})
 
 export const metadata: Metadata = {
   title: 'Crew Trips',
@@ -33,7 +45,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={fraunces.variable}>
       <body>{children}<InstallBanner /></body>
     </html>
   )
