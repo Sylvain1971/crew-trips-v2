@@ -1,5 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { SvgIcon } from '@/lib/svgIcons'
 
 export default function Home() {
@@ -7,7 +8,14 @@ export default function Home() {
   return (
     <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'32px 20px'}}>
       <div style={{textAlign:'center',marginBottom:48}}>
-        <div style={{fontSize:60,marginBottom:16}}>🏕</div>
+        <Image
+          src="/logo-hero.webp"
+          alt="Crew Trips"
+          width={120}
+          height={120}
+          priority
+          style={{marginBottom:16}}
+        />
         <h1 style={{fontSize:34,fontWeight:800,color:'#fff',letterSpacing:'-.04em',lineHeight:1.1,margin:0}}>Crew Trips</h1>
         <p style={{fontSize:15,color:'rgba(255,255,255,.5)',marginTop:12,lineHeight:1.6}}>
           Un seul lien.<br/>Pour tout savoir.

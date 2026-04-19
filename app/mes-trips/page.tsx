@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { TRIP_ICONS } from '@/lib/utils'
 import { SvgIcon } from '@/lib/svgIcons'
@@ -95,7 +96,9 @@ export default function MesTripsPage() {
           style={{position:'absolute',top:16,left:20,background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
           ← Retour
         </button>
-        <div style={{fontSize:36,marginBottom:4}}>🏕</div>
+        <div style={{marginBottom:4}}>
+          <Image src="/logo-hero.webp" alt="Crew Trips" width={56} height={56} />
+        </div>
         <div style={{fontWeight:800,fontSize:22,color:'#fff',letterSpacing:'-.03em'}}>Crew Trips</div>
         <div style={{fontWeight:600,fontSize:15,color:'rgba(255,255,255,.6)',marginTop:4}}>Mes trips</div>
       </div>
