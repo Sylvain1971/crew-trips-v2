@@ -285,6 +285,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           fichier_url: optimisticCard.fichier_url ?? null,
           membre_prenom: optimisticCard.membre_prenom ?? null,
           is_prive: optimisticCard.is_prive ?? false,
+          // Écrit auteur_id seulement si manquant (cards pré-migration).
+          // Évite d'écraser l'auteur légitime quand un admin modifie la card d'un autre.
+          ...(originalCard.auteur_id ? {} : { auteur_id: membre.id }),
         }).eq('id', originalCard.id).select().single())
         if (error) throw error
         // Supabase peut renvoyer des valeurs normalisées (timestamps, trimmed...) : on resync
