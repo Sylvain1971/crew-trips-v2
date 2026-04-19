@@ -477,19 +477,19 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             </button>
           </div>
         </div>
-        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:12}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}}>
           <div style={{flex:1,minWidth:0}}>
             <div style={{fontSize:12,color:'rgba(255,255,255,.5)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>{trip.destination || 'Crew Trip'}</div>
             <div style={{fontSize:22,fontWeight:800,letterSpacing:'-.02em',lineHeight:1.2}}>{trip.nom}</div>
             {tripDate && <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:5}}>{tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}</div>}
+            {cd && (
+              <div style={{marginTop:8,fontSize:13,color:'rgba(255,255,255,.7)',fontWeight:600}}>
+                {cd}
+              </div>
+            )}
           </div>
-          <Image src="/mountain-badge.webp" alt="Crew Trips" width={64} height={64} style={{flexShrink:0,opacity:.9}} unoptimized />
+          <Image src="/mountain-badge.webp" alt="Crew Trips" width={72} height={72} style={{flexShrink:0,opacity:.9}} unoptimized />
         </div>
-        {cd && (
-          <div style={{marginTop:8,fontSize:13,color:'rgba(255,255,255,.7)',fontWeight:600}}>
-            {cd}
-          </div>
-        )}
       </div>
 
       {/* Sentinel pour détecter le conteneur scrollable parent */}
