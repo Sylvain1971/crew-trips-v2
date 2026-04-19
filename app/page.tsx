@@ -6,7 +6,7 @@ import { SvgIcon } from '@/lib/svgIcons'
 export default function Home() {
   const router = useRouter()
   return (
-    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'20px 20px 40px',position:'relative'}}>
+    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'40px 20px',position:'relative'}}>
 
       {/* Signature hero */}
       <div style={{textAlign:'center',marginBottom:44,display:'flex',flexDirection:'column',alignItems:'center'}}>

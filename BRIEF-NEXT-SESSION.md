@@ -1,9 +1,124 @@
 # Crew Trips v2 — Brief session suivante
+# Crew Trips v2 — Brief session suivante
 
-> **Dernière session : 18 avril 2026 (soir++)** — 14 commits poussés dans une grosse session.
-> **Mega audit perf Album (7 commits) + A11y/Bundle/next.config optim (5 commits) + UX flèches & partage (2 commits).**
-> **État : stable, déployé, TypeScript clean, build Next OK, Lighthouse 90/100/100/100.**
+> **Dernière session : 18 avril 2026 (fin de soirée ++)** — 11 commits supplémentaires après la session d'optim.
+> **Logo Crew Trips intégré + PWA icons complets + Fraunces serif + signature marque unifiée.**
+> **État : stable, déployé, TypeScript clean, build Next OK.**
 > **Working tree clean, synchro avec origin/main.**
+
+---
+
+## 🎯 PROCHAINE SESSION — 2 priorités principales
+
+### 🔴 PRIORITÉ 1 — Icône PWA écran d'accueil (~15 min)
+
+**État** : actuellement `apple-touch-icon.png` 180×180 avec fond forest plein et le logo-hero (silhouettes + montagne brumeuse) dedans. Rendu à cette taille : détails se perdent, illisible à 60×60 sur home screen iOS.
+
+**À faire** : créer une version simplifiée de l'icône pour le home screen iOS/Android :
+- Garder uniquement la montagne centrale + halo lunaire (pas les silhouettes qui deviennent bouillie à 60px)
+- Ou : monogramme stylisé "CT" en serif Fraunces sur fond forest
+- Ou : silhouettes très simplifiées avec moins de détails
+- Tester à 60, 80, 120, 180px pour valider la lisibilité
+- Regénérer aussi icon-192.png, icon-512.png, icon-maskable-512.png avec le même design
+- Considérer une version spécifique pour maskable (padding safe zone 15%)
+
+Fichiers actuels à remplacer :
+- `public/apple-touch-icon.png` (180×180, fond forest)
+- `public/icon-192.png` (Android PWA)
+- `public/icon-512.png` (Android PWA)
+- `public/icon-maskable-512.png` (avec padding)
+- `public/favicon.ico` + `public/favicon-32.png`
+
+### 🟡 PRIORITÉ 2 — Icônes types de trip (TRIP_ICONS refactor ~45 min)
+
+**État** : `lib/utils.ts` définit `TRIP_ICONS` avec des emojis 🎣⛷🗻🥾🚵🫎🧘☀️🏕. Utilisés dans 5 endroits :
+- `app/nouveau/page.tsx` (select type + preview header)
+- `app/trip/[code]/page.tsx` (header small)
+- `app/trip/[code]/JoinScreen.tsx`
+- `app/trip/[code]/created/page.tsx`
+- `app/mes-trips/page.tsx` (liste trips — probablement)
+
+**À faire** :
+1. Sylvain revient avec 9 SVG monochrome séparés (stroke currentColor) — il va demander à ChatGPT avec un prompt strict "mode code brut"
+2. Créer `lib/tripIcons.tsx` avec les 9 composants SVG
+3. Transformer `TRIP_ICONS` en map de React components au lieu de strings emoji
+4. Adapter tous les call sites (5 fichiers) pour utiliser `<TripIcon type={trip.type} />` au lieu de `{TRIP_ICONS[trip.type]}`
+5. Tests : chaque type de trip doit bien afficher son icône + fallback "autre"
+6. Vérifier que les select HTML supportent bien les SVG (spoiler : non, faut faire custom dropdown ou garder emoji juste dans `<option>`)
+
+**Note** : pour le `<select>` dans `/nouveau`, probablement garder les emojis dans les options HTML (ne supporte pas SVG) mais afficher SVG dans le header preview. Ou refaire un custom dropdown (chantier plus gros).
+
+### 🟢 PRIORITÉ 3 — Finaliser signature sur les autres pages
+
+L'harmonisation typographique (Fraunces + uppercase letter-spacé) n'a été faite que sur `/` et `/mes-trips`. Les autres pages ont toujours l'ancien style :
+- `app/nouveau/page.tsx` (header "Crew Trips" + sous-titre)
+- `app/trip/[code]/JoinScreen.tsx` (branding "Crew Trips")
+- `app/trip/[code]/created/page.tsx` (page succès)
+
+Appliquer la même recette : logo 84px avec `marginBottom: -10`, Fraunces 22px, "XXX" en uppercase letter-spacing .22em 9px.
+
+---
+
+## 📦 Ce qui a été fait cette session (bilan)
+
+### Bugs critiques fixés
+- `48a1633` Cards privées : fix SELECT incomplet + optimistic manquant auteur_id
+- `c5026ae` Cards orphelines : adopte auteur_id si manquant
+- `6e3c74f` Zoom parasite : retire user-scalable=true (compromis A11y accepté)
+- **SQL migration** : 3 cards orphelines du trip Winter Steelhead récupérées avec UUID Sylvain `cdb50338-1b42-4a4a-b5c5-5a6f8201176c`
+
+### UX / Features
+- `543e755` Lightbox : prefetch N±1 + Escape + flèches clavier desktop
+- `2e474ad` Docs : `TESTS-MANUELS.md` 273 lignes, 14 sections
+
+### Logo & Branding
+- `7dd3d76` Assets logo-hero PNG + WebP
+- `2ea383d` Intégration logo sur home + mes-trips + tous assets PWA
+- `c3e8059` Agrandissement logo 120→180px home, 56→84px mes-trips
+- `8a611ff` Police de marque **Fraunces serif** via `next/font/google`
+- `3f44f7e` Retrait filet blanc (erreur d'attribution)
+- `d2b05a7` Rééquilibre titre 40→32px + harmonisation mes-trips
+- `b86af2b` / `6b5c631` Layout hero + margin négatif pour coller logo-titre
+- **Dernier commit** : symétrie padding haut/bas pour centrage parfait
+
+---
+
+## 🎨 Design system actualisé
+
+### Police de marque
+- **Fraunces serif 700** via `next/font/google` avec CSS variable `--font-brand`
+- Utilisée uniquement pour "Crew Trips" hero title
+- Le reste de l'app reste en system font (SF Pro iOS / Roboto Android)
+
+### Signature marque (recette reproductible)
+```tsx
+<Image src="/logo-hero.webp" width={180} height={180} priority
+  style={{marginBottom: -18}} />  // negatif pour coller titre sous halo
+<h1 style={{
+  fontFamily: 'var(--font-brand), Georgia, serif',
+  fontSize: 32, fontWeight: 700,
+  letterSpacing: '-.02em', lineHeight: 1,
+  color: '#fff', margin: '0 0 10px'
+}}>Crew Trips</h1>
+<p style={{
+  fontSize: 9, color: 'rgba(255,255,255,.5)',
+  letterSpacing: '.22em', textTransform: 'uppercase',
+  fontWeight: 500, margin: 0
+}}>Un seul lien · Pour tout savoir</p>
+```
+
+### Proportions entre pages
+| Element | Home | Mes trips |
+|---|---|---|
+| Logo | 180px | 84px (×0.47) |
+| Logo marginBottom | -18 | -10 |
+| "Crew Trips" font-size | 32 | 22 |
+| Slogan letter-spacing | .22em | .22em |
+| Slogan font-size | 9 | 9 |
+
+---
+
+
 
 ---
 
