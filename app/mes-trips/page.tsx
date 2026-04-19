@@ -99,8 +99,7 @@ export default function MesTripsPage() {
         <div style={{marginBottom:2}}>
           <Image src="/logo-hero.webp" alt="Crew Trips" width={84} height={84} />
         </div>
-        <div style={{fontFamily:'var(--font-brand), Georgia, serif',fontWeight:700,fontSize:26,color:'#fff',letterSpacing:'-.025em',lineHeight:1}}>Crew Trips</div>
-        <div style={{width:36,height:1,background:'rgba(255,255,255,.3)',margin:'8px 0'}} aria-hidden="true" />
+        <div style={{fontFamily:'var(--font-brand), Georgia, serif',fontWeight:700,fontSize:26,color:'#fff',letterSpacing:'-.025em',lineHeight:1,marginBottom:8}}>Crew Trips</div>
         <div style={{fontSize:10,color:'rgba(255,255,255,.55)',letterSpacing:'.18em',textTransform:'uppercase',fontWeight:500}}>Mes trips</div>
       </div>
 

@@ -16,8 +16,7 @@ export default function Home() {
           priority
           style={{marginBottom:4}}
         />
-        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:40,fontWeight:700,color:'#fff',letterSpacing:'-.025em',lineHeight:.95,margin:0}}>Crew Trips</h1>
-        <div style={{width:42,height:1,background:'rgba(255,255,255,.35)',margin:'10px 0 10px'}} aria-hidden="true" />
+        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:40,fontWeight:700,color:'#fff',letterSpacing:'-.025em',lineHeight:.95,margin:'0 0 12px'}}>Crew Trips</h1>
         <p style={{fontSize:10,color:'rgba(255,255,255,.55)',margin:0,lineHeight:1.4,letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
           Un seul lien · Pour tout savoir
         </p>
