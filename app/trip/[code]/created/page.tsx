@@ -57,7 +57,8 @@ export default function CreatedPage({ params: paramsPromise }: { params: Promise
           <SvgIcon name="check" size={36} />
         </div>
 
-        <h1 style={{ color: '#fff', fontSize: 24, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-.02em' }}>Trip créé !</h1>
+        <h1 style={{ fontFamily:'var(--font-brand), Georgia, serif', color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 6px', letterSpacing: '-.02em', lineHeight: 1 }}>Trip créé</h1>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,.5)', letterSpacing: '.22em', textTransform: 'uppercase', fontWeight: 500, marginBottom: 18 }}>Prêt à partager</div>
         <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, textAlign: 'center', lineHeight: 1.5, marginBottom: 28 }}>
           {icon} {trip?.nom || '…'}
           {dateDebut && <><br /><span style={{ fontSize: 12 }}>{dateDebut}{dateFin ? ` → ${dateFin}` : ''}</span></>}

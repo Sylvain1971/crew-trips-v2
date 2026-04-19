@@ -105,7 +105,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 20px'}}>
 
         {/* Branding */}
-        <div style={{fontSize:12,fontWeight:700,color:'rgba(255,255,255,.3)',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:20}}>
+        <div style={{fontSize:9,fontWeight:500,color:'rgba(255,255,255,.5)',letterSpacing:'.22em',textTransform:'uppercase',marginBottom:20}}>
           Crew Trips
         </div>
 

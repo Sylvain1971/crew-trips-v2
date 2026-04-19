@@ -129,9 +129,9 @@ function NouveauInner() {
           ← Retour
         </button>
         <div style={{fontSize:36,marginBottom:4}}>{TRIP_ICONS[type]||'🏕'}</div>
-        <div style={{fontWeight:800,fontSize:22,color:'#fff',letterSpacing:'-.03em'}}>Crew Trips</div>
-        <div style={{fontWeight:600,fontSize:15,color:'rgba(255,255,255,.6)',marginTop:4}}>
-          {isDuplicate ? 'Dupliquer un trip' : 'Nouveau trip'}
+        <div style={{fontFamily:'var(--font-brand), Georgia, serif',fontWeight:700,fontSize:20,color:'#fff',letterSpacing:'-.02em',lineHeight:1,marginBottom:6}}>Crew Trips</div>
+        <div style={{fontSize:9,color:'rgba(255,255,255,.5)',letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
+          {isDuplicate ? 'DUPLIQUER UN TRIP' : 'NOUVEAU TRIP'}
         </div>
       </div>
 
