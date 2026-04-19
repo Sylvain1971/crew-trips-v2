@@ -141,7 +141,7 @@ export function getCatPlaceholders(catId: string, tripType: string): { titre: st
 // Exemples pour la page Nouveau trip
 export function getTripExamples(type: string): { nom: string; dest: string } {
   switch (type) {
-    case 'peche':     return { nom: 'Rivière Babine — Septembre 2025', dest: 'Rivière Babine, BC' }
+    case 'peche':     return { nom: 'Rivière Dean — Septembre 2025', dest: 'Rivière Dean, BC' }
     case 'ski':       return { nom: 'Whistler — Mars 2026',             dest: 'Whistler, BC' }
     case 'motoneige': return { nom: 'Monts Groulx — Février 2026',      dest: 'Monts Groulx, QC' }
     case 'hike':      return { nom: 'Torres del Paine — Août 2026',     dest: 'Patagonie, Chili' }
