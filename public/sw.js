@@ -1,5 +1,5 @@
 ﻿// Service Worker — Crew Trips v2
-// Version 2026-04-18-b (bump cette ligne quand tu modifies le SW pour forcer la mise à jour)
+// Version 2026-04-19-a (bump cette ligne quand tu modifies le SW pour forcer la mise à jour)
 // Stocke les membres par trip + le dernier trip visité (persisté en cache)
 
 self.addEventListener('install', () => self.skipWaiting())
