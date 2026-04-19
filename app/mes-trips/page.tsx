@@ -148,10 +148,11 @@ export default function MesTripsPage() {
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
                   <div style={{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>
-                  <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:20,flexShrink:0,
-                    background:'rgba(0,0,0,.08)',color:'var(--text-3)',display:'inline-flex',alignItems:'center',gap:3}}>
-                    {t.role==='createur' ? <><SvgIcon name="star" size={10} />Admin</> : 'Participant'}
-                  </span>
+                  {t.role==='createur' && (
+                    <span title="Admin" aria-label="Admin" style={{color:'#F59E0B',display:'inline-flex',flexShrink:0}}>
+                      <SvgIcon name="star" size={13} />
+                    </span>
+                  )}
                 </div>
                 {t.destination && <div style={{fontSize:12,color:'var(--text-3)',marginTop:2,display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="pin" size={11} /> {t.destination}</div>}
                 {t.date_debut && <div style={{fontSize:12,color:'var(--text-3)',marginTop:1,display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="calendar" size={11} /> {fmtDate(t.date_debut)}{t.date_fin ? ` → ${fmtDate(t.date_fin)}` : ''}</div>}
