@@ -6,17 +6,17 @@ import { SvgIcon } from '@/lib/svgIcons'
 export default function Home() {
   const router = useRouter()
   return (
-    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',background:'var(--forest)',padding:'0 20px 40px',position:'relative'}}>
+    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'20px 20px 40px',position:'relative'}}>
 
-      {/* Signature hero : positionnee dans le tiers superieur (15% du haut) */}
-      <div style={{textAlign:'center',marginTop:'15vh',marginBottom:'auto',display:'flex',flexDirection:'column',alignItems:'center'}}>
+      {/* Signature hero */}
+      <div style={{textAlign:'center',marginBottom:44,display:'flex',flexDirection:'column',alignItems:'center'}}>
         <Image
           src="/logo-hero.webp"
           alt="Crew Trips"
           width={180}
           height={180}
           priority
-          style={{marginBottom:4}}
+          style={{marginBottom:-18}}
         />
         <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:32,fontWeight:700,color:'#fff',letterSpacing:'-.02em',lineHeight:1,margin:'0 0 10px'}}>Crew Trips</h1>
         <p style={{fontSize:9,color:'rgba(255,255,255,.5)',margin:0,lineHeight:1.4,letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
@@ -24,8 +24,8 @@ export default function Home() {
         </p>
       </div>
 
-      {/* CTAs en bas */}
-      <div style={{width:'100%',maxWidth:360,display:'flex',flexDirection:'column',gap:14,marginBottom:60}}>
+      {/* CTAs */}
+      <div style={{width:'100%',maxWidth:360,display:'flex',flexDirection:'column',gap:14}}>
 
         {/* Mes trips */}
         <button onClick={()=>router.push('/mes-trips')}
