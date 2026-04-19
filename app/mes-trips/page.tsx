@@ -142,8 +142,8 @@ export default function MesTripsPage() {
 
           {trips.map((t) => (
             <div key={t.code} className="card" style={{marginBottom:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
-              <div style={{flexShrink:0,width:48,height:48}}>
-                <TripIcon type={t.type} size={48} />
+              <div style={{flexShrink:0,width:56,height:56}}>
+                <TripIcon type={t.type} size={56} />
               </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
