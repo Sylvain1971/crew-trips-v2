@@ -6,8 +6,8 @@ import { SvgIcon } from '@/lib/svgIcons'
 export default function Home() {
   const router = useRouter()
   return (
-    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'32px 20px'}}>
-      <div style={{textAlign:'center',marginBottom:48,display:'flex',flexDirection:'column',alignItems:'center'}}>
+    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'32px 20px 80px',position:'relative'}}>
+      <div style={{textAlign:'center',marginBottom:40,display:'flex',flexDirection:'column',alignItems:'center'}}>
         <Image
           src="/logo-hero.webp"
           alt="Crew Trips"
@@ -16,8 +16,8 @@ export default function Home() {
           priority
           style={{marginBottom:4}}
         />
-        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:40,fontWeight:700,color:'#fff',letterSpacing:'-.025em',lineHeight:.95,margin:'0 0 12px'}}>Crew Trips</h1>
-        <p style={{fontSize:10,color:'rgba(255,255,255,.55)',margin:0,lineHeight:1.4,letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
+        <h1 style={{fontFamily:'var(--font-brand), Georgia, serif',fontSize:32,fontWeight:700,color:'#fff',letterSpacing:'-.02em',lineHeight:1,margin:'0 0 10px'}}>Crew Trips</h1>
+        <p style={{fontSize:9,color:'rgba(255,255,255,.5)',margin:0,lineHeight:1.4,letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
           Un seul lien · Pour tout savoir
         </p>
       </div>
@@ -56,7 +56,7 @@ export default function Home() {
 
       </div>
 
-      <p style={{fontSize:11,color:'rgba(255,255,255,.5)',marginTop:40,textAlign:'center'}}>
+      <p style={{fontSize:11,color:'rgba(255,255,255,.35)',textAlign:'center',position:'absolute',bottom:24,left:0,right:0}}>
         crew-trips-v2.vercel.app
       </p>
 
