@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logo preview — Crew Trips</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#F5F0E8;color:#0F2D0F;padding:24px;-webkit-font-smoothing:antialiased}
+  h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+  p.sub{color:#8B7355;font-size:13px;margin:0 0 24px}
+  .grid{display:grid;grid-template-columns:1fr;gap:20px;max-width:1200px;margin:0 auto}
+  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr 1fr}}
+  .panel{border-radius:14px;padding:24px 16px;text-align:center;border:1px solid rgba(0,0,0,.08)}
+  .panel .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px}
+  .sizes{display:flex;align-items:flex-end;justify-content:center;gap:14px;margin-bottom:22px;min-height:160px}
+  .sizes > div{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .sizes img{display:block;object-fit:contain}
+  .sizes span{font-size:10px;font-weight:600;letter-spacing:.03em}
+  .mock{padding:16px 0 6px}
+  .mock img{display:block;margin:0 auto}
+  .mock .title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:12px}
+  .mock .subtitle{font-size:13px;margin-top:4px}
+
+  .forest{background:#0F2D0F;color:#fff}
+  .forest .label,.forest .sizes span,.forest .mock .subtitle{color:rgba(255,255,255,.55)}
+  .forest .mock .title{color:#fff}
+  .forest.panel{border-color:rgba(255,255,255,.1)}
+
+  .sand{background:#F5F0E8;color:#0F2D0F}
+  .sand .label,.sand .sizes span,.sand .mock .subtitle{color:#8B7355}
+  .sand .mock .title{color:#0F2D0F}
+  .sand.panel{border-color:#E8E0CC}
+
+  .black{background:#000;color:#fff}
+  .black .label,.black .sizes span,.black .mock .subtitle{color:rgba(255,255,255,.55)}
+  .black .mock .title{color:#fff}
+  .black.panel{border-color:rgba(255,255,255,.1)}
+
+  .note{max-width:1200px;margin:28px auto 0;padding:16px 20px;background:#fff;border:1px solid #E8E0CC;border-radius:12px;font-size:13px;line-height:1.6;color:#5A5A5A}
+  .note strong{color:#0F2D0F}
+  .checklist{margin:10px 0 0;padding-left:20px}
+  .checklist li{margin:4px 0}
+  .footer{text-align:center;color:#8B7355;font-size:12px;margin-top:22px}
+</style>
+</head>
+<body>
+
+<div style="max-width:1200px;margin:0 auto 24px">
+  <h1>Preview logo — Crew Trips</h1>
+  <p class="sub">Rendu du logo sur 3 fonds, 3 tailles + mock de la page d'accueil. Aucune modification du code de l'app.</p>
+</div>
+
+<div class="grid">
+
+  <!-- FOREST -->
+  <div class="panel forest">
+    <div class="label">Home · fond forest #0F2D0F</div>
+    <div class="sizes">
+      <div><img src="/logo-hero.webp" width="60" height="60" alt=""><span>60px</span></div>
+      <div><img src="/logo-hero.webp" width="100" height="100" alt=""><span>100px</span></div>
+      <div><img src="/logo-hero.webp" width="140" height="140" alt=""><span>140px</span></div>
+    </div>
+    <div class="mock">
+      <img src="/logo-hero.webp" width="120" height="120" alt="Crew Trips">
+      <div class="title">Crew Trips</div>
+      <div class="subtitle">Un seul lien. Pour tout savoir.</div>
+    </div>
+  </div>
+
+  <!-- SAND -->
+  <div class="panel sand">
+    <div class="label">Mes trips · fond sable #F5F0E8</div>
+    <div class="sizes">
+      <div><img src="/logo-hero.webp" width="60" height="60" alt=""><span>60px</span></div>
+      <div><img src="/logo-hero.webp" width="100" height="100" alt=""><span>100px</span></div>
+      <div><img src="/logo-hero.webp" width="140" height="140" alt=""><span>140px</span></div>
+    </div>
+    <div class="mock">
+      <img src="/logo-hero.webp" width="80" height="80" alt="Mes trips">
+      <div class="title">Mes trips</div>
+      <div class="subtitle">3 trips actifs</div>
+    </div>
+  </div>
+
+  <!-- BLACK -->
+  <div class="panel black">
+    <div class="label">Test transparence · fond noir</div>
+    <div class="sizes">
+      <div><img src="/logo-hero.webp" width="60" height="60" alt=""><span>60px</span></div>
+      <div><img src="/logo-hero.webp" width="100" height="100" alt=""><span>100px</span></div>
+      <div><img src="/logo-hero.webp" width="140" height="140" alt=""><span>140px</span></div>
+    </div>
+    <div class="mock">
+      <img src="/logo-hero.webp" width="120" height="120" alt="">
+      <div class="title">Verif</div>
+      <div class="subtitle">Pas de halo noir attendu</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="note">
+  <strong>Ce qu'il faut valider visuellement :</strong>
+  <ul class="checklist">
+    <li><strong>Fond forest (vert)</strong> — le médaillon flotte proprement, pas de carré sombre autour. C'est le test critique pour la home (LCP).</li>
+    <li><strong>Fond sable (beige)</strong> — le halo sépia contraste bien, les silhouettes sont lisibles.</li>
+    <li><strong>Fond noir</strong> — si tu vois un halo noir autour du cercle, la transparence a un problème. Sinon parfait.</li>
+    <li><strong>À 60px</strong> — distingue-t-on encore les silhouettes du crew ? Si non, on affichera minimum 80px.</li>
+  </ul>
+</div>
+
+<div class="footer">
+  Fichier temporaire · public/logo-preview.html · peut être supprimé après validation
+</div>
+
+</body>
+</html>
