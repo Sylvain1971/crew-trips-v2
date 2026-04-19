@@ -34,6 +34,44 @@ export default function Lightbox({
     }
   }, [lightboxIdx])
 
+  // Prefetch N±1 : précharge discrètement la photo précédente et suivante
+  // pour que le swipe soit instantané. `new Image()` déclenche une requête
+  // HTTP qui va peupler le cache du navigateur ; l'objet est libéré dès
+  // la fin de l'useEffect (pas de leak).
+  useEffect(() => {
+    const prefetch = (url?: string) => {
+      if (!url || url.startsWith('blob:')) return
+      const img = new Image()
+      img.src = thumbUrl(url, 1600)
+    }
+    const prev = photos[lightboxIdx - 1]
+    const next = photos[lightboxIdx + 1]
+    prefetch(prev?.image_url || undefined)
+    prefetch(next?.image_url || undefined)
+  }, [lightboxIdx, photos])
+
+  // Navigation clavier desktop : Escape ferme, ← → naviguent.
+  // Ignoré si un zoom est actif (l'utilisateur pourrait déplacer l'image).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+        return
+      }
+      if (isZoomed) return
+      if (e.key === 'ArrowLeft' && lightboxIdx > 0) {
+        e.preventDefault()
+        onPrev()
+      } else if (e.key === 'ArrowRight' && lightboxIdx < photos.length - 1) {
+        e.preventDefault()
+        onNext()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isZoomed, lightboxIdx, photos.length, onClose, onPrev, onNext])
+
   const currentPhoto = photos[lightboxIdx]
   if (!currentPhoto) return null
 
