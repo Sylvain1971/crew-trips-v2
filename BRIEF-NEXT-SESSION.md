@@ -1,51 +1,50 @@
 # Crew Trips v2 — Brief session suivante
 
-> **Dernière session : 18 avril 2026 (soirée marathon)** — 15 commits poussés + cleanup DB.
-> **Bugs critiques fixés (cards privées) + UX (zoom parasite, lightbox) + Logo hero complet + Fraunces serif + signature marque unifiée.**
-> **État : stable, déployé, TypeScript clean, build Next OK, working tree clean.**
+> **Dernière session : 19 avril 2026 (matin)** — 11 commits poussés, focus logo.
+> **Nouveau logo-hero intégré (illustration crew complète), 7 itérations de pipeline de détourage pour résoudre halos parasites, nouvelles valeurs logo/titre home+mes-trips validées via visualiseur HTML interactif.**
+> **État : stable, déployé, TypeScript clean, build Next 16.2.3 OK, working tree clean.**
 
 ---
 
 ## 🎯 PROCHAINE SESSION — 3 priorités
 
-### 🔴 PRIORITÉ 1 — Icône PWA écran d'accueil (~20 min)
+### 🔴 PRIORITÉ 1 — Harmoniser la signature typographique sur les pages trip/* (~30 min)
 
-**Problème** : le logo-hero (silhouettes + montagne brumeuse) est magnifique à 180px sur la home, mais devient bouillie à 60×60 sur le home screen iOS quand l'app est installée.
+**État actuel** : la recette compacte (logo + Fraunces + slogan UPPERCASE) est appliquée sur `/` (hero) et `/mes-trips` (compact) avec les **nouvelles valeurs validées cette session**. Il reste 4 pages à harmoniser :
 
-**À faire** : créer une icône PWA dédiée, simplifiée pour rester lisible à petite taille.
+- `app/nouveau/page.tsx` — header "Crew Trips" + sous-titre "Nouveau trip"
+- `app/trip/[code]/page.tsx` — header trip
+- `app/trip/[code]/JoinScreen.tsx` — branding "Crew Trips"
+- `app/trip/[code]/created/page.tsx` — page succès "Trip créé"
 
-**Options de design à explorer** :
-- Monogramme "CT" en Fraunces serif blanc sur fond forest `#0F2D0F`
-- Juste la montagne + halo lunaire du logo-hero (sans les silhouettes)
-- Silhouettes très simplifiées (2-3 persos au lieu de 6)
-- Symbole abstrait style Apple/Notion (initiales stylisées dans une forme organique)
+**Recette compacte à appliquer** (validée, utilisée sur mes-trips actuellement) :
 
-Sylvain va probablement demander à ChatGPT une version spécifique "icône app 512×512". Pour bien lui cadrer la commande, prompt suggéré :
-
+```tsx
+<div style={{marginBottom:4}}>
+  <Image src="/logo-hero.webp" alt="Crew Trips" width={90} height={90} />
+</div>
+<div style={{
+  fontFamily:'var(--font-brand), Georgia, serif',
+  fontWeight:700, fontSize:20, color:'#fff',
+  letterSpacing:'-.02em', lineHeight:1, marginBottom:6
+}}>Crew Trips</div>
+<div style={{
+  fontSize:9, color:'rgba(255,255,255,.5)',
+  letterSpacing:'.22em', textTransform:'uppercase',
+  fontWeight:500
+}}>[LABEL PAGE]</div>
 ```
-Crée-moi un icône d'app mobile 512×512 pour Crew Trips.
-Contraintes :
-- Fond forest #0F2D0F pleine couleur (pas transparent — iOS ignore la transparence)
-- Sujet centré occupant 60-70% du cadre
-- Lisible et reconnaissable même réduit à 60×60 pixels
-- Cohérent visuellement avec mon logo-hero actuel (illustration éditoriale
-  avec montagne brumeuse et halo lunaire, palette vert sépia) mais SIMPLIFIÉ
-- Maximum 3 éléments visuels (ex: montagne stylisée + lune/soleil + sol)
-- Style "silhouette éditoriale" comme mon logo, pas cartoon flat
-```
 
-**Fichiers à regénérer après validation** (script Sharp déjà écrit dans une session précédente, refaire pareil) :
-- `public/apple-touch-icon.png` (180×180 iOS, fond forest plein)
-- `public/icon-192.png` (192×192 Android PWA)
-- `public/icon-512.png` (512×512 Android PWA + splash)
-- `public/icon-maskable-512.png` (avec padding safe zone 15% pour Android adaptive)
-- `public/favicon.ico` + `public/favicon-32.png`
-
-Le `public/manifest.json` référence déjà les bons chemins, pas à modifier.
+Labels par page :
+- `/nouveau` → `NOUVEAU TRIP`
+- `/trip/[code]` → nom du trip en majuscules OU `DÉTAILS DU TRIP`
+- `/trip/[code]` JoinScreen → `REJOIGNEZ LE TRIP`
+- `/trip/[code]/created` → `TRIP CRÉÉ`
 
 ### 🟡 PRIORITÉ 2 — Icônes types de trip — TRIP_ICONS refactor (~45-60 min)
 
 **État actuel** : `lib/utils.ts` définit `TRIP_ICONS` avec des emojis `🎣⛷🗻🥾🚵🫎🧘☀️🏕`. Utilisés à 5 endroits :
+
 - `app/nouveau/page.tsx` — select type + preview header
 - `app/trip/[code]/page.tsx` — header small
 - `app/trip/[code]/JoinScreen.tsx` — branding type
@@ -90,31 +89,36 @@ Livre en 9 code blocks ```svg séparés.
 3. Adapter les 5 call sites
 4. Cas particulier du `<select>` HTML dans `/nouveau` : HTML ne supporte pas SVG dans `<option>`. Soit garder les emojis dans le select et SVG ailleurs, soit refaire custom dropdown (chantier plus gros — probablement garder emojis pour cette session)
 
-### 🟢 PRIORITÉ 3 — Finaliser signature typographique sur les autres pages (~20 min)
+### 🟢 PRIORITÉ 3 — Icône PWA écran d'accueil (~20 min)
 
-L'harmonisation Fraunces serif + slogan uppercase letter-spacé a été appliquée UNIQUEMENT sur `/` et `/mes-trips`. Pages restantes avec ancien style :
-- `app/nouveau/page.tsx` — header "Crew Trips" + sous-titre "Nouveau trip"
-- `app/trip/[code]/JoinScreen.tsx` — branding "Crew Trips"
-- `app/trip/[code]/created/page.tsx` — page succès
+**Problème** : le logo-hero (silhouettes + montagne + crew complet) est magnifique à 192px sur la home, mais devient bouillie à 60×60 sur le home screen iOS quand l'app est installée. L'illustration est encore plus riche qu'avant → problème aggravé.
 
-**Recette à appliquer** (cohérente avec mes-trips/page.tsx) :
-```tsx
-<div style={{marginBottom: -10}}>
-  <Image src="/logo-hero.webp" alt="Crew Trips" width={84} height={84} />
-</div>
-<div style={{
-  fontFamily: 'var(--font-brand), Georgia, serif',
-  fontWeight: 700, fontSize: 22, color: '#fff',
-  letterSpacing: '-.02em', lineHeight: 1, marginBottom: 6
-}}>Crew Trips</div>
-<div style={{
-  fontSize: 9, color: 'rgba(255,255,255,.5)',
-  letterSpacing: '.22em', textTransform: 'uppercase',
-  fontWeight: 500
-}}>XXX</div>
+**À faire** : créer une icône PWA dédiée, simplifiée pour rester lisible à petite taille.
+
+Prompt Gemini suggéré :
+
+```
+Crée-moi un icône d'app mobile 1024×1024 pour Crew Trips.
+Contraintes :
+- Fond forest #0F2D0F pleine couleur (pas transparent — iOS ignore la transparence)
+- Sujet unique centré : montagnes stylisées (3 pics) en vert sauge
+  avec halo lunaire doré au-dessus (style soleil pâle)
+- PAS de silhouettes humaines
+- PAS de cadre/bordure cercle
+- Sujet occupe 60-70% du cadre
+- Style illustration éditoriale cohérent avec logo-hero existant
+- Lisible même réduit à 60×60 pixels
+- Palette : vert forest #0F2D0F, vert sauge, doré pâle
 ```
 
-Remplacer "XXX" par : "NOUVEAU TRIP" / "REJOIGNEZ LE TRIP" / "TRIP CRÉÉ" selon la page.
+**Fichiers à regénérer après validation** (pipeline sharp déjà rodé cette session) :
+- `public/apple-touch-icon.png` (180×180 iOS, fond forest plein)
+- `public/icon-192.png` (192×192 Android PWA)
+- `public/icon-512.png` (512×512 Android PWA + splash)
+- `public/icon-maskable-512.png` (avec padding safe zone 15% pour Android adaptive)
+- `public/favicon.ico` + `public/favicon-32.png`
+
+Le `public/manifest.json` référence déjà les bons chemins, pas à modifier.
 
 ---
 
@@ -123,7 +127,7 @@ Remplacer "XXX" par : "NOUVEAU TRIP" / "REJOIGNEZ LE TRIP" / "TRIP CRÉÉ" selon
 ```powershell
 cd C:\Users\sbergeron\crew-trips-v2
 git status                    # Doit être clean, synchro origin/main
-git log -5 --oneline          # Dernier commit : 9e56d4e (UX remonte signature)
+git log -5 --oneline          # Dernier commit : 820e87c (UI: nouvelles valeurs logo/titre)
 ```
 
 ---
@@ -131,7 +135,7 @@ git log -5 --oneline          # Dernier commit : 9e56d4e (UX remonte signature)
 ## 📦 Stack technique
 
 - **Next.js 16.2.3** Turbopack + React 19.2.4 + TypeScript 5.9.3 + Supabase 2.103
-- **Librairies** : `react-zoom-pan-pinch` 4.0.3, `jszip` 3.10.1, `browser-image-compression` 2.0.2, `sharp` (via Next/Image)
+- **Librairies** : `react-zoom-pan-pinch` 4.0.3, `jszip` 3.10.1, `browser-image-compression` 2.0.2, `sharp` 0.34.5 (via Next/Image et scripts de traitement logo)
 - **Police de marque** : Fraunces serif 700 via `next/font/google`, exposée via CSS var `--font-brand`
 - **browserslist moderne** (Chrome 93+, Safari 15+, FF 93+, Edge 93+)
 - **next.config.ts** : AVIF/WebP images, optimizePackageImports, remotePatterns Supabase/YouTube
@@ -171,15 +175,24 @@ resto        #E11D48   rose/rouge
 liens        #7C3AED   violet
 ```
 
-### Signature marque (recette reproductible)
+### Couleurs du logo-hero (importantes pour traitement sharp futur)
+```
+bordure        #20321B   /* vert très foncé du cercle */
+ciel           #F6E8C6   /* crème clair (haut du cercle) */
+sol            #EBD5A9   /* sable doré (bande plancher, bas du cercle) */
+montagne       #5B7C4F   /* vert sauge */
+soleil         jaune chaud
+```
+
+### Signature marque (recettes reproductibles validées session du 19 avril)
 
 **Version HERO** (page `/` home, logo grand) :
 ```tsx
-<Image src="/logo-hero.webp" width={180} height={180} priority
-  style={{marginBottom: -18}} />
+<Image src="/logo-hero.webp" width={192} height={192} priority
+  style={{marginBottom:8}} />
 <h1 style={{
   fontFamily: 'var(--font-brand), Georgia, serif',
-  fontSize: 32, fontWeight: 700,
+  fontSize: 29, fontWeight: 700,
   letterSpacing: '-.02em', lineHeight: 1,
   color: '#fff', margin: '0 0 10px'
 }}>Crew Trips</h1>
@@ -192,11 +205,11 @@ liens        #7C3AED   violet
 
 **Version COMPACTE** (headers des autres pages, logo petit) :
 ```tsx
-<Image src="/logo-hero.webp" width={84} height={84}
-  style={{marginBottom: -10}} />
+<Image src="/logo-hero.webp" width={90} height={90}
+  style={{marginBottom:4}} />
 <div style={{
   fontFamily: 'var(--font-brand), Georgia, serif',
-  fontSize: 22, fontWeight: 700,
+  fontSize: 20, fontWeight: 700,
   letterSpacing: '-.02em', lineHeight: 1, marginBottom: 6,
   color: '#fff'
 }}>Crew Trips</div>
@@ -209,15 +222,15 @@ liens        #7C3AED   violet
 
 ### Proportions clés
 
-| Element | Home hero | Headers compacts |
-|---|---|---|
-| Logo | 180px | 84px (×0.47) |
-| Logo marginBottom | -18 | -10 |
-| "Crew Trips" font-size | 32 | 22 |
-| Slogan/label letter-spacing | .22em | .22em |
-| Slogan/label font-size | 9 | 9 |
+| Element                     | Home hero | Headers compacts |
+|-----------------------------|-----------|------------------|
+| Logo                        | 192px     | 90px (×0.47)     |
+| Logo marginBottom           | 8         | 4                |
+| "Crew Trips" font-size      | 29        | 20 (×0.69)       |
+| Slogan/label letter-spacing | .22em     | .22em            |
+| Slogan/label font-size      | 9         | 9                |
 
-### Layout home actuel (validé par Sylvain)
+### Layout home actuel (validé par Sylvain session 19 avril)
 - `padding: '56px 20px 40px'` (signature ancrée à 56px du haut, pas centrage mathématique)
 - `marginBottom: 80` sur la signature → gros air avant les boutons
 - `position: absolute bottom: 24` pour le footer "crew-trips-v2.vercel.app"
@@ -237,23 +250,23 @@ liens        #7C3AED   violet
 crew-trips-v2/
 ├── app/
 │   ├── layout.tsx                  # Fraunces via next/font, viewport bloqué
-│   ├── page.tsx                    # Home : logo 180px + Fraunces 32 + slogan UPPERCASE
-│   ├── mes-trips/page.tsx          # Logo 84 + Fraunces 22 + "MES TRIPS" UPPERCASE
-│   ├── nouveau/page.tsx            # PAS ENCORE harmonisé (P3)
+│   ├── page.tsx                    # Home : logo 192 + Fraunces 29 + slogan ← HARMONISÉ
+│   ├── mes-trips/page.tsx          # Logo 90 + Fraunces 20 + "MES TRIPS" ← HARMONISÉ
+│   ├── nouveau/page.tsx            # ← À HARMONISER (P1 prochaine session)
 │   ├── rejoindre/page.tsx
 │   ├── admin/page.tsx
 │   ├── album/[token]/page.tsx
 │   ├── globals.css
 │   └── trip/[code]/
-│       ├── page.tsx                # Layout 3 tabs (Infos/Chat/Membres)
+│       ├── page.tsx                # ← À HARMONISER (P1)
 │       ├── Infos.tsx               # MAIN FILE cards + lodge + filtres
 │       ├── InfoCardView.tsx
 │       ├── CardContent.tsx
 │       ├── Album.tsx               # Onglet Chat (photos) - PhotoTile memo, Lightbox dynamic
 │       ├── Lightbox.tsx            # Lightbox dynamique + prefetch N±1 + clavier
 │       ├── Membres.tsx             # Permissions + invite + nom editable
-│       ├── JoinScreen.tsx          # PAS ENCORE harmonisé (P3)
-│       ├── created/page.tsx        # PAS ENCORE harmonisé (P3)
+│       ├── JoinScreen.tsx          # ← À HARMONISER (P1)
+│       ├── created/page.tsx        # ← À HARMONISER (P1)
 │       └── print/page.tsx
 ├── lib/
 │   ├── types.tsx                   # InfoCard, CATEGORIES, getCatSvg
@@ -264,12 +277,12 @@ crew-trips-v2/
 │   ├── shareFiles.ts               # Web Share API
 │   └── imageCompression.ts
 ├── public/
-│   ├── logo-hero.png               # 200 KB, 1024x1024, fond transparent
-│   ├── logo-hero.webp              # 124 KB (servi par next/image)
+│   ├── logo-hero.png               # ~884 KB, 1024x1024, fond transparent ← NOUVEAU (V7)
+│   ├── logo-hero.webp              # ~70 KB (servi par next/image)
 │   ├── favicon.ico + favicon-32.png
-│   ├── icon-192.png + icon-512.png # À REGÉNÉRER (P1)
-│   ├── icon-maskable-512.png       # À REGÉNÉRER (P1)
-│   ├── apple-touch-icon.png        # À REGÉNÉRER (P1)
+│   ├── icon-192.png + icon-512.png # À REGÉNÉRER (P3)
+│   ├── icon-maskable-512.png       # À REGÉNÉRER (P3)
+│   ├── apple-touch-icon.png        # À REGÉNÉRER (P3)
 │   ├── manifest.json
 │   └── sw.js                       # Service Worker
 ├── next.config.ts                  # AVIF/WebP + optimizePackageImports + remotePatterns
@@ -280,29 +293,28 @@ crew-trips-v2/
 
 ---
 
-## ✅ Ce qui a été fait cette session (18 avril 2026 soirée)
+## ✅ Ce qui a été fait cette session (19 avril 2026 matin)
 
-### Bugs critiques
-- `48a1633` Fix cards privées disparaissent/réapparaissent (SELECT incomplet + optimistic)
-- `c5026ae` Fix adopte auteur_id sur cards orphelines (pre-migration)
-- `6e3c74f` Fix bloque zoom parasite double-tap + pinch (compromis A11y)
-- **SQL cleanup** : 3 cards orphelines du trip Winter Steelhead récupérées avec membre.id Sylvain
+### Logo-hero nouveau (remplacement complet)
+Sylvain a fourni un nouveau logo Gemini illustration "crew complet" (6 silhouettes : randonneur, homme, femme+planche, pêcheur au lancer avec soie en infini, yoga, skieur ; montagnes vert sauge, soleil jaune, oiseaux ; bordure cercle vert foncé, fond beige).
 
-### UX & Features
-- `543e755` Lightbox prefetch N±1 + Escape + flèches clavier desktop
-- `2e474ad` Docs TESTS-MANUELS.md (273 lignes, 14 sections)
+**Pipeline de traitement sharp développé en 7 itérations pour résoudre halos parasites** :
 
-### Logo & Branding
-- `7dd3d76` Assets logo-hero PNG + WebP
-- `2ea383d` Intégration logo sur home + mes-trips + assets PWA complets
-- `c3e8059` Agrandissement logo 120→180px home, 56→84px mes-trips
-- `8a611ff` Police Fraunces serif via next/font/google
-- `3f44f7e` Retrait filet blanc (erreur d'attribution)
-- `d2b05a7` Rééquilibre titre 40→32px + harmonisation mes-trips
-- `b86af2b` Layout hero (tentative centrage)
-- `6b5c631` marginBottom négatif pour coller logo↔titre (absorbe halo)
-- `9003c90` Padding symétrique + update brief
-- `9e56d4e` Ancrage signature haut (56px padding) + 80px air avant boutons ← **DERNIER COMMIT**
+- `ea16080` V1 — premier remplacement, détection bbox → dents de scie au bord
+- `5f4d802` V3 — bordure synthétique redessinée ancien source → triple anneau parasite
+- `06dcd72` V3 — nouveau source Gemini (canvas carré, centré)
+- `e4901b0` V4 — détourage simple au p50 (rayon médian) au lieu de p95
+- `4dff4bf` V5 — ajout recréation bande plancher sable doré `#EBD5A9` en post-traitement
+- `1bbe25f` V6 — fix halo blanc en recolorisant pixels AA en vert foncé bordure `#20321B`
+- **`62c11e4` V7 ← ACTUEL** — **masque circulaire FINAL après resize** au rayon 487 pour couper le secondaire anneau beige clair parasite à rayons 490-510 que le design Gemini incluait hors de la bordure principale
+
+### UI signature marque
+- `820e87c` Nouvelles valeurs logo/titre validées via **visualiseur HTML interactif** (déposé dans `Downloads/crew-trips-visualiseur.html`, ignoré par git)
+  - Home : logo 180→192, marginBottom -18→8, fontSize 32→29
+  - Mes-trips compact : logo 84→90, mb -10→4, fs 22→20
+
+### Backup
+- Ancien logo sauvegardé dans `_logo-backup/` à la racine (hors git, `.gitignore` `_*/`)
 
 ---
 
@@ -316,12 +328,20 @@ git add app/trip/`[code`]/Album.tsx  # backtick-escape obligatoire pour git
 `Desktop Commander:edit_block` gère automatiquement les brackets.
 
 ### Git commits avec accents/emoji
-Écrire le message dans `_m.txt` via `Desktop Commander:write_file`, puis `git commit -F _m.txt; Remove-Item _m.txt`.
+Écrire le message dans `_m.txt` via PowerShell en une ligne avec `` `n `` pour newlines :
+```powershell
+$msg = "Titre`n`nLigne 1`nLigne 2"
+[System.IO.File]::WriteAllText((Join-Path (Get-Location) '_m.txt'), $msg, [System.Text.UTF8Encoding]::new($false))
+git commit -F _m.txt
+Remove-Item _m.txt
+```
+⚠️ **NE PAS utiliser les here-strings PowerShell `@"..."@`** via Desktop Commander:interact_with_process — ils restent bloqués en état "continuation" et le shell se fige.
 
 ### PowerShell
 - `&&` ne fonctionne pas → utiliser `;`
 - `$env:VAR` pas `$VAR`
 - Variables `$` mangées par le shell parent → passer par un script `.ps1` file
+- **Set-Location au lancement de chaque nouveau shell** : le `cd` ne se propage pas toujours si le shell est spawné depuis System32
 
 ### NODE_ENV
 Sylvain a `NODE_ENV=production` global sur la machine.
@@ -335,10 +355,13 @@ Sylvain a `NODE_ENV=production` global sur la machine.
 - **Clé ANON uniquement disponible dans .env.local**, pas de SERVICE_ROLE_KEY → écritures DB passent par UI ou SQL Editor Supabase
 - Supabase project : `dnvzqsgwqwrvsgfjqqxn`
 
+### Transfert de fichiers Claude ↔ Windows
+**Approche validée** : écrire le contenu dans un fichier temp côté Claude, l'encoder en **base64**, le récupérer via `view` dans le chat, puis décoder côté Windows avec `[System.IO.File]::WriteAllBytes`. Fonctionne jusqu'à ~10KB par chunk.
+
 ### Création de fichiers
 - `create_file` de Claude écrit dans le **conteneur Claude**, PAS sur Windows
-- **Utiliser `Desktop Commander:write_file`** pour écrire dans `C:\Users\sbergeron\...`
-- `Desktop Commander:edit_block` pour les modifications
+- **Utiliser `Desktop Commander:edit_block`** avec `old_string` vide ou fichier existant pour éditer sur Windows
+- Pour créer un NOUVEAU fichier sur Windows : passer par base64 + `[System.IO.File]::WriteAllBytes`, OU utiliser `Windows-MCP:FileSystem` mode write
 
 ---
 
@@ -354,10 +377,10 @@ Colle EXACTEMENT ce prompt :
 
 > "Salut Claude, on reprend Crew Trips v2. Lis `C:/Users/sbergeron/crew-trips-v2/BRIEF-NEXT-SESSION.md` pour le contexte complet. On va travailler sur [SUJET]."
 
-**Sujets probables** :
+**Sujets probables par ordre de priorité** :
 
-1. **🔴 Icône PWA écran d'accueil** — simplifier le logo pour 60-80px, regénérer les 5 assets (favicon, icon-192, icon-512, maskable, apple-touch-icon)
-2. **🟡 Refactor TRIP_ICONS en SVG** — Sylvain arrive avec 9 SVG de ChatGPT, on crée `lib/tripIcons.tsx` et on adapte 5 call sites
-3. **🟢 Finaliser signature typographique** sur `/nouveau`, `JoinScreen.tsx`, `/created` (appliquer la recette Fraunces compacte)
+1. **🔴 Harmoniser signature typographique** sur `nouveau`, `trip/[code]`, `JoinScreen`, `created` (recette compacte logo 90 + Fraunces 20 + slogan UPPERCASE)
+2. **🟡 Refactor TRIP_ICONS en SVG** — 9 SVG de ChatGPT, création `lib/tripIcons.tsx`, adaptation 5 call sites
+3. **🟢 Icône PWA écran d'accueil** — asset simplifié pour 60×60 iOS, regénération 5 assets PWA
 
 Bonne session 🌲
