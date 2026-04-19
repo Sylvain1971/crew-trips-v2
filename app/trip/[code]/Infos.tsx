@@ -466,24 +466,24 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
             Mes trips
           </a>
-          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:6}}>
-            <div style={{display:'flex',gap:8}}>
-              {isCreateur && (
-                <button onClick={()=>setEditTrip(true)} aria-label="Modifier le trip" style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'rgba(255,255,255,.75)',cursor:'pointer',display:'flex',alignItems:'center'}}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-              )}
-              <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')} aria-label="Imprimer" style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'rgba(255,255,255,.75)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/><rect x="2" y="9" width="20" height="9" rx="2"/><circle cx="17" cy="13.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+          <div style={{display:'flex',gap:8}}>
+            {isCreateur && (
+              <button onClick={()=>setEditTrip(true)} aria-label="Modifier le trip" style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'rgba(255,255,255,.75)',cursor:'pointer',display:'flex',alignItems:'center'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-            </div>
-            <Image src="/mountain-badge.webp" alt="Crew Trips" width={40} height={40} style={{display:'block',opacity:.85}} unoptimized />
+            )}
+            <button onClick={()=>window.open(`/trip/${trip.code}/print`,'_blank')} aria-label="Imprimer" style={{background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.2)',borderRadius:10,padding:'7px 11px',color:'rgba(255,255,255,.75)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V3h12v6"/><path d="M6 18v3h12v-3"/><rect x="2" y="9" width="20" height="9" rx="2"/><circle cx="17" cy="13.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+            </button>
           </div>
         </div>
-        <div>
-          <div style={{fontSize:12,color:'rgba(255,255,255,.5)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>{trip.destination || 'Crew Trip'}</div>
-          <div style={{fontSize:22,fontWeight:800,letterSpacing:'-.02em',lineHeight:1.2}}>{trip.nom}</div>
-          {tripDate && <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:5}}>{tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}</div>}
+        <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:12}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,color:'rgba(255,255,255,.5)',fontWeight:600,textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>{trip.destination || 'Crew Trip'}</div>
+            <div style={{fontSize:22,fontWeight:800,letterSpacing:'-.02em',lineHeight:1.2}}>{trip.nom}</div>
+            {tripDate && <div style={{fontSize:13,color:'rgba(255,255,255,.5)',marginTop:5}}>{tripDate}{tripDateFin ? ` → ${tripDateFin}` : ''}</div>}
+          </div>
+          <Image src="/mountain-badge.webp" alt="Crew Trips" width={64} height={64} style={{flexShrink:0,opacity:.9}} unoptimized />
         </div>
         {cd && (
           <div style={{marginTop:8,fontSize:13,color:'rgba(255,255,255,.7)',fontWeight:600}}>
