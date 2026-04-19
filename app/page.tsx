@@ -6,8 +6,10 @@ import { SvgIcon } from '@/lib/svgIcons'
 export default function Home() {
   const router = useRouter()
   return (
-    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'var(--forest)',padding:'32px 20px 80px',position:'relative'}}>
-      <div style={{textAlign:'center',marginBottom:40,display:'flex',flexDirection:'column',alignItems:'center'}}>
+    <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',background:'var(--forest)',padding:'0 20px 40px',position:'relative'}}>
+
+      {/* Signature hero : positionnee dans le tiers superieur (15% du haut) */}
+      <div style={{textAlign:'center',marginTop:'15vh',marginBottom:'auto',display:'flex',flexDirection:'column',alignItems:'center'}}>
         <Image
           src="/logo-hero.webp"
           alt="Crew Trips"
@@ -22,7 +24,8 @@ export default function Home() {
         </p>
       </div>
 
-      <div style={{width:'100%',maxWidth:360,display:'flex',flexDirection:'column',gap:14}}>
+      {/* CTAs en bas */}
+      <div style={{width:'100%',maxWidth:360,display:'flex',flexDirection:'column',gap:14,marginBottom:60}}>
 
         {/* Mes trips */}
         <button onClick={()=>router.push('/mes-trips')}
