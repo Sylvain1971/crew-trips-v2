@@ -44,4 +44,6 @@ next-env.d.ts
 _*.bat
 _*.txt
 _*.cjs
+_*.js
+_*/
 *.log
