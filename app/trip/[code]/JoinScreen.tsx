@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
-import { countdown, TRIP_ICONS } from '@/lib/utils'
+import { countdown } from '@/lib/utils'
+import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
 
@@ -111,7 +112,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
         {/* Info trip */}
         <div style={{textAlign:'center',marginBottom:24}}>
-          <div style={{fontSize:52,marginBottom:10}}>{TRIP_ICONS[trip.type]||'🏕'}</div>
+          <div style={{width:90,height:90,margin:'0 auto 10px'}}><TripIcon type={trip.type} size={90} /></div>
           <h1 style={{fontSize:24,fontWeight:800,color:'#fff',letterSpacing:'-.03em',lineHeight:1.15,marginBottom:6}}>{trip.nom}</h1>
           {trip.destination && <p style={{fontSize:14,color:'rgba(255,255,255,.55)',marginBottom:4,display:'inline-flex',alignItems:'center',gap:4}}><SvgIcon name="pin" size={13} /> {trip.destination}</p>}
           {trip.date_debut && (

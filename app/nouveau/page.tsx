@@ -2,7 +2,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { TRIP_ICONS, getTripExamples } from '@/lib/utils'
+import { getTripExamples } from '@/lib/utils'
+import { TripIcon } from '@/lib/tripIcons'
 import { COULEURS_MEMBRES } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
 
@@ -128,7 +129,9 @@ function NouveauInner() {
           style={{position:'absolute',top:16,left:20,background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
           ← Retour
         </button>
-        <div style={{fontSize:36,marginBottom:4}}>{TRIP_ICONS[type]||'🏕'}</div>
+        <div style={{marginBottom:4,width:64,height:64}}>
+          <TripIcon type={type} size={64} />
+        </div>
         <div style={{fontFamily:'var(--font-brand), Georgia, serif',fontWeight:700,fontSize:20,color:'#fff',letterSpacing:'-.02em',lineHeight:1,marginBottom:6}}>Crew Trips</div>
         <div style={{fontSize:9,color:'rgba(255,255,255,.5)',letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>
           {isDuplicate ? 'DUPLIQUER UN TRIP' : 'NOUVEAU TRIP'}

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { TRIP_ICONS } from '@/lib/utils'
+import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 
 // Le code admin est défini dans .env.local :
@@ -162,7 +162,7 @@ export default function AdminPage() {
           {trips.map(t => (
             <div key={t.id} className="card" style={{ padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ fontSize: 28, flexShrink: 0 }}>{TRIP_ICONS[t.type] || '🏕'}</div>
+                <div style={{ width: 36, height: 36, flexShrink: 0 }}><TripIcon type={t.type} size={36} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.nom}</div>
                   <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2, display:'inline-flex', alignItems:'center', flexWrap:'wrap', gap:4 }}>

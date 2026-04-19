@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, use } from 'react'
-import { TRIP_ICONS } from '@/lib/utils'
+import { TripIcon } from '@/lib/tripIcons'
 import { useTripSession } from '@/lib/useTripSession'
 import JoinScreen from './JoinScreen'
 import Infos from './Infos'
@@ -85,7 +85,7 @@ export default function TripPage({ params: paramsPromise }: { params: Promise<{ 
             </svg>
             Mes trips
           </a>
-          <span style={{ fontSize: 20 }}>{TRIP_ICONS[trip.type] || '🏕'}</span>
+          <span style={{ width: 28, height: 28, flexShrink: 0 }}><TripIcon type={trip.type} size={28} /></span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {trip.nom}

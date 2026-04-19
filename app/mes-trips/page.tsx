@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
-import { TRIP_ICONS } from '@/lib/utils'
+import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 
 function formatTel(val: string): string {
@@ -142,7 +142,9 @@ export default function MesTripsPage() {
 
           {trips.map((t) => (
             <div key={t.code} className="card" style={{marginBottom:10,padding:'14px 16px',display:'flex',alignItems:'center',gap:12}}>
-              <div style={{fontSize:28,flexShrink:0}}>{TRIP_ICONS[t.type]||'🏕'}</div>
+              <div style={{flexShrink:0,width:36,height:36}}>
+                <TripIcon type={t.type} size={36} />
+              </div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
                   <div style={{fontWeight:700,fontSize:15,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.nom}</div>

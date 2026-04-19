@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
-import { TRIP_ICONS } from '@/lib/utils'
+import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 import type { Trip } from '@/lib/types'
 
@@ -41,7 +41,7 @@ export default function CreatedPage({ params: paramsPromise }: { params: Promise
     else copy()
   }
 
-  const icon = TRIP_ICONS[trip?.type || 'autre'] || '🏕'
+  const tripType = trip?.type || 'autre'
   const dateDebut = trip?.date_debut
     ? new Date(trip.date_debut + 'T00:00:00').toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })
     : ''
@@ -59,9 +59,10 @@ export default function CreatedPage({ params: paramsPromise }: { params: Promise
 
         <h1 style={{ fontFamily:'var(--font-brand), Georgia, serif', color: '#fff', fontSize: 20, fontWeight: 700, margin: '0 0 6px', letterSpacing: '-.02em', lineHeight: 1 }}>Trip créé</h1>
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,.5)', letterSpacing: '.22em', textTransform: 'uppercase', fontWeight: 500, marginBottom: 18 }}>Prêt à partager</div>
-        <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, textAlign: 'center', lineHeight: 1.5, marginBottom: 28 }}>
-          {icon} {trip?.nom || '…'}
-          {dateDebut && <><br /><span style={{ fontSize: 12 }}>{dateDebut}{dateFin ? ` → ${dateFin}` : ''}</span></>}
+        <div style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, textAlign: 'center', lineHeight: 1.5, marginBottom: 28, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8, flexWrap:'wrap' }}>
+          <span style={{width:20,height:20,display:'inline-block',flexShrink:0}}><TripIcon type={tripType} size={20} /></span>
+          <span>{trip?.nom || '…'}</span>
+          {dateDebut && <span style={{width:'100%',fontSize:12}}>{dateDebut}{dateFin ? ` → ${dateFin}` : ''}</span>}
         </div>
 
         {/* Lien cliquable */}
