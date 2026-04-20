@@ -40,6 +40,9 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
+  // Detecte le mode PWA standalone. Utilise pour sauter l'ecran choice quand
+  // on sait qu'un utilisateur est deja inscrit (crew-tel present).
+  const [isStandalone, setIsStandalone] = useState(false)
 
   useEffect(()=>{
     const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
@@ -47,6 +50,19 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       const saved = localStorage.getItem('crew-tel'); if (saved) setTel(saved)
       const savedPrenom = localStorage.getItem('crew-prenom'); if (savedPrenom) setPrenom(savedPrenom)
       const savedNom = localStorage.getItem('crew-nom'); if (savedNom) setNom(savedNom)
+
+      // Detection PWA standalone (iOS + Android)
+      const standalone =
+        window.matchMedia?.('(display-mode: standalone)').matches ||
+        (window.navigator as { standalone?: boolean }).standalone === true
+      setIsStandalone(!!standalone)
+
+      // Optimisation UX: si on est dans la PWA ET qu'un tel a deja ete pose
+      // localement, on skip l'ecran de choix et on va direct en mode reconnexion
+      // avec le tel pre-rempli. L'utilisateur n'a qu'a valider.
+      if (standalone && saved && saved.replace(/\D/g,'').length === 10) {
+        setMode('reconnexion')
+      }
     } catch {}
     return ()=>clearInterval(t)
   },[trip.date_debut])
@@ -219,25 +235,25 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               <strong style={{color:'rgba(255,255,255,.8)'}}>Crew Trips</strong> regroupe toutes les infos — vols, lodge, équipement, chat.
             </div>
 
-            <button onClick={()=>{setMode('reconnexion');setErreur(null)}}
+            <button onClick={()=>{setMode('inscription');setErreur(null)}}
               style={{width:'100%',padding:'16px 20px',borderRadius:12,border:'none',
                 background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:15,cursor:'pointer',marginBottom:10,
                 display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
               <span style={{textAlign:'left'}}>
-                <span style={{display:'block',fontSize:15,fontWeight:700}}>Je suis déjà inscrit</span>
-                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.7,marginTop:2}}>Entrez juste votre téléphone</span>
+                <span style={{display:'block',fontSize:15,fontWeight:700}}>Je rejoins pour la 1re fois</span>
+                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.7,marginTop:2}}>Prénom, nom et téléphone</span>
               </span>
               <span style={{fontSize:18}}>→</span>
             </button>
 
-            <button onClick={()=>{setMode('inscription');setErreur(null)}}
+            <button onClick={()=>{setMode('reconnexion');setErreur(null)}}
               style={{width:'100%',padding:'16px 20px',borderRadius:12,
                 border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.04)',
                 color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',
                 display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
               <span style={{textAlign:'left'}}>
-                <span style={{display:'block',fontSize:14,fontWeight:700}}>Je rejoins pour la 1re fois</span>
-                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.6,marginTop:2}}>Prénom, nom et téléphone</span>
+                <span style={{display:'block',fontSize:14,fontWeight:700}}>Je suis déjà inscrit</span>
+                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.6,marginTop:2}}>Entrez juste votre téléphone</span>
               </span>
               <span style={{fontSize:18,opacity:.6}}>→</span>
             </button>
@@ -259,7 +275,10 @@ export default function JoinScreen({trip,autorises,onJoin}:{
           {entete}
           <div style={{width:'100%',maxWidth:360,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:'1px solid rgba(255,255,255,.1)'}}>
             <div style={{fontSize:13,color:'rgba(255,255,255,.5)',textAlign:'center',marginBottom:18,lineHeight:1.65}}>
-              Entrez le numéro de téléphone avec lequel vous vous êtes inscrit.
+              {isStandalone
+                ? <>Bienvenue. Confirmez votre numéro de téléphone pour ouvrir le trip.</>
+                : <>Entrez le numéro de téléphone avec lequel vous vous êtes inscrit.</>
+              }
             </div>
 
             <div style={{marginBottom:14}}>
