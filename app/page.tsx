@@ -59,14 +59,6 @@ export default function Home() {
 
       </div>
 
-      {/* Lien discret : Retrouver mes trips — pour les utilisateurs qui ont efface leur historique */}
-      <button onClick={()=>router.push('/retrouver')}
-        style={{marginTop:20,padding:'10px 18px',borderRadius:10,
-          border:'1px solid rgba(255,255,255,.12)',background:'transparent',
-          color:'rgba(255,255,255,.55)',fontWeight:500,fontSize:13,cursor:'pointer'}}>
-        Retrouver mes trips
-      </button>
-
       <p style={{fontSize:11,color:'rgba(255,255,255,.35)',textAlign:'center',position:'absolute',bottom:24,left:0,right:0}}>
         crew-trips-v2.vercel.app
       </p>
