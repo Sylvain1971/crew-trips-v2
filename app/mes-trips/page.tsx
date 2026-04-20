@@ -25,11 +25,20 @@ export default function MesTripsPage() {
   const [trips, setTrips] = useState<TripDB[]>([])
   const [loading, setLoading] = useState(false)
   const [cherche, setCherche] = useState(false)
+  const [telLocked, setTelLocked] = useState(false)
 
   const telComplet = tel.replace(/\D/g,'').length === 10
 
   useEffect(() => {
     try {
+      // Verrou : si une identité a été validée précédemment, on bloque la saisie
+      const locked = localStorage.getItem('crew-tel-locked')
+      if (locked) {
+        setTel(locked)
+        setTelLocked(true)
+        charger(locked)
+        return
+      }
       const saved = localStorage.getItem('crew-tel')
       if (saved) { setTel(saved); charger(saved) }
     } catch {}
@@ -54,17 +63,17 @@ export default function MesTripsPage() {
 
     let tripsParticipant: TripDB[] = []
     if (membresParticipant && membresParticipant.length > 0) {
-      const tripIds = membresParticipant.map((m: any) => m.trip_id)
+      const tripIds = membresParticipant.map((m: { trip_id: string }) => m.trip_id)
       const { data: tripsData } = await supabase.from('trips')
         .select('code,nom,type,destination,date_debut,date_fin')
         .in('id', tripIds)
         .order('created_at', { ascending: false })
-      tripsParticipant = (tripsData || []).map((t: any) => ({ ...t, role: 'participant' as const }))
+      tripsParticipant = (tripsData || []).map((t: Omit<TripDB,'role'>) => ({ ...t, role: 'participant' as const }))
     }
 
     // Fusionner — créateurs en premier, sans doublons
-    const codesCreateur = new Set((tripsCreateur || []).map((t: any) => t.code))
-    const creeateurs: TripDB[] = (tripsCreateur || []).map((t: any) => ({ ...t, role: 'createur' as const }))
+    const codesCreateur = new Set((tripsCreateur || []).map((t: { code: string }) => t.code))
+    const creeateurs: TripDB[] = (tripsCreateur || []).map((t: Omit<TripDB,'role'>) => ({ ...t, role: 'createur' as const }))
     const participants: TripDB[] = tripsParticipant.filter(t => !codesCreateur.has(t.code))
 
     setTrips([...creeateurs, ...participants])
@@ -72,6 +81,7 @@ export default function MesTripsPage() {
   }
 
   function onTelChange(val: string) {
+    if (telLocked) return
     const formatted = formatTel(val)
     setTel(formatted)
     const digits = formatted.replace(/\D/g, '')
@@ -81,6 +91,21 @@ export default function MesTripsPage() {
     } else {
       setTrips([]); setCherche(false)
     }
+  }
+
+  function changerUtilisateur() {
+    const msg = "Changer d'utilisateur ?\n\nCela effacera votre identité enregistrée sur cet appareil. Vous devrez vous reconnecter à un trip via son lien d'invitation."
+    if (!confirm(msg)) return
+    try {
+      localStorage.removeItem('crew-tel-locked')
+      localStorage.removeItem('crew-tel')
+      localStorage.removeItem('crew-prenom')
+      localStorage.removeItem('crew-nom')
+    } catch {}
+    setTelLocked(false)
+    setTel('')
+    setTrips([])
+    setCherche(false)
   }
 
   function fmtDate(d?: string) {
@@ -106,16 +131,27 @@ export default function MesTripsPage() {
       <div style={{flex:1,padding:'16px 20px 40px'}}>
         {/* Champ téléphone */}
         <div className="field" style={{maxWidth:420,margin:'0 auto 24px'}}>
-          <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
+          <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>
+            {telLocked
+              ? <>🔒 IDENTITÉ VERROUILLÉE SUR CET APPAREIL</>
+              : <>VOTRE NUMÉRO DE TÉLÉPHONE</>}
+          </label>
           <input className="input"
             type="tel" placeholder="ex : 418 000 0000"
             value={tel} onChange={e=>onTelChange(e.target.value)}
-            autoFocus
-            style={{background:'rgba(255,255,255,.08)',
+            readOnly={telLocked}
+            autoFocus={!telLocked}
+            style={{background: telLocked ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.08)',
               border:`1.5px solid ${tel && !telComplet ? '#f87171' : telComplet ? '#4ade80' : 'rgba(255,255,255,.15)'}`,
-              color:'#fff',letterSpacing:1,fontSize:18,textAlign:'center'}}
+              color: telLocked ? 'rgba(255,255,255,.75)' : '#fff',
+              letterSpacing:1,fontSize:18,textAlign:'center',
+              cursor: telLocked ? 'not-allowed' : 'text'}}
           />
-          {telComplet && <div style={{fontSize:11,color:'#4ade80',marginTop:5,textAlign:'center'}}>✓ Numéro reconnu</div>}
+          {telLocked && (
+            <div style={{fontSize:11,color:'rgba(255,255,255,.45)',marginTop:6,textAlign:'center',lineHeight:1.5}}>
+              Pour des raisons de sécurité, un appareil est lié à un seul participant.
+            </div>
+          )}
         </div>
 
         {/* Liste des trips */}
@@ -171,6 +207,17 @@ export default function MesTripsPage() {
                 border:'1.5px solid rgba(255,255,255,.15)',background:'transparent',
                 color:'rgba(255,255,255,.6)',fontWeight:600,fontSize:14,cursor:'pointer'}}>
               + Créer un nouveau trip
+            </button>
+          )}
+
+          {/* Bouton "Changer d'utilisateur" : visible seulement si verrouillé */}
+          {telLocked && (
+            <button onClick={changerUtilisateur}
+              style={{width:'100%',marginTop:16,padding:'11px',borderRadius:10,
+                border:'1px solid rgba(255,255,255,.12)',background:'transparent',
+                color:'rgba(255,255,255,.4)',fontWeight:500,fontSize:12,cursor:'pointer',
+                display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              Changer d&apos;utilisateur
             </button>
           )}
         </div>
