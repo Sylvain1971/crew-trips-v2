@@ -13,7 +13,7 @@ export interface Trip {
 }
 export interface Membre {
   id: string; trip_id: string; prenom: string; nom: string; couleur: string
-  is_createur: boolean; tel?: string; created_at: string
+  is_createur: boolean; tel?: string; nip?: string | null; created_at: string
 }
 export interface InfoCard {
   id: string; trip_id: string; categorie: string; titre: string
@@ -168,4 +168,35 @@ export function matchParticipant(
   const ilManqueUnTel = candidats.some(a => !normalizeTel(a.tel || ''))
   if (ilManqueUnTel) return { ok: false, raison: 'homonyme_sans_tel' }
   return { ok: false, raison: 'tel_mismatch' }
+}
+
+
+// =============================================================================
+// NIP — Hachage cote client (SHA-256)
+// =============================================================================
+
+/**
+ * Hache un NIP 4 chiffres en SHA-256 hexadecimal.
+ * Utilise Web Crypto API (dispo dans tous les navigateurs modernes).
+ *
+ * Pourquoi hacher ?
+ * - Le NIP ne sort jamais en clair vers la DB
+ * - Meme en cas de fuite Supabase, les NIP restent proteges
+ * - L'admin peut faire un reset (UPDATE nip = NULL) mais ne peut PAS
+ *   lire le NIP d'un utilisateur
+ *
+ * Retour : string de 64 caracteres hex (toujours la meme longueur).
+ * Pour "1234" => "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
+ */
+export async function hashNip(nip: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(nip)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** Valide qu'un NIP est bien 4 chiffres exactement. */
+export function isValidNip(nip: string): boolean {
+  return /^\d{4}$/.test(nip.trim())
 }

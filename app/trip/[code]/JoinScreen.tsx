@@ -6,6 +6,8 @@ import {
   matchParticipant,
   normalizeName,
   normalizeTel,
+  hashNip,
+  isValidNip,
 } from '@/lib/types'
 import { countdown } from '@/lib/utils'
 import { TripIcon } from '@/lib/tripIcons'
@@ -24,11 +26,51 @@ function formatTel(val: string): string {
   return `${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6)}`
 }
 
+// Rate limiting: cle localStorage pour traquer les tentatives echouees
+// sur CET appareil (tous trips confondus). Valeur = {count, until}.
+const RL_KEY = 'crew-nip-rate-limit'
+const RL_MAX_ATTEMPTS = 3
+const RL_BLOCK_MS = 15 * 60 * 1000 // 15 minutes
+
+function getRateLimit(): { blocked: boolean; remainingMin: number; attempts: number } {
+  try {
+    const raw = localStorage.getItem(RL_KEY)
+    if (!raw) return { blocked: false, remainingMin: 0, attempts: 0 }
+    const { count, until } = JSON.parse(raw) as { count: number; until: number }
+    const now = Date.now()
+    if (until && now < until) {
+      return { blocked: true, remainingMin: Math.ceil((until - now) / 60000), attempts: count }
+    }
+    // Expire: reset
+    if (until && now >= until) {
+      localStorage.removeItem(RL_KEY)
+      return { blocked: false, remainingMin: 0, attempts: 0 }
+    }
+    return { blocked: false, remainingMin: 0, attempts: count || 0 }
+  } catch { return { blocked: false, remainingMin: 0, attempts: 0 } }
+}
+
+function bumpRateLimit(): number {
+  try {
+    const raw = localStorage.getItem(RL_KEY)
+    const prev = raw ? JSON.parse(raw) as { count: number; until: number } : { count: 0, until: 0 }
+    const count = (prev.count || 0) + 1
+    const until = count >= RL_MAX_ATTEMPTS ? Date.now() + RL_BLOCK_MS : 0
+    localStorage.setItem(RL_KEY, JSON.stringify({ count, until }))
+    return count
+  } catch { return 0 }
+}
+
+function resetRateLimit() {
+  try { localStorage.removeItem(RL_KEY) } catch {}
+}
+
 // Mode d'entrée sur JoinScreen.
 // - 'choice': écran de choix initial (reconnexion ou inscription)
-// - 'reconnexion': 1 seul champ (tel) pour les participants déjà inscrits
-// - 'inscription': 3 champs (prénom + nom + tel) pour la 1re inscription
-type Mode = 'choice' | 'reconnexion' | 'inscription'
+// - 'reconnexion': tel + NIP pour les participants déjà inscrits
+// - 'inscription': prénom + nom + tel + NIP pour la 1re inscription
+// - 'creer-nip': migration douce — utilisateur existant sans NIP en DB
+type Mode = 'choice' | 'reconnexion' | 'inscription' | 'creer-nip'
 
 export default function JoinScreen({trip,autorises,onJoin}:{
   trip:Trip, autorises:ParticipantAutorise[], onJoin:(m:Membre)=>void
@@ -37,12 +79,14 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
   const [tel, setTel] = useState('')
+  const [nip, setNip] = useState('')
+  const [nipConfirm, setNipConfirm] = useState('')
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
-  // Detecte le mode PWA standalone. Utilise pour sauter l'ecran choice quand
-  // on sait qu'un utilisateur est deja inscrit (crew-tel present).
   const [isStandalone, setIsStandalone] = useState(false)
+  // Pour mode 'creer-nip': on stocke le membre DB existant dont le NIP est null
+  const [pendingMembre, setPendingMembre] = useState<Membre|null>(null)
 
   useEffect(()=>{
     const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
@@ -51,24 +95,20 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       const savedPrenom = localStorage.getItem('crew-prenom'); if (savedPrenom) setPrenom(savedPrenom)
       const savedNom = localStorage.getItem('crew-nom'); if (savedNom) setNom(savedNom)
 
-      // Detection PWA standalone (iOS + Android)
       const standalone =
         window.matchMedia?.('(display-mode: standalone)').matches ||
         (window.navigator as { standalone?: boolean }).standalone === true
       setIsStandalone(!!standalone)
 
-      // Optimisation UX: en PWA installee, on assume que l'utilisateur
-      // s'est deja inscrit (sinon il n'aurait pas installe la PWA).
-      // On skip l'ecran de choix et on va direct en mode reconnexion.
-      if (standalone) {
-        setMode('reconnexion')
-      }
+      if (standalone) { setMode('reconnexion') }
     } catch {}
     return ()=>clearInterval(t)
   },[trip.date_debut])
 
   const listeActive = autorises.length > 0
   const telComplet = normalizeTel(tel).length === 10
+  const nipValide = isValidNip(nip)
+  const nipsMatch = nip === nipConfirm
 
   function onChangeTel(val: string) {
     const f = formatTel(val)
@@ -76,28 +116,38 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     setErreur(null)
     if (f.replace(/\D/g,'').length === 10) try { localStorage.setItem('crew-tel', f) } catch {}
   }
+  function onChangeNip(val: string, setter: (s: string) => void) {
+    setter(val.replace(/\D/g, '').slice(0, 4))
+    setErreur(null)
+  }
 
-  // Poser le verrou + appeler onJoin. Centralise la logique pour eviter les
-  // oublis d'ecriture des 4 cles (crew-tel-locked, crew-tel, crew-prenom, crew-nom).
   function finaliserConnexion(membre: Membre, digits: string, prenomFinal: string, nomFinal: string) {
     try {
       localStorage.setItem('crew-tel-locked', formatTel(digits))
       localStorage.setItem('crew-tel', formatTel(digits))
       localStorage.setItem('crew-prenom', prenomFinal)
       if (nomFinal) localStorage.setItem('crew-nom', nomFinal)
+      resetRateLimit() // succes = reset compteur
     } catch {}
     onJoin({...membre, nom: membre.nom || '', is_createur: membre.is_createur ?? false})
   }
 
-  // MODE RECONNEXION : 1 seul champ tel, match sur tel dans membres du trip courant.
-  // Securite: le scope est le trip (l'utilisateur doit avoir le lien d'invitation
-  // specifique). Le tel agit comme mot de passe, limite a ce trip.
+  // MODE RECONNEXION : tel + NIP, match sur (trip_id, tel, nip hashe)
   async function reconnecter() {
     const digits = normalizeTel(tel)
     if (digits.length !== 10) { setErreur('Numéro de téléphone requis (10 chiffres).'); return }
+    if (!isValidNip(nip)) { setErreur('NIP requis (4 chiffres).'); return }
+
+    // Rate limiting
+    const rl = getRateLimit()
+    if (rl.blocked) {
+      setErreur(`Trop de tentatives. Réessayez dans ${rl.remainingMin} minute${rl.remainingMin>1?'s':''} ou contactez l'administrateur.`)
+      return
+    }
 
     setLoading(true); setErreur(null)
 
+    // Etape 1: trouver le membre par (trip_id + tel)
     const { data: membre } = await supabase.from('membres')
       .select('*')
       .eq('trip_id', trip.id)
@@ -109,10 +159,51 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       setLoading(false); return
     }
 
+    // Etape 2: cas migration douce — nip IS NULL en DB
+    if (!membre.nip) {
+      setLoading(false)
+      setPendingMembre(membre)
+      setMode('creer-nip')
+      // Pre-remplir le tel pour eviter de le retaper
+      return
+    }
+
+    // Etape 3: comparer hash
+    const nipHash = await hashNip(nip)
+    if (nipHash !== membre.nip) {
+      const attempts = bumpRateLimit()
+      const remaining = RL_MAX_ATTEMPTS - attempts
+      if (remaining <= 0) {
+        setErreur(`Trop de tentatives. Réessayez dans 15 minutes ou contactez l'administrateur.`)
+      } else {
+        setErreur(`NIP incorrect. ${remaining} tentative${remaining>1?'s':''} restante${remaining>1?'s':''} avant blocage temporaire.`)
+      }
+      setLoading(false); return
+    }
+
     finaliserConnexion(membre, digits, membre.prenom, membre.nom || '')
   }
 
-  // MODE INSCRIPTION : logique existante, 3 champs (prenom + nom + tel)
+  // MODE CREER-NIP : l'utilisateur existe en DB mais n'a pas encore de NIP
+  // (migration douce apres deploiement de la feature NIP)
+  async function creerNipMigration() {
+    if (!pendingMembre) { setMode('reconnexion'); return }
+    if (!isValidNip(nip)) { setErreur('NIP requis (4 chiffres).'); return }
+    if (!nipsMatch) { setErreur('Les deux NIP ne correspondent pas.'); return }
+
+    setLoading(true); setErreur(null)
+    const nipHash = await hashNip(nip)
+    const { error } = await supabase.from('membres').update({ nip: nipHash }).eq('id', pendingMembre.id)
+    if (error) {
+      setErreur('Erreur lors de la création du NIP. Réessayez.')
+      setLoading(false); return
+    }
+
+    const digits = normalizeTel(pendingMembre.tel || tel)
+    finaliserConnexion({...pendingMembre, nip: nipHash}, digits, pendingMembre.prenom, pendingMembre.nom || '')
+  }
+
+  // MODE INSCRIPTION : prenom + nom + tel + NIP + confirmer NIP
   async function rejoindre() {
     const prenomClean = prenom.trim()
     const nomClean = nom.trim()
@@ -121,10 +212,12 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     if (!prenomClean) { setErreur('Veuillez entrer votre prénom.'); return }
     if (!nomClean) { setErreur('Veuillez entrer votre nom de famille.'); return }
     if (digits.length !== 10) { setErreur('Numéro de téléphone requis (10 chiffres).'); return }
+    if (!isValidNip(nip)) { setErreur('NIP requis (4 chiffres).'); return }
+    if (!nipsMatch) { setErreur('Les deux NIP ne correspondent pas.'); return }
 
     setLoading(true); setErreur(null)
 
-    // Étape 1 : si une liste d'autorisés existe, valider prénom+nom (+ tel si préenregistré)
+    // Etape 1 : validation liste autorises (si active)
     let prenomFinal = prenomClean
     let nomFinal = nomClean
     if (listeActive) {
@@ -144,7 +237,9 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       nomFinal = r.participant.nom || ''
     }
 
-    // Étape 2 : reconnexion — match exact sur prenom + nom + tel dans membres
+    const nipHash = await hashNip(nip)
+
+    // Etape 2 : reconnexion — match exact sur prenom + nom + tel dans membres
     const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
 
     if (membresExistants && membresExistants.length > 0) {
@@ -154,8 +249,11 @@ export default function JoinScreen({trip,autorises,onJoin}:{
         && normalizeTel(m.tel || '') === digits
       )
       if (membreExact) {
+        // Membre existant: on met a jour le NIP (premiere creation ou ecrasement
+        // volontaire — pas de probleme car on a valide prenom+nom+tel+nipConfirm).
+        await supabase.from('membres').update({ nip: nipHash }).eq('id', membreExact.id)
         setLoading(false)
-        finaliserConnexion(membreExact, digits, prenomFinal, nomFinal)
+        finaliserConnexion({...membreExact, nip: nipHash}, digits, prenomFinal, nomFinal)
         return
       }
 
@@ -168,14 +266,14 @@ export default function JoinScreen({trip,autorises,onJoin}:{
           setErreur("Un autre participant porte déjà ce prénom et nom dans ce trip avec un téléphone différent. Contactez l'organisateur.")
           setLoading(false); return
         }
-        await supabase.from('membres').update({ tel: digits, nom: nomFinal }).eq('id', membreNomSeul.id)
+        await supabase.from('membres').update({ tel: digits, nom: nomFinal, nip: nipHash }).eq('id', membreNomSeul.id)
         setLoading(false)
-        finaliserConnexion({...membreNomSeul, nom: nomFinal, tel: digits}, digits, prenomFinal, nomFinal)
+        finaliserConnexion({...membreNomSeul, nom: nomFinal, tel: digits, nip: nipHash}, digits, prenomFinal, nomFinal)
         return
       }
     }
 
-    // Étape 3 : nouvelle inscription
+    // Etape 3 : nouvelle inscription
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const { data, error } = await supabase.from('membres')
@@ -185,7 +283,8 @@ export default function JoinScreen({trip,autorises,onJoin}:{
         nom: nomFinal,
         couleur,
         is_createur: isFirst,
-        tel: digits
+        tel: digits,
+        nip: nipHash
       })
       .select().single()
     if (!error && data) {
@@ -196,10 +295,10 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     }
   }
 
-  const canSubmitInscription = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && !loading
-  const canSubmitReconnexion = telComplet && !loading
+  const canSubmitInscription = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && nipValide && nipsMatch && !loading
+  const canSubmitReconnexion = telComplet && nipValide && !loading
+  const canSubmitCreerNip = nipValide && nipsMatch && !loading
 
-  // En-tête commun aux 3 modes (branding + info trip + countdown)
   const entete = (
     <>
       <div style={{fontSize:9,fontWeight:500,color:'rgba(255,255,255,.5)',letterSpacing:'.22em',textTransform:'uppercase',marginBottom:20}}>
@@ -223,7 +322,18 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     </>
   )
 
-  // MODE 'choice' : écran initial avec 2 gros boutons
+  // Bloc separateur visuel pour la section "Creez votre NIP"
+  const nipSeparateur = (
+    <div style={{display:'flex',alignItems:'center',gap:10,marginTop:6,marginBottom:12}}>
+      <div style={{flex:1,height:1,background:'rgba(255,255,255,.1)'}} />
+      <span style={{fontSize:10,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',fontWeight:600}}>
+        Créez votre NIP
+      </span>
+      <div style={{flex:1,height:1,background:'rgba(255,255,255,.1)'}} />
+    </div>
+  )
+
+  // MODE 'choice'
   if (mode === 'choice') {
     return (
       <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
@@ -241,7 +351,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
                 display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
               <span style={{textAlign:'left'}}>
                 <span style={{display:'block',fontSize:15,fontWeight:700}}>Je rejoins pour la 1re fois</span>
-                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.7,marginTop:2}}>Prénom, nom et téléphone</span>
+                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.7,marginTop:2}}>Prénom, nom, téléphone et NIP</span>
               </span>
               <span style={{fontSize:18}}>→</span>
             </button>
@@ -253,7 +363,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
                 display:'flex',alignItems:'center',justifyContent:'space-between',gap:10}}>
               <span style={{textAlign:'left'}}>
                 <span style={{display:'block',fontSize:14,fontWeight:700}}>Je suis déjà inscrit</span>
-                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.6,marginTop:2}}>Entrez juste votre téléphone</span>
+                <span style={{display:'block',fontSize:11,fontWeight:400,opacity:.6,marginTop:2}}>Téléphone et NIP</span>
               </span>
               <span style={{fontSize:18,opacity:.6}}>→</span>
             </button>
@@ -267,7 +377,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     )
   }
 
-  // MODE 'reconnexion' : 1 seul champ tel
+  // MODE 'reconnexion' : tel + NIP
   if (mode === 'reconnexion') {
     return (
       <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
@@ -276,22 +386,36 @@ export default function JoinScreen({trip,autorises,onJoin}:{
           <div style={{width:'100%',maxWidth:360,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:'1px solid rgba(255,255,255,.1)'}}>
             <div style={{fontSize:13,color:'rgba(255,255,255,.5)',textAlign:'center',marginBottom:18,lineHeight:1.65}}>
               {isStandalone
-                ? <>Bienvenue. Confirmez votre numéro de téléphone pour ouvrir le trip.</>
-                : <>Entrez le numéro de téléphone avec lequel vous vous êtes inscrit.</>
+                ? <>Bienvenue. Entrez votre téléphone et NIP pour ouvrir le trip.</>
+                : <>Entrez le numéro de téléphone et le NIP avec lesquels vous vous êtes inscrit.</>
               }
             </div>
 
-            <div style={{marginBottom:14}}>
+            <div style={{marginBottom:12}}>
               <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
                 Numéro de téléphone
               </label>
               <input className="input" type="tel" placeholder="418 000 0000"
                 value={tel} onChange={e=>onChangeTel(e.target.value)}
-                onKeyDown={e=>e.key==='Enter' && canSubmitReconnexion && reconnecter()}
                 autoFocus
                 style={{fontSize:16,letterSpacing:1,textAlign:'center',
                   background:'rgba(255,255,255,.06)',
                   border:`1.5px solid ${tel && telComplet ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                  color:'#fff'}}
+              />
+            </div>
+
+            <div style={{marginBottom:14}}>
+              <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+                NIP (4 chiffres)
+              </label>
+              <input className="input" type="password" inputMode="numeric" placeholder="••••"
+                value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
+                onKeyDown={e=>e.key==='Enter' && canSubmitReconnexion && reconnecter()}
+                maxLength={4}
+                style={{fontSize:18,letterSpacing:8,textAlign:'center',
+                  background:'rgba(255,255,255,.06)',
+                  border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
                   color:'#fff'}}
               />
             </div>
@@ -308,12 +432,14 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               {loading ? 'Connexion…' : 'Entrer dans le trip →'}
             </button>
 
-            {/* Bouton Retour masque en PWA standalone: en PWA il n'y a pas
-                d'ecran choice a re-afficher (on y arrive directement). */}
+            <div style={{fontSize:11,color:'rgba(255,255,255,.4)',textAlign:'center',marginTop:6,lineHeight:1.5}}>
+              🤔 NIP oublié ? Contactez l&apos;administrateur du trip pour qu&apos;il le réinitialise.
+            </div>
+
             {!isStandalone && (
-              <button onClick={()=>{setMode('choice');setErreur(null)}}
+              <button onClick={()=>{setMode('choice');setErreur(null);setNip('')}}
                 style={{width:'100%',padding:'10px',background:'none',border:'none',
-                  color:'rgba(255,255,255,.4)',fontSize:12,cursor:'pointer',fontWeight:500}}>
+                  color:'rgba(255,255,255,.4)',fontSize:12,cursor:'pointer',fontWeight:500,marginTop:6}}>
                 ← Retour
               </button>
             )}
@@ -323,7 +449,67 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     )
   }
 
-  // MODE 'inscription' : 3 champs (prenom + nom + tel)
+  // MODE 'creer-nip' : migration douce (utilisateur existe en DB sans NIP)
+  if (mode === 'creer-nip') {
+    return (
+      <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 20px'}}>
+          {entete}
+          <div style={{width:'100%',maxWidth:360,background:'rgba(255,255,255,.06)',borderRadius:20,padding:24,border:'1px solid rgba(255,255,255,.1)'}}>
+            <div style={{fontSize:13,color:'rgba(255,255,255,.7)',textAlign:'center',marginBottom:8,lineHeight:1.65,fontWeight:600}}>
+              Bienvenue {pendingMembre?.prenom} !
+            </div>
+            <div style={{fontSize:12,color:'rgba(255,255,255,.5)',textAlign:'center',marginBottom:18,lineHeight:1.65}}>
+              Pour sécuriser votre accès, créez un NIP à 4 chiffres. Vous l&apos;utiliserez à chaque connexion sur un nouvel appareil.
+            </div>
+
+            <div style={{marginBottom:10}}>
+              <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+                NIP (4 chiffres)
+              </label>
+              <input className="input" type="password" inputMode="numeric" placeholder="••••"
+                value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
+                autoFocus maxLength={4}
+                style={{fontSize:18,letterSpacing:8,textAlign:'center',
+                  background:'rgba(255,255,255,.06)',
+                  border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                  color:'#fff'}}
+              />
+            </div>
+
+            <div style={{marginBottom:14}}>
+              <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+                Confirmer le NIP
+              </label>
+              <input className="input" type="password" inputMode="numeric" placeholder="••••"
+                value={nipConfirm} onChange={e=>onChangeNip(e.target.value, setNipConfirm)}
+                onKeyDown={e=>e.key==='Enter' && canSubmitCreerNip && creerNipMigration()}
+                maxLength={4}
+                style={{fontSize:18,letterSpacing:8,textAlign:'center',
+                  background:'rgba(255,255,255,.06)',
+                  border:`1.5px solid ${nipConfirm && nipsMatch && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                  color:'#fff'}}
+              />
+            </div>
+
+            {erreur && (
+              <div style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.3)',borderRadius:10,padding:'10px 14px',marginBottom:10}}>
+                <p style={{fontSize:13,color:'#fca5a5',textAlign:'center',lineHeight:1.5}}>{erreur}</p>
+              </div>
+            )}
+
+            <button className="btn" onClick={creerNipMigration} disabled={!canSubmitCreerNip}
+              style={{background: !canSubmitCreerNip ? 'rgba(255,255,255,.15)' : '#fff',
+                color: !canSubmitCreerNip ? 'rgba(255,255,255,.4)' : 'var(--forest)',fontWeight:700,marginBottom:8}}>
+              {loading ? 'Création…' : 'Créer mon NIP et entrer →'}
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // MODE 'inscription' : prenom + nom + tel + NIP + confirmer NIP
   return (
     <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
       <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'32px 20px'}}>
@@ -351,22 +537,51 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             </label>
             <input className="input" placeholder="Votre nom de famille" value={nom}
               onChange={e=>{setNom(e.target.value);setErreur(null)}}
-              onKeyDown={e=>e.key==='Enter' && canSubmitInscription && rejoindre()}
               style={{fontSize:16,fontWeight:600,background:'rgba(255,255,255,.08)',
                 border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
             />
           </div>
 
-          <div style={{marginBottom:14}}>
+          <div style={{marginBottom:12}}>
             <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
               Numéro de téléphone
             </label>
             <input className="input" type="tel" placeholder="418 000 0000"
               value={tel} onChange={e=>onChangeTel(e.target.value)}
-              onKeyDown={e=>e.key==='Enter' && canSubmitInscription && rejoindre()}
               style={{fontSize:15,letterSpacing:1,background:'rgba(255,255,255,.06)',
                 border:`1.5px solid ${tel && telComplet ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
                 color:'rgba(255,255,255,.85)'}}
+            />
+          </div>
+
+          {nipSeparateur}
+
+          <div style={{marginBottom:10}}>
+            <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+              NIP (4 chiffres)
+            </label>
+            <input className="input" type="password" inputMode="numeric" placeholder="••••"
+              value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
+              maxLength={4}
+              style={{fontSize:18,letterSpacing:8,textAlign:'center',
+                background:'rgba(255,255,255,.06)',
+                border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                color:'#fff'}}
+            />
+          </div>
+
+          <div style={{marginBottom:14}}>
+            <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+              Confirmer le NIP
+            </label>
+            <input className="input" type="password" inputMode="numeric" placeholder="••••"
+              value={nipConfirm} onChange={e=>onChangeNip(e.target.value, setNipConfirm)}
+              onKeyDown={e=>e.key==='Enter' && canSubmitInscription && rejoindre()}
+              maxLength={4}
+              style={{fontSize:18,letterSpacing:8,textAlign:'center',
+                background:'rgba(255,255,255,.06)',
+                border:`1.5px solid ${nipConfirm && nipsMatch && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                color:'#fff'}}
             />
           </div>
 
@@ -382,7 +597,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             {loading ? 'Connexion…' : 'Entrer dans le trip →'}
           </button>
 
-          <button onClick={()=>{setMode('choice');setErreur(null)}}
+          <button onClick={()=>{setMode('choice');setErreur(null);setNip('');setNipConfirm('')}}
             style={{width:'100%',padding:'10px',background:'none',border:'none',
               color:'rgba(255,255,255,.4)',fontSize:12,cursor:'pointer',fontWeight:500}}>
             ← Retour
