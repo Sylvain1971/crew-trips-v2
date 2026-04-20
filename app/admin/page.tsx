@@ -136,8 +136,8 @@ export default function AdminPage() {
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length !== 1 ? 's' : ''} actif{trips.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <a href="/admin/retrouver" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>Retrouver un utilisateur</a>
             <button onClick={() => router.back()} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>← Retour</button>
+            <a href="/admin/retrouver" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>Retrouver un utilisateur</a>
             <button onClick={() => { setAuth(false); try { sessionStorage.removeItem('crew-admin-authed') } catch {} }} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>Déconnexion</button>
           </div>
         </div>
