@@ -11,16 +11,10 @@ export async function generateMetadata(
     title: {
       absolute: nom,   // Empêche Next.js d'ajouter le titre parent " | Crew Trips"
     },
-    manifest: `/trip/${code}/manifest`,
-    appleWebApp: {
-      capable: true,
-      statusBarStyle: 'black-translucent',
-      title: nom,   // iOS lit ce champ pour pré-remplir le nom de l'icône
-    },
-    other: {
-      // Forcer iOS à utiliser le nom complet (évite le parsing par mots)
-      'apple-mobile-web-app-title': nom,
-    }
+    // Pas de manifest dynamique par trip : on herite du /manifest.json global via app/layout.tsx
+    // -> l'icone PWA s'appelle toujours "Crew Trips" et la PWA est installable depuis n'importe quelle page
+    // appleWebApp + apple-mobile-web-app-title sont aussi herites du root layout
+    // -> coherent avec l'UX "une seule PWA Crew Trips, acces aux trips via le menu Mes trips"
   }
 }
 
