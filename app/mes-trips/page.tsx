@@ -6,18 +6,17 @@ import { supabase } from '@/lib/supabase'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 
-function formatTel(val: string): string {
-  const digits = val.replace(/\D/g, '').slice(0, 10)
-  if (digits.length <= 3) return digits
-  if (digits.length <= 6) return `${digits.slice(0,3)} ${digits.slice(3)}`
-  return `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`
-}
-
 interface TripDB {
   code: string; nom: string; type: string
   destination?: string; date_debut?: string; date_fin?: string
   role: 'createur' | 'participant'
 }
+
+// États possibles de la page :
+// - 'checking' : on vérifie le localStorage au mount (flash de chargement)
+// - 'no-identity' : pas de verrou => on affiche l'écran "Identité requise"
+// - 'authorized' : verrou présent => on charge et affiche les trips
+type PageState = 'checking' | 'no-identity' | 'authorized'
 
 export default function MesTripsPage() {
   const router = useRouter()
@@ -25,23 +24,34 @@ export default function MesTripsPage() {
   const [trips, setTrips] = useState<TripDB[]>([])
   const [loading, setLoading] = useState(false)
   const [cherche, setCherche] = useState(false)
-  const [telLocked, setTelLocked] = useState(false)
-
-  const telComplet = tel.replace(/\D/g,'').length === 10
+  const [pageState, setPageState] = useState<PageState>('checking')
 
   useEffect(() => {
     try {
-      // Verrou : si une identité a été validée précédemment, on bloque la saisie
-      const locked = localStorage.getItem('crew-tel-locked')
+      // Verrou : si une identité a été validée précédemment, on affiche les trips
+      let locked = localStorage.getItem('crew-tel-locked')
+
+      // Migration transparente : si l'utilisateur avait déjà un tel enregistré
+      // (ancienne logique avant le verrou), on le promeut automatiquement pour
+      // ne pas éjecter les utilisateurs existants au déploiement.
+      if (!locked) {
+        const oldTel = localStorage.getItem('crew-tel')
+        if (oldTel && oldTel.replace(/\D/g,'').length === 10) {
+          localStorage.setItem('crew-tel-locked', oldTel)
+          locked = oldTel
+        }
+      }
+
       if (locked) {
         setTel(locked)
-        setTelLocked(true)
+        setPageState('authorized')
         charger(locked)
-        return
+      } else {
+        setPageState('no-identity')
       }
-      const saved = localStorage.getItem('crew-tel')
-      if (saved) { setTel(saved); charger(saved) }
-    } catch {}
+    } catch {
+      setPageState('no-identity')
+    }
   }, [])
 
   async function charger(numero: string) {
@@ -80,21 +90,8 @@ export default function MesTripsPage() {
     setLoading(false)
   }
 
-  function onTelChange(val: string) {
-    if (telLocked) return
-    const formatted = formatTel(val)
-    setTel(formatted)
-    const digits = formatted.replace(/\D/g, '')
-    if (digits.length === 10) {
-      try { localStorage.setItem('crew-tel', formatted) } catch {}
-      charger(formatted)
-    } else {
-      setTrips([]); setCherche(false)
-    }
-  }
-
   function changerUtilisateur() {
-    const msg = "Changer d'utilisateur ?\n\nCela effacera votre identité enregistrée sur cet appareil. Vous devrez vous reconnecter à un trip via son lien d'invitation."
+    const msg = "Changer d'utilisateur ?\n\nCela effacera votre identité enregistrée sur cet appareil. Pour revenir, vous devrez cliquer un lien d'invitation ou créer un nouveau trip."
     if (!confirm(msg)) return
     try {
       localStorage.removeItem('crew-tel-locked')
@@ -102,10 +99,8 @@ export default function MesTripsPage() {
       localStorage.removeItem('crew-prenom')
       localStorage.removeItem('crew-nom')
     } catch {}
-    setTelLocked(false)
-    setTel('')
-    setTrips([])
-    setCherche(false)
+    // Redirection vers l'accueil — on ne libère PAS le champ sur place (c'était la faille)
+    router.push('/')
   }
 
   function fmtDate(d?: string) {
@@ -113,6 +108,69 @@ export default function MesTripsPage() {
     return new Date(d + 'T00:00:00').toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
+  // =====================================================
+  // Rendu : 3 états
+  // =====================================================
+
+  // État 1 : chargement initial (flash court le temps de lire localStorage)
+  if (pageState === 'checking') {
+    return (
+      <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        <div style={{color:'rgba(255,255,255,.4)',fontSize:14}}>Chargement…</div>
+      </main>
+    )
+  }
+
+  // État 2 : pas d'identité sur cet appareil — écran "Identité requise"
+  if (pageState === 'no-identity') {
+    return (
+      <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
+        <div style={{background:'var(--forest)',padding:'16px 20px 20px',display:'flex',flexDirection:'column',alignItems:'center',position:'relative'}}>
+          <button onClick={()=>router.push('/')}
+            style={{position:'absolute',top:16,left:20,background:'rgba(255,255,255,.1)',border:'none',borderRadius:10,padding:'8px 12px',color:'#fff',cursor:'pointer',fontSize:14}}>
+            ← Retour
+          </button>
+          <div style={{marginBottom:4}}>
+            <Image src="/logo-hero.webp" alt="Crew Trips" width={90} height={90} />
+          </div>
+          <div style={{fontFamily:'var(--font-brand), Georgia, serif',fontWeight:700,fontSize:20,color:'#fff',letterSpacing:'-.02em',lineHeight:1,marginBottom:6}}>Crew Trips</div>
+          <div style={{fontSize:9,color:'rgba(255,255,255,.5)',letterSpacing:'.22em',textTransform:'uppercase',fontWeight:500}}>Mes trips</div>
+        </div>
+
+        <div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'20px 24px',textAlign:'center'}}>
+          <div style={{display:'inline-flex',width:80,height:80,borderRadius:20,background:'rgba(255,255,255,.08)',color:'rgba(255,255,255,.7)',alignItems:'center',justifyContent:'center',marginBottom:20}}>
+            <SvgIcon name="lock" size={40} />
+          </div>
+          <div style={{fontSize:20,fontWeight:700,color:'#fff',marginBottom:10,letterSpacing:'-.02em'}}>
+            Identité requise
+          </div>
+          <div style={{fontSize:14,color:'rgba(255,255,255,.6)',lineHeight:1.6,maxWidth:340,marginBottom:28}}>
+            Pour voir vos trips, rejoignez-en un via votre lien d&apos;invitation, ou créez-en un nouveau.
+          </div>
+
+          <div style={{display:'flex',flexDirection:'column',gap:10,width:'100%',maxWidth:320}}>
+            <button onClick={()=>router.push('/nouveau')}
+              style={{padding:'14px 20px',borderRadius:12,border:'none',background:'#fff',
+                color:'var(--forest)',fontWeight:700,fontSize:15,cursor:'pointer'}}>
+              Créer un nouveau trip →
+            </button>
+            <button onClick={()=>router.push('/')}
+              style={{padding:'13px 20px',borderRadius:12,
+                border:'1.5px solid rgba(255,255,255,.2)',background:'transparent',
+                color:'rgba(255,255,255,.8)',fontWeight:600,fontSize:14,cursor:'pointer'}}>
+              J&apos;ai un lien d&apos;invitation
+            </button>
+          </div>
+
+          <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:24,lineHeight:1.6,maxWidth:300}}>
+            Un appareil est lié à un seul participant pour des raisons de sécurité.
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // État 3 : autorisé — on affiche la liste des trips
   return (
     <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
       {/* Header */}
@@ -129,29 +187,27 @@ export default function MesTripsPage() {
       </div>
 
       <div style={{flex:1,padding:'16px 20px 40px'}}>
-        {/* Champ téléphone */}
+        {/* Identité verrouillée (lecture seule, pas d'input) */}
         <div className="field" style={{maxWidth:420,margin:'0 auto 24px'}}>
           <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>
-            {telLocked
-              ? <>🔒 IDENTITÉ VERROUILLÉE SUR CET APPAREIL</>
-              : <>VOTRE NUMÉRO DE TÉLÉPHONE</>}
+            🔒 IDENTITÉ VERROUILLÉE SUR CET APPAREIL
           </label>
-          <input className="input"
-            type="tel" placeholder="ex : 418 000 0000"
-            value={tel} onChange={e=>onTelChange(e.target.value)}
-            readOnly={telLocked}
-            autoFocus={!telLocked}
-            style={{background: telLocked ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.08)',
-              border:`1.5px solid ${tel && !telComplet ? '#f87171' : telComplet ? '#4ade80' : 'rgba(255,255,255,.15)'}`,
-              color: telLocked ? 'rgba(255,255,255,.75)' : '#fff',
-              letterSpacing:1,fontSize:18,textAlign:'center',
-              cursor: telLocked ? 'not-allowed' : 'text'}}
-          />
-          {telLocked && (
-            <div style={{fontSize:11,color:'rgba(255,255,255,.45)',marginTop:6,textAlign:'center',lineHeight:1.5}}>
-              Pour des raisons de sécurité, un appareil est lié à un seul participant.
-            </div>
-          )}
+          <div style={{
+            background:'rgba(255,255,255,.04)',
+            border:'1.5px solid rgba(255,255,255,.15)',
+            borderRadius:10,
+            padding:'14px 16px',
+            color:'rgba(255,255,255,.75)',
+            letterSpacing:1,
+            fontSize:18,
+            textAlign:'center',
+            fontWeight:600,
+          }}>
+            {tel}
+          </div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,.45)',marginTop:6,textAlign:'center',lineHeight:1.5}}>
+            Pour des raisons de sécurité, un appareil est lié à un seul participant.
+          </div>
         </div>
 
         {/* Liste des trips */}
@@ -210,16 +266,14 @@ export default function MesTripsPage() {
             </button>
           )}
 
-          {/* Bouton "Changer d'utilisateur" : visible seulement si verrouillé */}
-          {telLocked && (
-            <button onClick={changerUtilisateur}
-              style={{width:'100%',marginTop:16,padding:'11px',borderRadius:10,
-                border:'1px solid rgba(255,255,255,.12)',background:'transparent',
-                color:'rgba(255,255,255,.4)',fontWeight:500,fontSize:12,cursor:'pointer',
-                display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-              Changer d&apos;utilisateur
-            </button>
-          )}
+          {/* Bouton "Changer d'utilisateur" — toujours visible en mode autorisé */}
+          <button onClick={changerUtilisateur}
+            style={{width:'100%',marginTop:16,padding:'11px',borderRadius:10,
+              border:'1px solid rgba(255,255,255,.12)',background:'transparent',
+              color:'rgba(255,255,255,.4)',fontWeight:500,fontSize:12,cursor:'pointer',
+              display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            Changer d&apos;utilisateur
+          </button>
         </div>
       </div>
     </main>
