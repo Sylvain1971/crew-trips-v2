@@ -1,9 +1,10 @@
-﻿'use client'
+'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
+import QRCode from 'qrcode'
 
 const COULEURS_BG = ['#EFF6FF','#F0FDF4','#FFFBEB','#FFF1F2','#F5F3FF','#F0F9FF','#FFF7ED','#EEF2FF']
 
@@ -14,10 +15,6 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [autorises, setAutorises] = useState<ParticipantAutorise[]>([])
   const [copied, setCopied] = useState(false)
   const [newPrenom, setNewPrenom] = useState('')
-  const [whatsapp, setWhatsapp] = useState(trip.whatsapp_lien||'')
-  const [editWhatsapp, setEditWhatsapp] = useState(false)
-  const [sms, setSms] = useState(trip.sms_lien||'')
-  const [editSms, setEditSms] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -26,6 +23,8 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [savingPrenom, setSavingPrenom] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [generatingShare, setGeneratingShare] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState('')
   const router = useRouter()
   const isCreateur = membre.is_createur
 
@@ -40,10 +39,50 @@ export default function Membres({trip, membre, onTripUpdate}: {
     navigator.clipboard.writeText(`${window.location.origin}/trip/${trip.code}`)
     setCopied(true); setTimeout(()=>setCopied(false),3000)
   }
-  function share() {
+  function openTexto() {
     const url = `${window.location.origin}/trip/${trip.code}`
-    if (navigator.share) navigator.share({title:'Crew Trips',text:'Rejoins notre trip !',url})
-    else copyLink()
+    const body = `Je t'invite au trip ${trip.nom}. Voici le lien: ${url}`
+    window.location.href = `sms:&body=${encodeURIComponent(body)}`
+  }
+  function openMail() {
+    const url = `${window.location.origin}/trip/${trip.code}`
+    const subject = `Invitation : ${trip.nom} (Crew Trips)`
+    const body = `Je t'invite au trip ${trip.nom}.\n\nVoici le lien: ${url}`
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+  async function openQR() {
+    const url = `${window.location.origin}/trip/${trip.code}`
+    try {
+      const dataUrl = await QRCode.toDataURL(url, { width: 512, margin: 2, color: { dark: '#0F2D0F', light: '#ffffff' } })
+      setQrDataUrl(dataUrl)
+      setShowQR(true)
+    } catch {
+      alert('Erreur lors de la generation du QR code')
+    }
+  }
+  function downloadQR() {
+    if (!qrDataUrl) return
+    const a = document.createElement('a')
+    a.href = qrDataUrl
+    a.download = `crew-trips-${trip.code}.png`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+  async function shareQR() {
+    if (!qrDataUrl) return
+    try {
+      const res = await fetch(qrDataUrl)
+      const blob = await res.blob()
+      const file = new File([blob], `crew-trips-${trip.code}.png`, { type: 'image/png' })
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'QR Crew Trips', text: `QR code pour rejoindre ${trip.nom}` })
+      } else {
+        downloadQR()
+      }
+    } catch {
+      // User cancelled or error
+    }
   }
 
   async function ajouterAutorise() {
@@ -92,44 +131,6 @@ export default function Membres({trip, membre, onTripUpdate}: {
     } catch (e: unknown) {
       // Rollback
       onTripUpdate({[key]:oldVal})
-      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
-    }
-  }
-
-  async function saveWhatsapp() {
-    const oldVal = trip.whatsapp_lien
-    const newVal = whatsapp || null
-    // Optimistic : fermer le sheet + mettre à jour tout de suite
-    onTripUpdate({whatsapp_lien: newVal || undefined})
-    setEditWhatsapp(false)
-    try {
-      const { error } = await supabase.from('trips').update({whatsapp_lien: newVal}).eq('id', trip.id)
-      if (error) throw error
-    } catch (e: unknown) {
-      // Rollback
-      onTripUpdate({whatsapp_lien: oldVal})
-      setWhatsapp(oldVal || '')
-      setEditWhatsapp(true)
-      alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
-    }
-  }
-
-  async function saveSms() {
-    const oldVal = trip.sms_lien
-    const val = sms.trim()
-    const newVal = val || null
-    // Optimistic : fermer le sheet + mettre à jour tout de suite
-    onTripUpdate({sms_lien: newVal || undefined})
-    setSms(newVal || '')
-    setEditSms(false)
-    try {
-      const { error } = await supabase.from('trips').update({sms_lien: newVal}).eq('id', trip.id)
-      if (error) throw error
-    } catch (e: unknown) {
-      // Rollback
-      onTripUpdate({sms_lien: oldVal})
-      setSms(oldVal || '')
-      setEditSms(true)
       alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
     }
   }
@@ -244,102 +245,31 @@ export default function Membres({trip, membre, onTripUpdate}: {
           border:'1px solid rgba(255,255,255,.12)'}}>
           {typeof window!=='undefined'?`${window.location.origin}/trip/${trip.code}`:`/trip/${trip.code}`}
         </div>
-        <div style={{display:'flex',gap:10}}>
-          <button onClick={copyLink} style={{flex:1,padding:'11px',borderRadius:10,
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+          <button onClick={copyLink} style={{padding:'11px',borderRadius:10,
             border:'1.5px solid rgba(255,255,255,.2)',
             background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.08)',
-            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s'}}>
-            {copied?'✓ Copié !':'📋 Copier'}
+            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s',
+            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            {copied?<><SvgIcon name="check" size={14} />Copié !</>:<><SvgIcon name="clipboard" size={14} />Copier</>}
           </button>
-          <button onClick={share} style={{flex:1,padding:'11px',borderRadius:10,border:'none',
-            background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:14,cursor:'pointer'}}>
-            ↗ Partager
+          <button onClick={openQR} style={{padding:'11px',borderRadius:10,
+            border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.08)',
+            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s',
+            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <SvgIcon name="qrcode" size={14} />QR Code
+          </button>
+          <button onClick={openMail} style={{padding:'11px',borderRadius:10,border:'none',
+            background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:14,cursor:'pointer',
+            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <SvgIcon name="mail" size={14} />Courriel
+          </button>
+          <button onClick={openTexto} style={{gridColumn:'1 / -1',padding:'11px',borderRadius:10,border:'none',
+            background:'#25D366',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer',
+            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+            <SvgIcon name="chat" size={14} />Texto
           </button>
         </div>
-      </div>
-
-      {/* WhatsApp */}
-      <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editWhatsapp||trip.whatsapp_lien?10:0}}>
-          <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-            <span style={{display:'inline-flex',color:'#25D366'}}><SvgIcon name="chat" size={16} /></span> Groupe WhatsApp
-          </div>
-          {isCreateur && (
-            <button onClick={()=>setEditWhatsapp(!editWhatsapp)}
-              style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
-                fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-              {editWhatsapp?'Fermer':trip.whatsapp_lien?'Modifier':'+ Ajouter'}
-            </button>
-          )}
-        </div>
-        {!editWhatsapp && trip.whatsapp_lien && (
-          <a href={trip.whatsapp_lien} target="_blank" rel="noreferrer"
-            style={{display:'flex',alignItems:'center',gap:10,background:'#F0FDF4',borderRadius:10,
-              padding:'10px 14px',textDecoration:'none',border:'1px solid #BBF7D0'}}>
-            <span style={{display:'inline-flex',width:32,height:32,borderRadius:8,background:'#25D366',color:'#fff',alignItems:'center',justifyContent:'center'}}><SvgIcon name="chat" size={18} /></span>
-            <div>
-              <div style={{fontSize:13,fontWeight:700,color:'#15803D'}}>Rejoindre le groupe</div>
-              <div style={{fontSize:11,color:'#166534',marginTop:1}}>WhatsApp ↗</div>
-            </div>
-          </a>
-        )}
-        {editWhatsapp && (
-          <div style={{display:'flex',gap:8}}>
-            <input className="input" placeholder="https://chat.whatsapp.com/..."
-              value={whatsapp} onChange={e=>setWhatsapp(e.target.value)}
-              style={{flex:1,fontSize:13}} />
-            <button onClick={saveWhatsapp}
-              style={{padding:'0 14px',borderRadius:10,border:'none',background:'var(--forest)',
-                color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>
-              OK
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Groupe de discussion */}
-      <div className="card" style={{marginBottom:16,padding:'14px 16px'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:editSms||trip.sms_lien?10:0}}>
-          <div style={{fontWeight:700,fontSize:14,display:'flex',alignItems:'center',gap:7}}>
-            <span style={{display:'inline-flex',color:'#0084FF'}}><SvgIcon name="chat" size={16} /></span> Groupe Messenger
-          </div>
-          {isCreateur && (
-            <button onClick={()=>setEditSms(!editSms)}
-              style={{background:'none',border:'1px solid var(--border)',borderRadius:7,padding:'4px 10px',
-                fontSize:12,fontWeight:600,color:'var(--text-2)',cursor:'pointer'}}>
-              {editSms?'Fermer':trip.sms_lien?'Modifier':'+ Ajouter'}
-            </button>
-          )}
-        </div>
-        {!editSms && trip.sms_lien && (
-          <a href={trip.sms_lien} target="_blank" rel="noreferrer"
-            style={{display:'flex',alignItems:'center',gap:10,background:'#EFF6FF',
-              borderRadius:10,padding:'10px 14px',textDecoration:'none',border:'1px solid #BFDBFE'}}>
-            <span style={{display:'inline-flex',width:32,height:32,borderRadius:8,background:'#0084FF',color:'#fff',alignItems:'center',justifyContent:'center'}}><SvgIcon name="chat" size={18} /></span>
-            <div>
-              <div style={{fontSize:13,fontWeight:700,color:'#1D4ED8'}}>Rejoindre le groupe</div>
-              <div style={{fontSize:11,color:'#1E40AF',marginTop:1}}>Messenger ↗</div>
-            </div>
-          </a>
-        )}
-        {editSms && (
-          <div>
-            <div style={{fontSize:12,color:'var(--text-3)',marginBottom:6}}>
-              Collez le lien d'invitation Messenger (m.me/... ou lien de groupe)
-            </div>
-            <div style={{display:'flex',gap:8}}>
-              <input className="input" type="url" placeholder="https://m.me/..."
-                value={sms} onChange={e=>setSms(e.target.value)}
-                onKeyDown={e=>e.key==='Enter'&&saveSms()}
-                style={{flex:1,fontSize:13}} />
-              <button onClick={saveSms}
-                style={{padding:'0 14px',borderRadius:10,border:'none',background:'var(--forest)',
-                  color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>
-                OK
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Partager l'album — créateur seulement */}
@@ -590,6 +520,40 @@ export default function Membres({trip, membre, onTripUpdate}: {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {/* QR Code modal */}
+      {showQR && (
+        <div onClick={()=>setShowQR(false)}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,.85)',zIndex:1000,
+            display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:'#fff',borderRadius:20,padding:24,maxWidth:400,width:'100%',textAlign:'center'}}>
+            <div style={{fontSize:18,fontWeight:700,color:'#0F2D0F',marginBottom:4}}>Scanner pour rejoindre</div>
+            <div style={{fontSize:13,color:'#6b7280',marginBottom:16}}>{trip.nom}</div>
+            {qrDataUrl && (
+              <img src={qrDataUrl} alt="QR code" style={{width:'100%',maxWidth:320,height:'auto',display:'block',margin:'0 auto 16px',borderRadius:12}} />
+            )}
+            <div style={{fontSize:12,color:'#6b7280',marginBottom:16,lineHeight:1.5}}>
+              L&apos;invité scanne ce code avec l&apos;appareil photo de son iPhone pour ouvrir directement dans Safari.
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+              <button onClick={shareQR}
+                style={{padding:'11px',borderRadius:10,border:'none',background:'var(--forest)',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer',
+                  display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                <SvgIcon name="link" size={14} />Partager
+              </button>
+              <button onClick={downloadQR}
+                style={{padding:'11px',borderRadius:10,border:'1.5px solid var(--border)',background:'#fff',color:'var(--text-1)',fontWeight:600,fontSize:14,cursor:'pointer',
+                  display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+                <SvgIcon name="download" size={14} />Télécharger
+              </button>
+            </div>
+            <button onClick={()=>setShowQR(false)}
+              style={{width:'100%',padding:'11px',borderRadius:10,border:'none',background:'transparent',color:'#6b7280',fontWeight:600,fontSize:13,cursor:'pointer'}}>
+              Fermer
+            </button>
+          </div>
         </div>
       )}
     </div>
