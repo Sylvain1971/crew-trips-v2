@@ -47,7 +47,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
   function openMail() {
     const url = `${window.location.origin}/trip/${trip.code}`
     const subject = `Invitation : ${trip.nom} (Crew Trips)`
-    const body = `Je t'invite au trip ${trip.nom}.\n\nVoici le lien: ${url}`
+    const body = `Je t'invite au trip ${trip.nom}.\n\n${url}\n\nCrew Trips regroupe les infos du voyage — vols, lodge, chat. Aucun compte requis.`
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
   async function openQR() {
