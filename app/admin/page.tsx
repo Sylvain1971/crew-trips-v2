@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
@@ -16,6 +17,7 @@ interface TripAdmin {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
   const [code, setCode] = useState('')
   const [auth, setAuth] = useState(false)
   const [trips, setTrips] = useState<TripAdmin[]>([])
@@ -97,9 +99,9 @@ export default function AdminPage() {
 
   if (!auth) return (
     <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative' }}>
-      <a href="/mes-trips" style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 10, padding: '8px 14px', color: 'rgba(255,255,255,.7)', fontSize: 14, textDecoration: 'none', fontWeight: 600 }}>
-        ← Mes trips
-      </a>
+      <button onClick={() => router.back()} style={{ position: 'absolute', top: 20, left: 20, background: 'rgba(255,255,255,.1)', border: 'none', borderRadius: 10, padding: '8px 14px', color: 'rgba(255,255,255,.7)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+        ← Retour
+      </button>
       <div style={{ width: '100%', maxWidth: 340, background: 'rgba(255,255,255,.06)', borderRadius: 20, padding: 28, border: '1px solid rgba(255,255,255,.1)' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>🔐</div>
@@ -128,14 +130,14 @@ export default function AdminPage() {
   return (
     <main style={{ minHeight: '100dvh', background: '#f5f0e8', padding: '20px 16px 60px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--forest)', margin: 0 }}>Admin Crew Trips</h1>
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length !== 1 ? 's' : ''} actif{trips.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <a href="/admin/retrouver" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>Retrouver un utilisateur</a>
-            <a href="/mes-trips" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>← Mes trips</a>
+            <button onClick={() => router.back()} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>← Retour</button>
             <button onClick={() => { setAuth(false); try { sessionStorage.removeItem('crew-admin-authed') } catch {} }} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>Déconnexion</button>
           </div>
         </div>

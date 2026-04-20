@@ -25,9 +25,21 @@ export default function MesTripsPage() {
   const [loading, setLoading] = useState(false)
   const [cherche, setCherche] = useState(false)
   const [pageState, setPageState] = useState<PageState>('checking')
+  // Détecter si on est dans la PWA installée (mode standalone iOS/Android).
+  // Important car iOS isole le localStorage entre Safari et la PWA
+  // installée — un utilisateur deja authentifie dans Safari apparait
+  // comme non-identifie dans la PWA au premier lancement.
+  const [isStandalone, setIsStandalone] = useState(false)
 
   useEffect(() => {
     try {
+      // Détecter le mode PWA standalone (iOS + Android)
+      const standalone =
+        window.matchMedia?.('(display-mode: standalone)').matches ||
+        // iOS specific
+        (window.navigator as { standalone?: boolean }).standalone === true
+      setIsStandalone(!!standalone)
+
       // Verrou : si une identité a été validée précédemment, on affiche les trips
       let locked = localStorage.getItem('crew-tel-locked')
 
@@ -142,10 +154,13 @@ export default function MesTripsPage() {
             <SvgIcon name="lock" size={40} />
           </div>
           <div style={{fontSize:20,fontWeight:700,color:'#fff',marginBottom:10,letterSpacing:'-.02em'}}>
-            Identité requise
+            {isStandalone ? 'Première connexion dans l\u2019app' : 'Identité requise'}
           </div>
           <div style={{fontSize:14,color:'rgba(255,255,255,.6)',lineHeight:1.6,maxWidth:340,marginBottom:28}}>
-            Pour voir vos trips, rejoignez-en un via votre lien d&apos;invitation, ou créez-en un nouveau.
+            {isStandalone
+              ? <>L&apos;app installée a sa propre mémoire, séparée de Safari. Rejoignez votre trip via son lien d&apos;invitation depuis cette app pour activer votre identité.</>
+              : <>Pour voir vos trips, rejoignez-en un via votre lien d&apos;invitation, ou créez-en un nouveau.</>
+            }
           </div>
 
           <div style={{display:'flex',flexDirection:'column',gap:10,width:'100%',maxWidth:320}}>
@@ -163,7 +178,10 @@ export default function MesTripsPage() {
           </div>
 
           <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:24,lineHeight:1.6,maxWidth:300}}>
-            Un appareil est lié à un seul participant pour des raisons de sécurité.
+            {isStandalone
+              ? <>Contrainte iOS : l&apos;app installée et Safari sont deux contextes séparés. Une authentification par contexte est nécessaire.</>
+              : <>Un appareil est lié à un seul participant pour des raisons de sécurité.</>
+            }
           </div>
         </div>
       </main>
