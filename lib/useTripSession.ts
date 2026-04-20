@@ -14,6 +14,23 @@ type State = {
   error: boolean
 }
 
+// Pose/maj le verrou d'identité (crew-tel-locked) dès qu'un membre est
+// retrouvé dans un trip, peu importe la stratégie (localStorage, tel,
+// Service Worker, JoinScreen). Assure que /mes-trips reconnaît cet appareil
+// comme déjà identifié.
+function poserVerrouIdentite(m: Membre | null) {
+  if (!m) return
+  const digits = (m.tel || '').replace(/\D/g, '')
+  if (digits.length !== 10) return
+  const formatted = `${digits.slice(0,3)} ${digits.slice(3,6)} ${digits.slice(6)}`
+  try {
+    localStorage.setItem('crew-tel-locked', formatted)
+    localStorage.setItem('crew-tel', formatted)
+    if (m.prenom) localStorage.setItem('crew-prenom', m.prenom)
+    if (m.nom) localStorage.setItem('crew-nom', m.nom)
+  } catch {}
+}
+
 async function tryLocalStorage(code: string): Promise<Membre | null> {
   try {
     const raw = localStorage.getItem(`crew2-${code}`)
@@ -103,6 +120,11 @@ export function useTripSession(code: string) {
         await tryTelReconnect(code, trip) ??
         await trySWCache(code)
 
+      // Poser le verrou d'identité dès qu'un membre est retrouvé, peu importe
+      // la stratégie. Couvre les utilisateurs déjà connectés avant le déploiement
+      // du verrou, et toutes les reconnexions silencieuses.
+      poserVerrouIdentite(membre)
+
       // 3. Si aucun membre trouvé, charger les participants autorisés (pour JoinScreen)
       //    Sinon, on évite cette requête — c'est le gain N+1.
       let autorises: ParticipantAutorise[] = []
@@ -122,6 +144,9 @@ export function useTripSession(code: string) {
   const saveMembre = useCallback((m: Membre) => {
     setState(s => ({ ...s, membre: m }))
     try { localStorage.setItem(`crew2-${code}`, JSON.stringify(m)) } catch {}
+    // Ceinture + bretelles : assurer que le verrou est toujours posé
+    // quand un membre est sauvé, même si JoinScreen oubliait un cas.
+    poserVerrouIdentite(m)
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'SET_MEMBRE', code, membre: m })
     }
