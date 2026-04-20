@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
@@ -19,11 +19,20 @@ function formatTel(val: string): string {
 export default function AdminRetrouverPage() {
   const router = useRouter()
 
-  // Protection admin : obligatoire d'entrer le code secret avant d'accéder au formulaire
+  // Protection admin : obligatoire d'entrer le code secret avant d'accéder au formulaire.
+  // Réutilise la session admin partagée (posée par /admin au login) pour éviter
+  // de redemander le code si on vient de /admin.
   const [code, setCode] = useState('')
   const [auth, setAuth] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
   const [loginErreur, setLoginErreur] = useState('')
+
+  // Au mount, vérifier si une session admin existe déjà
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('crew-admin-authed') === '1') setAuth(true)
+    } catch {}
+  }, [])
 
   // Formulaire de recherche
   const [prenom, setPrenom] = useState('')
@@ -40,7 +49,10 @@ export default function AdminRetrouverPage() {
       setLoginErreur('NEXT_PUBLIC_ADMIN_CODE non configuré.')
       return
     }
-    if (code === ADMIN_CODE) { setAuth(true); setLoginErreur('') }
+    if (code === ADMIN_CODE) {
+      setAuth(true); setLoginErreur('')
+      try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+    }
     else setLoginErreur('Code incorrect')
   }
 
@@ -74,14 +86,21 @@ export default function AdminRetrouverPage() {
       setLoading(false); return
     }
 
+    // Poser le verrou d'identité + redirection
     try {
       localStorage.setItem('crew-tel-locked', formatTel(digits))
       localStorage.setItem('crew-tel', formatTel(digits))
       localStorage.setItem('crew-prenom', match.prenom)
       if (match.nom) localStorage.setItem('crew-nom', match.nom)
-    } catch {}
+    } catch (e) {
+      setErreur('Impossible de sauvegarder l\'identité localement : ' + (e instanceof Error ? e.message : String(e)))
+      setLoading(false); return
+    }
 
-    router.push('/mes-trips')
+    // Forcer un hard reload pour que /mes-trips relise le localStorage proprement
+    // (router.push() garde le state React et peut créer des problèmes de timing
+    // sur le premier mount de /mes-trips).
+    window.location.href = '/mes-trips'
   }
 
   // Écran login admin

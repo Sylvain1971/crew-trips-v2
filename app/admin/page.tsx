@@ -33,7 +33,11 @@ export default function AdminPage() {
       setErreur('NEXT_PUBLIC_ADMIN_CODE non configuré dans .env.local')
       return
     }
-    if (code === ADMIN_CODE) { setAuth(true); setErreur('') }
+    if (code === ADMIN_CODE) {
+      setAuth(true); setErreur('')
+      // Partager la session avec les sous-pages admin (ex: /admin/retrouver)
+      try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+    }
     else setErreur('Code incorrect')
   }
 
@@ -130,9 +134,9 @@ export default function AdminPage() {
             <div style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>{trips.length} trip{trips.length !== 1 ? 's' : ''} actif{trips.length !== 1 ? 's' : ''}</div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <a href="/admin/retrouver" style={{ background: 'var(--forest)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: '#fff', cursor: 'pointer', textDecoration: 'none', fontWeight: 600 }}>Retrouver un utilisateur</a>
+            <a href="/admin/retrouver" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>Retrouver un utilisateur</a>
             <a href="/mes-trips" style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer', textDecoration: 'none' }}>← Mes trips</a>
-            <button onClick={() => setAuth(false)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>Déconnexion</button>
+            <button onClick={() => { setAuth(false); try { sessionStorage.removeItem('crew-admin-authed') } catch {} }} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--text-2)', cursor: 'pointer' }}>Déconnexion</button>
           </div>
         </div>
 
