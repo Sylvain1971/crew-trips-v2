@@ -229,11 +229,6 @@ export default function MesTripsPage() {
                 <SvgIcon name="clipboard" size={36} />
               </div>
               <div style={{color:'rgba(255,255,255,.5)',fontSize:14}}>Aucun trip trouvé pour ce numéro.</div>
-              <button onClick={()=>router.push('/nouveau')}
-                style={{marginTop:20,padding:'12px 24px',borderRadius:12,border:'none',background:'#fff',
-                  color:'var(--forest)',fontWeight:700,fontSize:14,cursor:'pointer'}}>
-                Créer un nouveau trip →
-              </button>
             </div>
           )}
 
@@ -261,15 +256,6 @@ export default function MesTripsPage() {
               </button>
             </div>
           ))}
-
-          {trips.length > 0 && (
-            <button onClick={()=>router.push('/nouveau')}
-              style={{width:'100%',marginTop:8,padding:'12px',borderRadius:12,
-                border:'1.5px solid rgba(255,255,255,.15)',background:'transparent',
-                color:'rgba(255,255,255,.6)',fontWeight:600,fontSize:14,cursor:'pointer'}}>
-              + Créer un nouveau trip
-            </button>
-          )}
         </div>
       </div>
     </main>
