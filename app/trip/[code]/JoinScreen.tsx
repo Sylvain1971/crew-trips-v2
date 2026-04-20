@@ -57,10 +57,10 @@ export default function JoinScreen({trip,autorises,onJoin}:{
         (window.navigator as { standalone?: boolean }).standalone === true
       setIsStandalone(!!standalone)
 
-      // Optimisation UX: si on est dans la PWA ET qu'un tel a deja ete pose
-      // localement, on skip l'ecran de choix et on va direct en mode reconnexion
-      // avec le tel pre-rempli. L'utilisateur n'a qu'a valider.
-      if (standalone && saved && saved.replace(/\D/g,'').length === 10) {
+      // Optimisation UX: en PWA installee, on assume que l'utilisateur
+      // s'est deja inscrit (sinon il n'aurait pas installe la PWA).
+      // On skip l'ecran de choix et on va direct en mode reconnexion.
+      if (standalone) {
         setMode('reconnexion')
       }
     } catch {}
@@ -308,11 +308,15 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               {loading ? 'Connexion…' : 'Entrer dans le trip →'}
             </button>
 
-            <button onClick={()=>{setMode('choice');setErreur(null)}}
-              style={{width:'100%',padding:'10px',background:'none',border:'none',
-                color:'rgba(255,255,255,.4)',fontSize:12,cursor:'pointer',fontWeight:500}}>
-              ← Retour
-            </button>
+            {/* Bouton Retour masque en PWA standalone: en PWA il n'y a pas
+                d'ecran choice a re-afficher (on y arrive directement). */}
+            {!isStandalone && (
+              <button onClick={()=>{setMode('choice');setErreur(null)}}
+                style={{width:'100%',padding:'10px',background:'none',border:'none',
+                  color:'rgba(255,255,255,.4)',fontSize:12,cursor:'pointer',fontWeight:500}}>
+                ← Retour
+              </button>
+            )}
           </div>
         </div>
       </main>
