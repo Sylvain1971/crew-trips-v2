@@ -70,32 +70,37 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
     const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
 
+    // Si une liste de participants autorises existe, le prenom saisi doit correspondre
+    // EXACTEMENT (insensible a la casse) a une entree de la liste.
+    // Plus de fuzzy ici : "Fisher Man" ne doit jamais valider si seul "Bergman Fisher" est autorise.
+    let prenomNormalise = nom
     if (listeActive) {
-      const valide = valider(nom)
-      if (!valide) {
+      const autorise = autorises.find(a => a.prenom.toLowerCase() === nom.toLowerCase())
+      if (!autorise) {
         setErreur("Votre prénom n'est pas sur la liste. Contactez l'organisateur.")
         setLoading(false); return
       }
+      prenomNormalise = autorise.prenom // utilise la casse exacte de la liste
     }
 
+    // Cherche un membre existant avec un match EXACT (insensible a la casse).
+    // Plus de fuzzy ici non plus : "Fisher Man" ne doit jamais etre reconnecte a "Bergman Fisher".
     if (membresExistants && membresExistants.length > 0) {
-      const prenomsMembres = membresExistants.map((m: {prenom: string}) => m.prenom)
-      const match = findClosestPrenom(nom, prenomsMembres)
-      if (match) {
-        const membreExistant = membresExistants.find((m: {prenom: string}) => m.prenom === match)
-        if (membreExistant) {
-          await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
-          setLoading(false)
-          onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
-          return
-        }
+      const membreExistant = membresExistants.find(
+        (m: {prenom: string}) => m.prenom.toLowerCase() === prenomNormalise.toLowerCase()
+      )
+      if (membreExistant) {
+        await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
+        setLoading(false)
+        onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
+        return
       }
     }
 
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const { data, error } = await supabase.from('membres')
-      .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst, tel: digits})
+      .insert({trip_id:trip.id, prenom:prenomNormalise, couleur, is_createur:isFirst, tel: digits})
       .select().single()
     if (!error && data) onJoin(data)
     else { setErreur('Erreur de connexion. Réessayez.'); setLoading(false) }
