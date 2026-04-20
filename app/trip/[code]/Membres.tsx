@@ -14,7 +14,6 @@ export default function Membres({trip, membre, onTripUpdate}: {
 }) {
   const [membres, setMembres] = useState<Membre[]>([])
   const [autorises, setAutorises] = useState<ParticipantAutorise[]>([])
-  const [copied, setCopied] = useState(false)
   const [newPrenom, setNewPrenom] = useState('')
   const [newNom, setNewNom] = useState('')
   const [newTel, setNewTel] = useState('')
@@ -37,24 +36,22 @@ export default function Membres({trip, membre, onTripUpdate}: {
       .then(({data})=>data&&setMembres(data))
     supabase.from('participants_autorises').select('*').eq('trip_id',trip.id).order('prenom')
       .then(({data})=>data&&setAutorises(data))
-  },[trip.id])
 
-  function copyLink() {
-    navigator.clipboard.writeText(`${window.location.origin}/trip/${trip.code}`)
-    setCopied(true); setTimeout(()=>setCopied(false),3000)
-  }
-  function openTexto() {
-    const url = `${window.location.origin}/trip/${trip.code}`
-    const body = `Je t'invite au trip ${trip.nom}. Voici le lien: ${url}`
-    window.location.href = `sms:&body=${encodeURIComponent(body)}`
-  }
-  function openMail() {
-    const url = `${window.location.origin}/trip/${trip.code}`
-    const subject = `Invitation : ${trip.nom} (Crew Trips)`
-    const body = `Je t'invite au trip ${trip.nom}.\n\n${url}\n\nCrew Trips regroupe les infos du voyage — vols, lodge, chat. Aucun compte requis.`
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  }
-  async function openQR() {
+    // Generer le QR code au mount (pour les createurs uniquement, affiche d'office
+    // dans le bloc "Connexion rapide"). Cout negligeable, gain UX: le QR est
+    // pret a scanner des que l'admin ouvre l'onglet Membres.
+    if (isCreateur && typeof window !== 'undefined') {
+      const url = `${window.location.origin}/trip/${trip.code}`
+      QRCode.toDataURL(url, { width: 512, margin: 2, color: { dark: '#0F2D0F', light: '#ffffff' } })
+        .then(d => setQrDataUrl(d))
+        .catch(() => {})
+    }
+  },[trip.id, trip.code, isCreateur])
+
+  async function openQRModal() {
+    // Si deja genere (cas normal), juste ouvrir la modal
+    if (qrDataUrl) { setShowQR(true); return }
+    // Fallback si la generation au mount a echoue
     const url = `${window.location.origin}/trip/${trip.code}`
     try {
       const dataUrl = await QRCode.toDataURL(url, { width: 512, margin: 2, color: { dark: '#0F2D0F', light: '#ffffff' } })
@@ -281,44 +278,57 @@ export default function Membres({trip, membre, onTripUpdate}: {
 
   return (
     <div style={{padding:'16px 16px 100px'}}>
-      {/* Inviter */}
-      <div style={{background:'var(--forest)',borderRadius:18,padding:20,marginBottom:16,textAlign:'center'}}>
-        <div style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:44,height:44,borderRadius:10,background:'#7C3AED',color:'#fff',marginBottom:6}}><SvgIcon name="link" size={24} /></div>
-        <div style={{color:'#fff',fontWeight:700,fontSize:16,marginBottom:6}}>Inviter des participants</div>
-        <div style={{color:'rgba(255,255,255,.55)',fontSize:13,marginBottom:14,lineHeight:1.5}}>
-          Partagez ce lien — aucun compte requis.
+      {/* Connexion rapide par QR — createur seulement.
+          Le lien brut n'a plus de sens depuis qu'on a le systeme "Participants
+          autorises": seuls les noms pre-enregistres peuvent rejoindre le trip.
+          Le QR sert uniquement a aider un participant DEJA dans la liste a
+          rejoindre rapidement quand on est en face de lui (telephone a
+          telephone). Les non-createurs ne voient pas cette section. */}
+      {isCreateur && (
+        <div style={{background:'var(--forest)',borderRadius:18,padding:20,marginBottom:16,textAlign:'center'}}>
+          <div style={{color:'#fff',fontWeight:700,fontSize:16,marginBottom:4}}>
+            Connexion rapide par QR
+          </div>
+          <div style={{color:'rgba(255,255,255,.55)',fontSize:12,marginBottom:14,lineHeight:1.5,maxWidth:320,margin:'0 auto 14px'}}>
+            Utile pour connecter un participant déjà ajouté à la liste ci-dessous, quand vous êtes ensemble (téléphone à téléphone).
+          </div>
+
+          {qrDataUrl ? (
+            <button onClick={openQRModal}
+              style={{background:'#fff',borderRadius:12,padding:12,border:'none',cursor:'pointer',
+                display:'block',margin:'0 auto 12px'}}
+              title="Cliquez pour agrandir">
+              <img src={qrDataUrl} alt="QR code" style={{display:'block',width:180,height:180}} />
+            </button>
+          ) : (
+            <div style={{background:'rgba(255,255,255,.08)',borderRadius:12,width:204,height:204,
+              display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',
+              color:'rgba(255,255,255,.4)',fontSize:12}}>
+              Génération du QR…
+            </div>
+          )}
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+            <button onClick={shareQR}
+              style={{padding:'11px',borderRadius:10,border:'none',background:'#fff',
+                color:'var(--forest)',fontWeight:700,fontSize:13,cursor:'pointer',
+                display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <SvgIcon name="link" size={14} />Partager
+            </button>
+            <button onClick={downloadQR}
+              style={{padding:'11px',borderRadius:10,
+                border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.08)',
+                color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer',
+                display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
+              <SvgIcon name="download" size={14} />Télécharger
+            </button>
+          </div>
+
+          <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:12,lineHeight:1.5}}>
+            ℹ️ Pour ajouter un nouveau participant, utilisez « Participants autorisés » ci-dessous.
+          </div>
         </div>
-        <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'8px 12px',fontSize:12,
-          color:'rgba(255,255,255,.6)',fontFamily:'monospace',marginBottom:12,wordBreak:'break-all',
-          border:'1px solid rgba(255,255,255,.12)'}}>
-          {typeof window!=='undefined'?`${window.location.origin}/trip/${trip.code}`:`/trip/${trip.code}`}
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-          <button onClick={copyLink} style={{gridColumn:'1 / -1',padding:'12px',borderRadius:10,border:'none',
-            background:copied?'rgba(255,255,255,.92)':'#fff',
-            color:'var(--forest)',fontWeight:700,fontSize:14,cursor:'pointer',transition:'background .2s',
-            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            {copied?<><SvgIcon name="check" size={14} />Copié !</>:<><SvgIcon name="clipboard" size={14} />Copier le lien</>}
-          </button>
-          <button onClick={openQR} style={{padding:'11px',borderRadius:10,
-            border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.08)',
-            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s',
-            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <SvgIcon name="qrcode" size={14} />QR Code
-          </button>
-          <button onClick={openMail} style={{padding:'11px',borderRadius:10,
-            border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.08)',
-            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s',
-            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <SvgIcon name="mail" size={14} />Courriel
-          </button>
-          <button onClick={openTexto} style={{gridColumn:'1 / -1',padding:'12px',borderRadius:10,border:'none',
-            background:'var(--green)',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer',transition:'background .2s',
-            display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            <SvgIcon name="chat" size={14} />Texto
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Partager l'album — créateur seulement */}
       {isCreateur && (
