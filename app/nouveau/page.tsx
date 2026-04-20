@@ -230,60 +230,65 @@ function NouveauInner() {
             </div>
           )}
 
-          {identityLocked && (
-            <div style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:10,padding:'10px 14px',marginBottom:16,textAlign:'center'}}>
-              <div style={{fontSize:11,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:3}}>
-                🔒 Identité verrouillée sur cet appareil
+          {identityLocked ? (
+            /* Bloc compact : identite en lecture seule (pas d'inputs), ~100px au lieu de ~400px */
+            <div style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:10,padding:'12px 16px',marginBottom:16}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginBottom:6}}>
+                <div style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase'}}>
+                  🔒 Identité verrouillée
+                </div>
+                <div style={{fontSize:10,color:'rgba(255,255,255,.35)'}}>
+                  Admin du trip
+                </div>
               </div>
-              <div style={{fontSize:12,color:'rgba(255,255,255,.45)',lineHeight:1.5}}>
-                Pour changer d&apos;identité, utilisez « Changer d&apos;utilisateur » depuis Mes trips.
+              <div style={{fontSize:15,fontWeight:700,color:'#fff',letterSpacing:'-.01em',lineHeight:1.2}}>
+                {prenom} {nomFamille}
+              </div>
+              <div style={{fontSize:13,color:'rgba(255,255,255,.55)',marginTop:2,letterSpacing:.5}}>
+                {tel}
+              </div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,.35)',marginTop:6,lineHeight:1.5}}>
+                Pour changer d&apos;identité : « Changer d&apos;utilisateur » depuis Mes trips.
               </div>
             </div>
+          ) : (
+            /* Premier usage : formulaire complet 3 champs */
+            <>
+              <div className="field">
+                <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
+                <input className="input" type="tel" placeholder="ex : 418 000 0000"
+                  value={tel}
+                  onChange={e=>onTelChange(e.target.value)}
+                  style={{background:'rgba(255,255,255,.08)',
+                    border:`1.5px solid ${tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
+                    color:'#fff',letterSpacing:1,textAlign:'center'}}/>
+                <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5,textAlign:'center'}}>
+                  Identifie votre compte créateur
+                </div>
+              </div>
+
+              <div className="field">
+                <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM</label>
+                <input className="input" placeholder="Votre prénom"
+                  value={prenom}
+                  onChange={e=>setPrenom(e.target.value)}
+                  onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
+                  style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+              </div>
+
+              <div className="field">
+                <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE NOM DE FAMILLE</label>
+                <input className="input" placeholder="Votre nom de famille"
+                  value={nomFamille}
+                  onChange={e=>setNomFamille(e.target.value)}
+                  onBlur={()=>{ try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
+                  style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+                <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
+                  Deviendra votre nom d&apos;administrateur dans ce trip
+                </div>
+              </div>
+            </>
           )}
-
-          <div className="field">
-            <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
-            <input className="input" type="tel" placeholder="ex : 418 000 0000"
-              value={tel}
-              onChange={e=>!identityLocked && onTelChange(e.target.value)}
-              readOnly={identityLocked}
-              style={{background:identityLocked?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)',
-                border:`1.5px solid ${identityLocked?'rgba(255,255,255,.1)':tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
-                color:identityLocked?'rgba(255,255,255,.6)':'#fff',letterSpacing:1,textAlign:'center',
-                cursor:identityLocked?'not-allowed':'text'}}/>
-            <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5,textAlign:'center'}}>
-              Identifie votre compte créateur
-            </div>
-          </div>
-
-          <div className="field">
-            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM</label>
-            <input className="input" placeholder="Votre prénom"
-              value={prenom}
-              onChange={e=>!identityLocked && setPrenom(e.target.value)}
-              onBlur={()=>{ if (!identityLocked) try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
-              readOnly={identityLocked}
-              style={{background:identityLocked?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)',
-                border:`1.5px solid ${identityLocked?'rgba(255,255,255,.1)':'rgba(255,255,255,.15)'}`,
-                color:identityLocked?'rgba(255,255,255,.6)':'#fff',
-                cursor:identityLocked?'not-allowed':'text'}}/>
-          </div>
-
-          <div className="field">
-            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE NOM DE FAMILLE</label>
-            <input className="input" placeholder="Votre nom de famille"
-              value={nomFamille}
-              onChange={e=>!identityLocked && setNomFamille(e.target.value)}
-              onBlur={()=>{ if (!identityLocked) try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
-              readOnly={identityLocked}
-              style={{background:identityLocked?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)',
-                border:`1.5px solid ${identityLocked?'rgba(255,255,255,.1)':'rgba(255,255,255,.15)'}`,
-                color:identityLocked?'rgba(255,255,255,.6)':'#fff',
-                cursor:identityLocked?'not-allowed':'text'}}/>
-            <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
-              Deviendra votre nom d&apos;administrateur dans ce trip
-            </div>
-          </div>
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
