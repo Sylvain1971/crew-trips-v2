@@ -246,12 +246,11 @@ export default function Membres({trip, membre, onTripUpdate}: {
           {typeof window!=='undefined'?`${window.location.origin}/trip/${trip.code}`:`/trip/${trip.code}`}
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-          <button onClick={copyLink} style={{padding:'11px',borderRadius:10,
-            border:'1.5px solid rgba(255,255,255,.2)',
-            background:copied?'rgba(255,255,255,.2)':'rgba(255,255,255,.08)',
-            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s',
+          <button onClick={copyLink} style={{gridColumn:'1 / -1',padding:'12px',borderRadius:10,border:'none',
+            background:copied?'rgba(255,255,255,.92)':'#fff',
+            color:'var(--forest)',fontWeight:700,fontSize:14,cursor:'pointer',transition:'background .2s',
             display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            {copied?<><SvgIcon name="check" size={14} />Copié !</>:<><SvgIcon name="clipboard" size={14} />Copier</>}
+            {copied?<><SvgIcon name="check" size={14} />Copié !</>:<><SvgIcon name="clipboard" size={14} />Copier le lien</>}
           </button>
           <button onClick={openQR} style={{padding:'11px',borderRadius:10,
             border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.08)',
@@ -259,13 +258,14 @@ export default function Membres({trip, membre, onTripUpdate}: {
             display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
             <SvgIcon name="qrcode" size={14} />QR Code
           </button>
-          <button onClick={openMail} style={{padding:'11px',borderRadius:10,border:'none',
-            background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:14,cursor:'pointer',
+          <button onClick={openMail} style={{padding:'11px',borderRadius:10,
+            border:'1.5px solid rgba(255,255,255,.2)',background:'rgba(255,255,255,.08)',
+            color:'#fff',fontWeight:600,fontSize:14,cursor:'pointer',transition:'background .2s',
             display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
             <SvgIcon name="mail" size={14} />Courriel
           </button>
-          <button onClick={openTexto} style={{gridColumn:'1 / -1',padding:'11px',borderRadius:10,border:'none',
-            background:'#25D366',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer',
+          <button onClick={openTexto} style={{gridColumn:'1 / -1',padding:'12px',borderRadius:10,border:'none',
+            background:'var(--green)',color:'#fff',fontWeight:700,fontSize:14,cursor:'pointer',transition:'background .2s',
             display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
             <SvgIcon name="chat" size={14} />Texto
           </button>
