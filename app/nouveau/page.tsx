@@ -90,7 +90,7 @@ function NouveauInner() {
       if (prenom.trim()) {
         const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
         const { data: newMembre } = await supabase.from('membres')
-          .insert({ trip_id: newTrip.id, prenom: prenom.trim(), couleur, is_createur: true })
+          .insert({ trip_id: newTrip.id, prenom: prenom.trim(), couleur, is_createur: true, tel: digits })
           .select().single()
         if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
       }

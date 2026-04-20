@@ -64,6 +64,8 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   async function rejoindre(nomFinal?: string) {
     const nom = (nomFinal || prenom).trim()
     if (!nom) return
+    const digits = tel.replace(/\D/g,'')
+    if (digits.length !== 10) { setErreur('Numéro de téléphone requis (10 chiffres).'); return }
     setLoading(true); setErreur(null); setSuggestion(null)
 
     const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
@@ -82,8 +84,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       if (match) {
         const membreExistant = membresExistants.find((m: {prenom: string}) => m.prenom === match)
         if (membreExistant) {
-          const digits = tel.replace(/\D/g,'')
-          if (digits.length === 10) await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
+          await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
           setLoading(false)
           onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
           return
@@ -93,9 +94,8 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
-    const digits = tel.replace(/\D/g,'')
     const { data, error } = await supabase.from('membres')
-      .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst, tel: digits.length===10?digits:null})
+      .insert({trip_id:trip.id, prenom:nom, couleur, is_createur:isFirst, tel: digits})
       .select().single()
     if (!error && data) onJoin(data)
     else { setErreur('Erreur de connexion. Réessayez.'); setLoading(false) }
@@ -171,7 +171,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
           {/* Champ tel — visible quand pas de suggestion en attente */}
           {(!suggestion || suggestionConfirmee) && (
-            <input className="input" type="tel" placeholder="ex : 418 000 0000 (optionnel)"
+            <input className="input" type="tel" placeholder="Numéro de téléphone (ex : 418 000 0000)"
               value={tel} onChange={e=>onChangeTel(e.target.value)}
               style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
                 background:'rgba(255,255,255,.06)',
@@ -186,9 +186,9 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             </div>
           )}
 
-          <button className="btn" onClick={()=>rejoindre()} disabled={loading||!prenom.trim()}
-            style={{background:loading||!prenom.trim()?'rgba(255,255,255,.15)':'#fff',
-              color:loading||!prenom.trim()?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700}}>
+          <button className="btn" onClick={()=>rejoindre()} disabled={loading||!prenom.trim()||tel.replace(/\D/g,'').length!==10}
+            style={{background:loading||!prenom.trim()||tel.replace(/\D/g,'').length!==10?'rgba(255,255,255,.15)':'#fff',
+              color:loading||!prenom.trim()||tel.replace(/\D/g,'').length!==10?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700}}>
             {loading?'Connexion…':'Entrer dans le trip →'}
           </button>
         </div>
