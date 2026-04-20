@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
-import { CATEGORIES, getCat, getCatSvg } from '@/lib/types'
+import { CATEGORIES, getCat, getCatSvg, formatNomComplet } from '@/lib/types'
 import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders, withRetry } from '@/lib/utils'
 import { useNavFiltre } from '@/lib/useNavFiltre'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
@@ -267,7 +267,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         contenu: editContenu.trim() || undefined,
         lien: editLien.trim() || undefined,
         fichier_url: fichier_url || undefined,
-        membre_prenom: isCreateur ? undefined : membre.prenom,
+        membre_prenom: isCreateur ? undefined : formatNomComplet(membre.prenom, membre.nom),
         is_prive: editIsPrive,
         // Garantit auteur_id défini : évite qu'une card privée disparaisse du filtre
         // si l'auteur_id manquait du SELECT initial (cards créées avant la migration

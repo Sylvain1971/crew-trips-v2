@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
+import { normalizeName, normalizeTel, formatNomComplet } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
 import QRCode from 'qrcode'
 
@@ -15,11 +16,14 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [autorises, setAutorises] = useState<ParticipantAutorise[]>([])
   const [copied, setCopied] = useState(false)
   const [newPrenom, setNewPrenom] = useState('')
+  const [newNom, setNewNom] = useState('')
+  const [newTel, setNewTel] = useState('')
   const [showDelete, setShowDelete] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [editingPrenom, setEditingPrenom] = useState(false)
   const [newPrenomSelf, setNewPrenomSelf] = useState('')
+  const [newNomSelf, setNewNomSelf] = useState('')
   const [savingPrenom, setSavingPrenom] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [generatingShare, setGeneratingShare] = useState(false)
@@ -86,17 +90,55 @@ export default function Membres({trip, membre, onTripUpdate}: {
   }
 
   async function ajouterAutorise() {
-    if (!newPrenom.trim()) return
+    const prenomClean = newPrenom.trim()
+    const nomClean = newNom.trim()
+    const telClean = normalizeTel(newTel)
+    if (!prenomClean || !nomClean) { alert('Prénom et nom de famille requis.'); return }
+    if (newTel && telClean.length !== 10) { alert('Le téléphone doit contenir 10 chiffres ou être vide.'); return }
+
+    // Détection homonymes parfaits (même prénom + même nom)
+    const homonymes = autorises.filter(a =>
+      normalizeName(a.prenom) === normalizeName(prenomClean)
+      && normalizeName(a.nom || '') === normalizeName(nomClean)
+    )
+
+    if (homonymes.length > 0) {
+      // Cas homonyme : les deux DOIVENT avoir un téléphone différent
+      if (!telClean) {
+        alert(`Un autre participant porte déjà le prénom et nom "${prenomClean} ${nomClean}".\n\nPour permettre la connexion des deux, vous devez fournir un téléphone pour ce nouveau participant.`)
+        return
+      }
+      const existantSansTel = homonymes.find(h => !normalizeTel(h.tel || ''))
+      if (existantSansTel) {
+        alert(`Un autre participant porte déjà le prénom et nom "${prenomClean} ${nomClean}" sans téléphone.\n\nAjoutez d'abord un téléphone pour cet autre participant, puis réessayez.`)
+        return
+      }
+      const conflit = homonymes.find(h => normalizeTel(h.tel || '') === telClean)
+      if (conflit) { alert('Ce téléphone est déjà utilisé par un homonyme.'); return }
+    }
+
     const {data} = await supabase.from('participants_autorises')
-      .insert({trip_id:trip.id,prenom:newPrenom.trim()}).select().single()
-    if (data) { setAutorises(p=>[...p,data]); setNewPrenom('') }
+      .insert({
+        trip_id: trip.id,
+        prenom: prenomClean,
+        nom: nomClean,
+        tel: telClean || null
+      })
+      .select().single()
+    if (data) {
+      setAutorises(p => [...p, data])
+      setNewPrenom(''); setNewNom(''); setNewTel('')
+    }
   }
 
-  async function retirerAutorise(id: string, prenom: string) {
+  async function retirerAutorise(id: string, prenom: string, nom: string) {
     await supabase.from('participants_autorises').delete().eq('id',id)
     setAutorises(p=>p.filter(a=>a.id!==id))
     // Déconnecter le membre actif correspondant (jamais le créateur)
-    const m = membres.find(m=>m.prenom.toLowerCase()===prenom.toLowerCase())
+    const m = membres.find(m =>
+      normalizeName(m.prenom) === normalizeName(prenom)
+      && normalizeName(m.nom || '') === normalizeName(nom)
+    )
     if (m && !m.is_createur) {
       await supabase.from('membres').delete().eq('id',m.id)
       setMembres(p=>p.filter(x=>x.id!==m.id))
@@ -115,7 +157,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
 
   async function retirerMembre(m: Membre) {
     if (m.is_createur) return
-    if (!confirm(`Retirer ${m.prenom} du trip ?`)) return
+    if (!confirm(`Retirer ${formatNomComplet(m.prenom, m.nom)} du trip ?`)) return
     await supabase.from('membres').delete().eq('id',m.id)
     setMembres(p=>p.filter(x=>x.id!==m.id))
   }
@@ -136,19 +178,25 @@ export default function Membres({trip, membre, onTripUpdate}: {
   }
 
   async function savePrenom() {
-    if (!newPrenomSelf.trim() || newPrenomSelf.trim() === membre.prenom) { setEditingPrenom(false); return }
+    const prenomClean = newPrenomSelf.trim()
+    const nomClean = newNomSelf.trim()
+    if (!prenomClean) { setEditingPrenom(false); return }
+    if (prenomClean === membre.prenom && nomClean === (membre.nom || '')) { setEditingPrenom(false); return }
     setSavingPrenom(true)
-    await supabase.from('membres').update({ prenom: newPrenomSelf.trim() }).eq('id', membre.id)
-    // Mettre à jour le localStorage et la liste locale
+    await supabase.from('membres').update({ prenom: prenomClean, nom: nomClean }).eq('id', membre.id)
+    // Mettre à jour le localStorage + liste locale + localStorage crew-prenom/crew-nom
     try {
       const stored = localStorage.getItem(`crew2-${trip.code}`)
       if (stored) {
         const m = JSON.parse(stored)
-        m.prenom = newPrenomSelf.trim()
+        m.prenom = prenomClean
+        m.nom = nomClean
         localStorage.setItem(`crew2-${trip.code}`, JSON.stringify(m))
       }
+      localStorage.setItem('crew-prenom', prenomClean)
+      localStorage.setItem('crew-nom', nomClean)
     } catch {}
-    setMembres(p => p.map(m => m.id === membre.id ? { ...m, prenom: newPrenomSelf.trim() } : m))
+    setMembres(p => p.map(m => m.id === membre.id ? { ...m, prenom: prenomClean, nom: nomClean } : m))
     setSavingPrenom(false)
     setEditingPrenom(false)
   }
@@ -333,31 +381,57 @@ export default function Membres({trip, membre, onTripUpdate}: {
           </div>
           <div style={{fontSize:12,color:'var(--text-3)',marginBottom:12,lineHeight:1.5}}>
             {autorises.length===0
-              ? 'Liste vide — tout le monde peut entrer. Ajoutez des prénoms pour restreindre l\'accès.'
-              : `${autorises.length} prénom${autorises.length>1?'s':''} autorisé${autorises.length>1?'s':''}.`}
+              ? 'Liste vide — tout le monde peut entrer. Ajoutez des participants pour restreindre l\'accès.'
+              : `${autorises.length} participant${autorises.length>1?'s':''} autorisé${autorises.length>1?'s':''}.`}
           </div>
-          <div style={{display:'flex',gap:8,marginBottom:10}}>
-            <input className="input" placeholder="Prénom à autoriser" value={newPrenom}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
+            <input className="input" placeholder="Prénom" value={newPrenom}
               onChange={e=>setNewPrenom(e.target.value)}
+              style={{fontSize:13,padding:'9px 12px'}} />
+            <input className="input" placeholder="Nom de famille" value={newNom}
+              onChange={e=>setNewNom(e.target.value)}
               onKeyDown={e=>e.key==='Enter'&&ajouterAutorise()}
-              style={{flex:1,fontSize:13,padding:'9px 12px'}} />
-            <button onClick={ajouterAutorise} disabled={!newPrenom.trim()}
+              style={{fontSize:13,padding:'9px 12px'}} />
+          </div>
+          <div style={{display:'flex',gap:6,marginBottom:6}}>
+            <input className="input" type="tel" placeholder="Téléphone (optionnel)"
+              value={newTel}
+              onChange={e=>{
+                const d = e.target.value.replace(/\D/g,'').slice(0,10)
+                const f = d.length<=3 ? d : d.length<=6 ? `${d.slice(0,3)} ${d.slice(3)}` : `${d.slice(0,3)} ${d.slice(3,6)} ${d.slice(6)}`
+                setNewTel(f)
+              }}
+              onKeyDown={e=>e.key==='Enter'&&ajouterAutorise()}
+              style={{flex:1,fontSize:13,padding:'9px 12px',letterSpacing:1}} />
+            <button onClick={ajouterAutorise} disabled={!newPrenom.trim()||!newNom.trim()}
               style={{padding:'0 14px',borderRadius:10,border:'none',
-                background:newPrenom.trim()?'var(--forest)':'var(--border)',
+                background:(newPrenom.trim()&&newNom.trim())?'var(--forest)':'var(--border)',
                 color:'#fff',fontWeight:700,fontSize:16,cursor:'pointer'}}>+</button>
+          </div>
+          <div style={{fontSize:11,color:'var(--text-3)',marginBottom:10,lineHeight:1.5}}>
+            Téléphone : à remplir seulement si deux participants portent exactement le même prénom et nom.
           </div>
           {autorises.length>0 && (
             <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
               {autorises.map(a=>{
-                const connecte = membres.some(m=>m.prenom.toLowerCase()===a.prenom.toLowerCase())
+                const connecte = membres.some(m =>
+                  normalizeName(m.prenom) === normalizeName(a.prenom)
+                  && normalizeName(m.nom || '') === normalizeName(a.nom || '')
+                )
+                const aTel = !!normalizeTel(a.tel || '')
                 return (
                   <div key={a.id} style={{display:'flex',alignItems:'center',gap:6,
                     background:connecte?'#F0FDF4':'var(--sand)',borderRadius:20,
                     padding:'5px 10px 5px 12px',border:`1px solid ${connecte?'#BBF7D0':'var(--border)'}`}}>
                     <span style={{width:7,height:7,borderRadius:'50%',
                       background:connecte?'#16A34A':'#D1D5DB',flexShrink:0}} />
-                    <span style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{a.prenom}</span>
-                    <button onClick={()=>retirerAutorise(a.id,a.prenom)}
+                    <span style={{fontSize:13,fontWeight:600,color:'var(--text)'}}>{formatNomComplet(a.prenom, a.nom)}</span>
+                    {aTel && (
+                      <span title="Téléphone enregistré" style={{display:'inline-flex',color:'var(--text-3)'}}>
+                        <SvgIcon name="chat" size={11} />
+                      </span>
+                    )}
+                    <button onClick={()=>retirerAutorise(a.id,a.prenom,a.nom)}
                       style={{background:'none',border:'none',color:'var(--text-3)',
                         fontSize:16,cursor:'pointer',padding:'0 2px',lineHeight:1}}>×</button>
                   </div>
@@ -411,12 +485,18 @@ export default function Membres({trip, membre, onTripUpdate}: {
               {m.prenom[0].toUpperCase()}
             </div>
             <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:15,display:'flex',alignItems:'center',gap:7}}>
-                {m.prenom}
+              <div style={{fontWeight:700,fontSize:15,display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
+                {formatNomComplet(m.prenom, m.nom)}
                 {m.is_createur && (
                   <span style={{fontSize:10,fontWeight:700,color:'#B45309',background:'#FFFBEB',
                     border:'1px solid #FDE68A',borderRadius:6,padding:'2px 6px',letterSpacing:'.04em'}}>
                     ADMINISTRATEUR
+                  </span>
+                )}
+                {!m.nom && (
+                  <span title="Nom de famille manquant — à compléter" style={{fontSize:10,fontWeight:700,color:'#DC2626',background:'#FEF2F2',
+                    border:'1px solid #FECACA',borderRadius:6,padding:'2px 6px',letterSpacing:'.04em'}}>
+                    ⚠ NOM MANQUANT
                   </span>
                 )}
               </div>
@@ -424,28 +504,38 @@ export default function Membres({trip, membre, onTripUpdate}: {
                 {m.id===membre.id ? 'Vous · ' : ''}
                 Depuis {new Date(m.created_at).toLocaleDateString('fr-CA',{day:'numeric',month:'long'})}
               {m.id===membre.id && !editingPrenom && (
-                <button onClick={()=>{setNewPrenomSelf(m.prenom);setEditingPrenom(true)}}
+                <button onClick={()=>{setNewPrenomSelf(m.prenom);setNewNomSelf(m.nom||'');setEditingPrenom(true)}}
                   style={{background:"none",border:"none",padding:0,marginTop:3,cursor:"pointer",display:"flex",alignItems:"center",gap:5,color:"var(--green)"}}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3"/><path d="M8 16l2.5-.5 6.5-6.5a1.5 1.5 0 0 0-2.1-2.1L8.5 13.5 8 16z"/></svg>
-                  <span style={{fontSize:11,fontWeight:600,textDecoration:"underline"}}>Modifier le nom</span>
+                  <span style={{fontSize:11,fontWeight:600,textDecoration:"underline"}}>Modifier mon nom</span>
                 </button>
               )}
               {m.id===membre.id && editingPrenom && (
-                <div style={{display:"flex",gap:6,marginTop:6,alignItems:"center"}}>
-                  <input className="input" value={newPrenomSelf}
-                    onChange={e=>setNewPrenomSelf(e.target.value)}
-                    onKeyDown={e=>{if(e.key==="Enter") savePrenom(); if(e.key==="Escape") setEditingPrenom(false)}}
-                    autoFocus style={{flex:1,fontSize:13,padding:"6px 10px"}} />
-                  <button onClick={savePrenom} disabled={savingPrenom||!newPrenomSelf.trim()}
-                    style={{padding:"6px 12px",borderRadius:8,border:"none",background:"var(--forest)",
-                      color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer",flexShrink:0}}>
-                    {savingPrenom?"…":"OK"}
-                  </button>
-                  <button onClick={()=>setEditingPrenom(false)}
-                    style={{padding:"6px 10px",borderRadius:8,border:"1px solid var(--border)",
-                      background:"transparent",color:"var(--text-2)",fontSize:12,cursor:"pointer",flexShrink:0}}>
-                    ✕
-                  </button>
+                <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
+                  <div style={{display:"flex",gap:6}}>
+                    <input className="input" value={newPrenomSelf}
+                      placeholder="Prénom"
+                      onChange={e=>setNewPrenomSelf(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter") savePrenom(); if(e.key==="Escape") setEditingPrenom(false)}}
+                      autoFocus style={{flex:1,fontSize:13,padding:"6px 10px"}} />
+                    <input className="input" value={newNomSelf}
+                      placeholder="Nom de famille"
+                      onChange={e=>setNewNomSelf(e.target.value)}
+                      onKeyDown={e=>{if(e.key==="Enter") savePrenom(); if(e.key==="Escape") setEditingPrenom(false)}}
+                      style={{flex:1,fontSize:13,padding:"6px 10px"}} />
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={savePrenom} disabled={savingPrenom||!newPrenomSelf.trim()}
+                      style={{flex:1,padding:"7px 12px",borderRadius:8,border:"none",background:"var(--forest)",
+                        color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                      {savingPrenom?"…":"Enregistrer"}
+                    </button>
+                    <button onClick={()=>setEditingPrenom(false)}
+                      style={{padding:"7px 12px",borderRadius:8,border:"1px solid var(--border)",
+                        background:"transparent",color:"var(--text-2)",fontSize:12,cursor:"pointer"}}>
+                      Annuler
+                    </button>
+                  </div>
                 </div>
               )}
               </div>
@@ -465,7 +555,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
       {isCreateur && (
         <div style={{marginBottom:16}}>
           <button onClick={()=>{
-            const participants = autorises.map(a=>a.prenom)
+            const participants = autorises.map(a=>formatNomComplet(a.prenom, a.nom))
             const params = new URLSearchParams({
               nom: trip.nom,
               type: trip.type,

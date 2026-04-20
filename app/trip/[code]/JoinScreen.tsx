@@ -1,7 +1,13 @@
-﻿'use client'
+'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { COULEURS_MEMBRES, findClosestPrenom } from '@/lib/types'
+import {
+  COULEURS_MEMBRES,
+  matchParticipant,
+  normalizeName,
+  normalizeTel,
+  formatNomComplet
+} from '@/lib/types'
 import { countdown } from '@/lib/utils'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
@@ -16,20 +22,24 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   trip:Trip, autorises:ParticipantAutorise[], onJoin:(m:Membre)=>void
 }) {
   const [prenom, setPrenom] = useState('')
+  const [nom, setNom] = useState('')
   const [tel, setTel] = useState('')
-  const [suggestion, setSuggestion] = useState<string|null>(null)
-  const [suggestionConfirmee, setSuggestionConfirmee] = useState(false)
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
 
   useEffect(()=>{
     const t = setInterval(()=>setCd(countdown(trip.date_debut)), 60000)
-    try { const saved = localStorage.getItem('crew-tel'); if (saved) setTel(saved) } catch {}
+    try {
+      const saved = localStorage.getItem('crew-tel'); if (saved) setTel(saved)
+      const savedPrenom = localStorage.getItem('crew-prenom'); if (savedPrenom) setPrenom(savedPrenom)
+      const savedNom = localStorage.getItem('crew-nom'); if (savedNom) setNom(savedNom)
+    } catch {}
     return ()=>clearInterval(t)
   },[trip.date_debut])
 
   const listeActive = autorises.length > 0
+  const telComplet = normalizeTel(tel).length === 10
 
   function formatTel(val: string): string {
     const d = val.replace(/\D/g,'').slice(0,10)
@@ -41,70 +51,124 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   function onChangeTel(val: string) {
     const f = formatTel(val)
     setTel(f)
+    setErreur(null)
     if (f.replace(/\D/g,'').length === 10) try { localStorage.setItem('crew-tel', f) } catch {}
-  }
-
-  function valider(nom: string) {
-    if (!listeActive) return nom
-    const proche = findClosestPrenom(nom, autorises.map(a=>a.prenom))
-    if (!proche) return null
-    return proche
   }
 
   function onChangePrenom(val: string) {
     setPrenom(val)
     setErreur(null)
-    setSuggestion(null)
-    setSuggestionConfirmee(false)
-    if (!listeActive || val.trim().length < 2) return
-    const proche = findClosestPrenom(val, autorises.map(a=>a.prenom))
-    if (proche && proche.toLowerCase() !== val.toLowerCase()) setSuggestion(proche)
   }
 
-  async function rejoindre(nomFinal?: string) {
-    const nom = (nomFinal || prenom).trim()
-    if (!nom) return
-    const digits = tel.replace(/\D/g,'')
+  function onChangeNom(val: string) {
+    setNom(val)
+    setErreur(null)
+  }
+
+  async function rejoindre() {
+    const prenomClean = prenom.trim()
+    const nomClean = nom.trim()
+    const digits = normalizeTel(tel)
+
+    if (!prenomClean) { setErreur('Veuillez entrer votre prénom.'); return }
+    if (!nomClean) { setErreur('Veuillez entrer votre nom de famille.'); return }
     if (digits.length !== 10) { setErreur('Numéro de téléphone requis (10 chiffres).'); return }
-    setLoading(true); setErreur(null); setSuggestion(null)
 
-    const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
+    setLoading(true); setErreur(null)
 
-    // Si une liste de participants autorises existe, le prenom saisi doit correspondre
-    // EXACTEMENT (insensible a la casse) a une entree de la liste.
-    // Plus de fuzzy ici : "Fisher Man" ne doit jamais valider si seul "Bergman Fisher" est autorise.
-    let prenomNormalise = nom
+    // Étape 1 : si une liste d'autorisés existe, valider prénom+nom (+ tel si préenregistré)
+    let prenomFinal = prenomClean
+    let nomFinal = nomClean
     if (listeActive) {
-      const autorise = autorises.find(a => a.prenom.toLowerCase() === nom.toLowerCase())
-      if (!autorise) {
-        setErreur("Votre prénom n'est pas sur la liste. Contactez l'organisateur.")
-        setLoading(false); return
+      const r = matchParticipant(autorises, prenomClean, nomClean, tel)
+      if (!r.ok) {
+        setLoading(false)
+        if (r.raison === 'not_found') {
+          setErreur("Ces informations ne correspondent à aucun participant autorisé. Contactez l'organisateur.")
+        } else if (r.raison === 'tel_mismatch') {
+          setErreur('Ce numéro de téléphone ne correspond pas à ce participant.')
+        } else {
+          setErreur("Plusieurs participants portent ce nom. Contactez l'organisateur pour régulariser votre inscription.")
+        }
+        return
       }
-      prenomNormalise = autorise.prenom // utilise la casse exacte de la liste
+      // Utiliser la casse exacte de la liste autorisée
+      prenomFinal = r.participant.prenom
+      nomFinal = r.participant.nom || ''
     }
 
-    // Cherche un membre existant avec un match EXACT (insensible a la casse).
-    // Plus de fuzzy ici non plus : "Fisher Man" ne doit jamais etre reconnecte a "Bergman Fisher".
+    // Étape 2 : reconnexion — match exact sur prenom + nom + tel dans membres
+    const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
+
     if (membresExistants && membresExistants.length > 0) {
-      const membreExistant = membresExistants.find(
-        (m: {prenom: string}) => m.prenom.toLowerCase() === prenomNormalise.toLowerCase()
+      // Priorité 1 : match des 3 champs (le cas normal pour quelqu'un qui revient)
+      const membreExact = membresExistants.find((m: Membre) =>
+        normalizeName(m.prenom) === normalizeName(prenomFinal)
+        && normalizeName(m.nom || '') === normalizeName(nomFinal)
+        && normalizeTel(m.tel || '') === digits
       )
-      if (membreExistant) {
-        await supabase.from('membres').update({ tel: digits }).eq('id', membreExistant.id)
+      if (membreExact) {
+        try {
+          localStorage.setItem('crew-tel-locked', formatTel(digits))
+          localStorage.setItem('crew-prenom', prenomFinal)
+          localStorage.setItem('crew-nom', nomFinal)
+        } catch {}
         setLoading(false)
-        onJoin({...membreExistant, is_createur: membreExistant.is_createur ?? false})
+        onJoin({...membreExact, nom: membreExact.nom || '', is_createur: membreExact.is_createur ?? false})
+        return
+      }
+
+      // Priorité 2 : match prénom + nom sans tel (migre un ancien membre qui entre la 1re fois avec tel)
+      const membreNomSeul = membresExistants.find((m: Membre) =>
+        normalizeName(m.prenom) === normalizeName(prenomFinal)
+        && normalizeName(m.nom || '') === normalizeName(nomFinal)
+      )
+      if (membreNomSeul) {
+        // Conflit : prénom+nom existant mais tel différent => on refuse (sécurité anti-usurpation)
+        if (normalizeTel(membreNomSeul.tel || '') && normalizeTel(membreNomSeul.tel || '') !== digits) {
+          setErreur("Un autre participant porte déjà ce prénom et nom dans ce trip avec un téléphone différent. Contactez l'organisateur.")
+          setLoading(false); return
+        }
+        // Pas de tel enregistré (ou identique) => on complète
+        await supabase.from('membres').update({ tel: digits, nom: nomFinal }).eq('id', membreNomSeul.id)
+        try {
+          localStorage.setItem('crew-tel-locked', formatTel(digits))
+          localStorage.setItem('crew-prenom', prenomFinal)
+          localStorage.setItem('crew-nom', nomFinal)
+        } catch {}
+        setLoading(false)
+        onJoin({...membreNomSeul, nom: nomFinal, tel: digits, is_createur: membreNomSeul.is_createur ?? false})
         return
       }
     }
 
+    // Étape 3 : nouvelle inscription
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const { data, error } = await supabase.from('membres')
-      .insert({trip_id:trip.id, prenom:prenomNormalise, couleur, is_createur:isFirst, tel: digits})
+      .insert({
+        trip_id: trip.id,
+        prenom: prenomFinal,
+        nom: nomFinal,
+        couleur,
+        is_createur: isFirst,
+        tel: digits
+      })
       .select().single()
-    if (!error && data) onJoin(data)
-    else { setErreur('Erreur de connexion. Réessayez.'); setLoading(false) }
+    if (!error && data) {
+      try {
+        localStorage.setItem('crew-tel-locked', formatTel(digits))
+        localStorage.setItem('crew-prenom', prenomFinal)
+        localStorage.setItem('crew-nom', nomFinal)
+      } catch {}
+      onJoin(data)
+    } else {
+      setErreur('Erreur de connexion. Réessayez.')
+      setLoading(false)
+    }
   }
+
+  const canSubmit = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && !loading
 
   return (
     <main style={{minHeight:'100dvh',background:'var(--forest)',display:'flex',flexDirection:'column'}}>
@@ -143,47 +207,48 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
           <div style={{height:1,background:'rgba(255,255,255,.08)',marginBottom:18}}/>
 
-          <p style={{fontSize:14,color:'rgba(255,255,255,.7)',textAlign:'center',marginBottom:12,fontWeight:600}}>
-            Entrez votre Prénom et Nom
-          </p>
-
-          <input className="input" placeholder="Prénom et Nom" value={prenom}
-            onChange={e=>onChangePrenom(e.target.value)}
-            onKeyDown={e=>e.key==='Enter'&&rejoindre()}
-            autoFocus
-            style={{textAlign:'center',fontSize:18,fontWeight:600,marginBottom:10,
-              background:'rgba(255,255,255,.08)',border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
-          />
-
-          {/* Suggestion */}
-          {suggestion && !suggestionConfirmee && (
-            <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'10px 14px',marginBottom:10,border:'1px solid rgba(255,255,255,.15)'}}>
-              <p style={{fontSize:13,color:'rgba(255,255,255,.7)',marginBottom:8,textAlign:'center'}}>
-                Vouliez-vous dire <strong style={{color:'#fff'}}>{suggestion}</strong> ?
-              </p>
-              <div style={{display:'flex',gap:8}}>
-                <button onClick={()=>{ setPrenom(suggestion); setSuggestionConfirmee(true) }}
-                  style={{flex:1,padding:'8px',borderRadius:8,border:'none',background:'#fff',color:'var(--forest)',fontWeight:700,fontSize:13,cursor:'pointer'}}>
-                  Oui, c'est moi
-                </button>
-                <button onClick={()=>{ setSuggestion(null); setSuggestionConfirmee(false) }}
-                  style={{padding:'8px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,.2)',background:'transparent',color:'rgba(255,255,255,.6)',fontSize:13,cursor:'pointer'}}>
-                  Non
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Champ tel — visible quand pas de suggestion en attente */}
-          {(!suggestion || suggestionConfirmee) && (
-            <input className="input" type="tel" placeholder="Numéro de téléphone (ex : 418 000 0000)"
-              value={tel} onChange={e=>onChangeTel(e.target.value)}
-              style={{textAlign:'center',fontSize:15,marginBottom:10,letterSpacing:1,
-                background:'rgba(255,255,255,.06)',
-                border:`1.5px solid ${tel && tel.replace(/\D/g,'').length===10?'#4ade80':'rgba(255,255,255,.1)'}`,
-                color:'rgba(255,255,255,.8)'}}
+          {/* Prénom */}
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+              Prénom
+            </label>
+            <input className="input" placeholder="ex : Sylvain" value={prenom}
+              onChange={e=>onChangePrenom(e.target.value)}
+              autoFocus
+              style={{fontSize:16,fontWeight:600,
+                background:'rgba(255,255,255,.08)',
+                border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
             />
-          )}
+          </div>
+
+          {/* Nom de famille */}
+          <div style={{marginBottom:12}}>
+            <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+              Nom de famille
+            </label>
+            <input className="input" placeholder="ex : Bergeron" value={nom}
+              onChange={e=>onChangeNom(e.target.value)}
+              onKeyDown={e=>e.key==='Enter' && canSubmit && rejoindre()}
+              style={{fontSize:16,fontWeight:600,
+                background:'rgba(255,255,255,.08)',
+                border:`1.5px solid ${erreur?'#f87171':'rgba(255,255,255,.15)'}`,color:'#fff'}}
+            />
+          </div>
+
+          {/* Téléphone */}
+          <div style={{marginBottom:14}}>
+            <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
+              Numéro de téléphone
+            </label>
+            <input className="input" type="tel" placeholder="418 000 0000"
+              value={tel} onChange={e=>onChangeTel(e.target.value)}
+              onKeyDown={e=>e.key==='Enter' && canSubmit && rejoindre()}
+              style={{fontSize:15,letterSpacing:1,
+                background:'rgba(255,255,255,.06)',
+                border:`1.5px solid ${tel && telComplet ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                color:'rgba(255,255,255,.85)'}}
+            />
+          </div>
 
           {erreur && (
             <div style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.3)',borderRadius:10,padding:'10px 14px',marginBottom:10}}>
@@ -191,10 +256,10 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             </div>
           )}
 
-          <button className="btn" onClick={()=>rejoindre()} disabled={loading||!prenom.trim()||tel.replace(/\D/g,'').length!==10}
-            style={{background:loading||!prenom.trim()||tel.replace(/\D/g,'').length!==10?'rgba(255,255,255,.15)':'#fff',
-              color:loading||!prenom.trim()||tel.replace(/\D/g,'').length!==10?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700}}>
-            {loading?'Connexion…':'Entrer dans le trip →'}
+          <button className="btn" onClick={rejoindre} disabled={!canSubmit}
+            style={{background: !canSubmit ? 'rgba(255,255,255,.15)' : '#fff',
+              color: !canSubmit ? 'rgba(255,255,255,.4)' : 'var(--forest)',fontWeight:700}}>
+            {loading ? 'Connexion…' : 'Entrer dans le trip →'}
           </button>
         </div>
 

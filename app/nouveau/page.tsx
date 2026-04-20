@@ -31,10 +31,12 @@ function NouveauInner() {
   const [d1, setD1] = useState('')
   const [d2, setD2] = useState('')
   const [prenom, setPrenom] = useState('')
+  const [nomFamille, setNomFamille] = useState('')
   const [loading, setLoading] = useState(false)
 
   const telComplet = tel.replace(/\D/g,'').length === 10
-  const prenomOk = prenom.trim().length >= 2
+  const prenomOk = prenom.trim().length >= 1
+  const nomFamilleOk = nomFamille.trim().length >= 1
   const isDuplicate = searchParams.get('nom') !== null
 
   useEffect(() => {
@@ -43,6 +45,8 @@ function NouveauInner() {
       if (saved) setTel(saved)
       const savedPrenom = localStorage.getItem('crew-prenom')
       if (savedPrenom) setPrenom(savedPrenom)
+      const savedNomFamille = localStorage.getItem('crew-nom')
+      if (savedNomFamille) setNomFamille(savedNomFamille)
       // Vérifier si le code créateur est déjà validé en session
       const sessionCode = sessionStorage.getItem('crew-creator-validated')
       if (sessionCode === '1') setCodeValide(true)
@@ -70,9 +74,13 @@ function NouveauInner() {
   }
 
   async function creer() {
-    if (!nom.trim() || !telComplet) return
+    if (!nom.trim() || !telComplet || !prenomOk || !nomFamilleOk) return
     setLoading(true)
-    try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {}
+    try {
+      localStorage.setItem('crew-prenom', prenom.trim())
+      localStorage.setItem('crew-nom', nomFamille.trim())
+      localStorage.setItem('crew-tel-locked', tel)
+    } catch {}
     const digits = tel.replace(/\D/g,'')
     const code = genCode()
     const { error } = await supabase.from('trips').insert({
@@ -86,11 +94,11 @@ function NouveauInner() {
       const sourceCode = searchParams.get('sourceCode') || null
       const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
       if (!newTrip) throw new Error('Trip introuvable')
-      // Créer membre créateur avec le prénom saisi
-      if (prenom.trim()) {
+      // Créer membre créateur avec le prénom + nom saisis
+      if (prenom.trim() && nomFamille.trim()) {
         const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
         const { data: newMembre } = await supabase.from('membres')
-          .insert({ trip_id: newTrip.id, prenom: prenom.trim(), couleur, is_createur: true, tel: digits })
+          .insert({ trip_id: newTrip.id, prenom: prenom.trim(), nom: nomFamille.trim(), couleur, is_createur: true, tel: digits })
           .select().single()
         if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
       }
@@ -190,19 +198,27 @@ function NouveauInner() {
               style={{background:'rgba(255,255,255,.08)',
                 border:`1.5px solid ${tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
                 color:'#fff',letterSpacing:1,textAlign:'center'}}/>
-            <div style={{fontSize:11,color:telComplet?'#4ade80':'rgba(255,255,255,.35)',marginTop:5,textAlign:'center'}}>
-              {telComplet ? '✓ Numéro reconnu' : 'Identifie votre compte créateur'}
+            <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5,textAlign:'center'}}>
+              Identifie votre compte créateur
             </div>
           </div>
 
           <div className="field">
-            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM ET NOM</label>
-            <input className="input" placeholder="Inscrivez votre prénom et nom"
+            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM</label>
+            <input className="input" placeholder="ex : Sylvain"
               value={prenom} onChange={e=>setPrenom(e.target.value)}
               onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+          </div>
+
+          <div className="field">
+            <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE NOM DE FAMILLE</label>
+            <input className="input" placeholder="ex : Bergeron"
+              value={nomFamille} onChange={e=>setNomFamille(e.target.value)}
+              onBlur={()=>{ try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
             <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
-              Deviendra votre nom d'administrateur dans ce trip
+              Deviendra votre nom d&apos;administrateur dans ce trip
             </div>
           </div>
 
@@ -268,9 +284,9 @@ function NouveauInner() {
             </div>
           </div>
 
-          <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet||!prenomOk}
-            style={{background:loading||!nom.trim()||!telComplet||!prenomOk?'rgba(255,255,255,.15)':'#fff',
-              color:loading||!nom.trim()||!telComplet||!prenomOk?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
+          <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk}
+            style={{background:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.15)':'#fff',
+              color:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
             {loading?'Création en cours…':isDuplicate?'Créer ce nouveau trip →':'Créer le trip →'}
           </button>
         </div>

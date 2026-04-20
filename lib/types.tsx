@@ -12,7 +12,7 @@ export interface Trip {
   created_at: string
 }
 export interface Membre {
-  id: string; trip_id: string; prenom: string; couleur: string
+  id: string; trip_id: string; prenom: string; nom: string; couleur: string
   is_createur: boolean; tel?: string; created_at: string
 }
 export interface InfoCard {
@@ -27,7 +27,7 @@ export interface Message {
   membre_id?: string; membre_prenom?: string; membre_couleur?: string; created_at: string
 }
 export interface ParticipantAutorise {
-  id: string; trip_id: string; prenom: string; created_at: string
+  id: string; trip_id: string; prenom: string; nom: string; tel?: string; created_at: string
 }
 export const CATEGORIES = [
   { id: 'transport',  label: 'Vols & Transport',   icon: '✈️', color: '#2563EB', bg: '#EFF6FF' },
@@ -101,34 +101,71 @@ export function getCatSvg(id: string, size: number = 16, tripType?: string): Rea
     default: return null
   }
 }
-export function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length
-  const dp: number[][] = Array.from({length:m+1}, (_,i) =>
-    Array.from({length:n+1}, (_,j) => i===0?j:j===0?i:0))
-  for (let i=1;i<=m;i++)
-    for (let j=1;j<=n;j++)
-      dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1])
-  return dp[m][n]
+// =============================================================================
+// Helpers de matching pour l'entrée d'un participant (prénom + nom + tel)
+// =============================================================================
+
+/** Normalise un nom pour comparaison : trim + lowercase. */
+export function normalizeName(s: string): string {
+  return (s || '').trim().toLowerCase()
 }
-export function findClosestPrenom(input: string, list: string[]): string|null {
-  const inp = input.toLowerCase().trim()
-  if (inp.length < 2) return null
-  // 1. Match exact complet
-  const exact = list.find(p=>p.toLowerCase()===inp)
-  if (exact) return exact
-  // 2. Un mot tapé correspond exactement à un mot dans la liste (ex: "Bergeron" dans "Sylvain Bergeron")
-  const inpWords = inp.split(/\s+/).filter(w=>w.length>=2)
-  const wordMatch = list.find(p=>{
-    const pWords = p.toLowerCase().split(/\s+/)
-    return inpWords.some(w => pWords.includes(w))
-  })
-  if (wordMatch) return wordMatch
-  // 3. Levenshtein <=2 sur le prénom COMPLET seulement (pas sur les mots individuels)
-  // Seulement si la saisie fait au moins 4 caractères (évite les faux positifs courts)
-  if (inp.length >= 4) {
-    for (const p of list) {
-      if (levenshtein(inp, p.toLowerCase()) <= 2) return p
-    }
+
+/** Normalise un numéro de téléphone : ne garde que les chiffres. */
+export function normalizeTel(s: string): string {
+  return (s || '').replace(/\D/g, '')
+}
+
+/** Affiche "Prénom Nom" — ou juste "Prénom" si nom vide (cas hérité). */
+export function formatNomComplet(prenom: string, nom?: string): string {
+  const n = (nom || '').trim()
+  return n ? `${prenom} ${n}` : prenom
+}
+
+export type MatchResult =
+  | { ok: true; participant: ParticipantAutorise }
+  | { ok: false; raison: 'not_found' | 'tel_mismatch' | 'homonyme_sans_tel' }
+
+/**
+ * Cherche un participant autorisé correspondant aux 3 champs.
+ *
+ * Règles (alignées sur la décision produit du 2026-04-20) :
+ * 1. Match exact insensible à la casse sur (prenom, nom).
+ * 2. Si 0 match => 'not_found'.
+ * 3. Si 1 match :
+ *    - si admin a préenregistré un tel pour ce participant => il DOIT matcher
+ *    - sinon => ok (le tel saisi par l'invité est accepté tel quel)
+ * 4. Si 2+ matches (vrais homonymes prénom+nom) :
+ *    - l'admin DOIT avoir fourni un tel différent pour chaque
+ *    - on cherche celui dont le tel matche ; sinon 'homonyme_sans_tel' ou 'tel_mismatch'
+ */
+export function matchParticipant(
+  autorises: ParticipantAutorise[],
+  prenomInput: string,
+  nomInput: string,
+  telInput: string
+): MatchResult {
+  const p = normalizeName(prenomInput)
+  const n = normalizeName(nomInput)
+  const t = normalizeTel(telInput)
+
+  const candidats = autorises.filter(
+    a => normalizeName(a.prenom) === p && normalizeName(a.nom || '') === n
+  )
+
+  if (candidats.length === 0) return { ok: false, raison: 'not_found' }
+
+  if (candidats.length === 1) {
+    const seul = candidats[0]
+    const telEnregistre = normalizeTel(seul.tel || '')
+    if (telEnregistre && telEnregistre !== t) return { ok: false, raison: 'tel_mismatch' }
+    return { ok: true, participant: seul }
   }
-  return null
+
+  // 2+ homonymes : le tel doit départager
+  const match = candidats.find(a => normalizeTel(a.tel || '') === t && t.length > 0)
+  if (match) return { ok: true, participant: match }
+  // Au moins un des homonymes n'a pas de tel => impossible de départager
+  const ilManqueUnTel = candidats.some(a => !normalizeTel(a.tel || ''))
+  if (ilManqueUnTel) return { ok: false, raison: 'homonyme_sans_tel' }
+  return { ok: false, raison: 'tel_mismatch' }
 }

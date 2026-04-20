@@ -6,6 +6,7 @@ import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import { canShareFiles, shareAllTogether, shareOneByOne } from '@/lib/shareFiles'
 import type { Message, Membre, Trip } from '@/lib/types'
+import { formatNomComplet } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
 
 // Lightbox chargee uniquement quand on ouvre une photo (evite ~18KB gzip de
@@ -336,7 +337,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           contenu: pendingSnapshot[i].caption || undefined,
           image_url: blobUrl,
           membre_id: membre.id,
-          membre_prenom: membre.prenom,
+          membre_prenom: formatNomComplet(membre.prenom, membre.nom),
           membre_couleur: membre.couleur,
           created_at: new Date().toISOString(),
           _pending: true,
@@ -370,7 +371,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
             contenu: caption || null,
             image_url,
             membre_id: membre.id,
-            membre_prenom: membre.prenom,
+            membre_prenom: formatNomComplet(membre.prenom, membre.nom),
             membre_couleur: membre.couleur,
           }).select().single()
           if (error) throw error
