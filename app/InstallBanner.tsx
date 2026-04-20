@@ -8,7 +8,13 @@ export default function InstallBanner() {
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const pathname = usePathname()
 
-  const showOnPage = pathname === '/' || (pathname.startsWith('/trip/') && !pathname.includes('/print'))
+  // Afficher le banner UNIQUEMENT sur les pages de trip, pas sur /.
+  // Raison: l'install PWA prend l'URL courante comme start_url (depuis qu'on
+  // a retire start_url du manifest). Si on autorisait l'install depuis /,
+  // la PWA pointerait vers / et l'utilisateur serait bloque (pas d'identite
+  // dans le contexte PWA isole). Depuis /trip/[code], la PWA pointera sur
+  // son trip et JoinScreen gerera la reconnexion.
+  const showOnPage = pathname.startsWith('/trip/') && !pathname.includes('/print')
 
   useEffect(() => {
     if (!showOnPage) { setShow(false); return }
