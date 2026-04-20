@@ -205,7 +205,7 @@ function NouveauInner() {
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM</label>
-            <input className="input" placeholder="ex : Sylvain"
+            <input className="input" placeholder="Votre prénom"
               value={prenom} onChange={e=>setPrenom(e.target.value)}
               onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
@@ -213,7 +213,7 @@ function NouveauInner() {
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE NOM DE FAMILLE</label>
-            <input className="input" placeholder="ex : Bergeron"
+            <input className="input" placeholder="Votre nom de famille"
               value={nomFamille} onChange={e=>setNomFamille(e.target.value)}
               onBlur={()=>{ try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
               style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>

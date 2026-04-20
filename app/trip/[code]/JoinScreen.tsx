@@ -212,7 +212,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
               Prénom
             </label>
-            <input className="input" placeholder="ex : Sylvain" value={prenom}
+            <input className="input" placeholder="Votre prénom" value={prenom}
               onChange={e=>onChangePrenom(e.target.value)}
               autoFocus
               style={{fontSize:16,fontWeight:600,
@@ -226,7 +226,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
               Nom de famille
             </label>
-            <input className="input" placeholder="ex : Bergeron" value={nom}
+            <input className="input" placeholder="Votre nom de famille" value={nom}
               onChange={e=>onChangeNom(e.target.value)}
               onKeyDown={e=>e.key==='Enter' && canSubmit && rejoindre()}
               style={{fontSize:16,fontWeight:600,

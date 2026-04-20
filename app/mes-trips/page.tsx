@@ -154,11 +154,11 @@ export default function MesTripsPage() {
                 color:'var(--forest)',fontWeight:700,fontSize:15,cursor:'pointer'}}>
               Créer un nouveau trip →
             </button>
-            <button onClick={()=>router.push('/')}
+            <button onClick={()=>router.push('/retrouver')}
               style={{padding:'13px 20px',borderRadius:12,
                 border:'1.5px solid rgba(255,255,255,.2)',background:'transparent',
                 color:'rgba(255,255,255,.8)',fontWeight:600,fontSize:14,cursor:'pointer'}}>
-              J&apos;ai un lien d&apos;invitation
+              Retrouver mes trips
             </button>
           </div>
 
