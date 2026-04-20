@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fraunces } from 'next/font/google'
 import './globals.css'
 import InstallBanner from './InstallBanner'
+import ServiceWorkerRegister from './ServiceWorkerRegister'
 
 // Police de marque : Fraunces serif editorial, utilisee pour les titres hero
 // uniquement (Crew Trips en brand signature). Pour tout le reste de l'app
@@ -46,7 +47,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" className={fraunces.variable}>
-      <body>{children}<InstallBanner /></body>
+      <body>{children}<ServiceWorkerRegister /><InstallBanner /></body>
     </html>
   )
 }
