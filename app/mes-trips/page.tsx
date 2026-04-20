@@ -102,19 +102,6 @@ export default function MesTripsPage() {
     setLoading(false)
   }
 
-  function changerUtilisateur() {
-    const msg = "Changer d'utilisateur ?\n\nCela effacera votre identité enregistrée sur cet appareil. Pour revenir, vous devrez cliquer un lien d'invitation ou créer un nouveau trip."
-    if (!confirm(msg)) return
-    try {
-      localStorage.removeItem('crew-tel-locked')
-      localStorage.removeItem('crew-tel')
-      localStorage.removeItem('crew-prenom')
-      localStorage.removeItem('crew-nom')
-    } catch {}
-    // Redirection vers l'accueil — on ne libère PAS le champ sur place (c'était la faille)
-    router.push('/')
-  }
-
   function fmtDate(d?: string) {
     if (!d) return ''
     return new Date(d + 'T00:00:00').toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -283,15 +270,6 @@ export default function MesTripsPage() {
               + Créer un nouveau trip
             </button>
           )}
-
-          {/* Bouton "Changer d'utilisateur" — toujours visible en mode autorisé */}
-          <button onClick={changerUtilisateur}
-            style={{width:'100%',marginTop:16,padding:'11px',borderRadius:10,
-              border:'1px solid rgba(255,255,255,.12)',background:'transparent',
-              color:'rgba(255,255,255,.4)',fontWeight:500,fontSize:12,cursor:'pointer',
-              display:'inline-flex',alignItems:'center',justifyContent:'center',gap:6}}>
-            Changer d&apos;utilisateur
-          </button>
         </div>
       </div>
     </main>
