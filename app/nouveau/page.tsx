@@ -33,6 +33,11 @@ function NouveauInner() {
   const [prenom, setPrenom] = useState('')
   const [nomFamille, setNomFamille] = useState('')
   const [loading, setLoading] = useState(false)
+  // Verrou d'identite pose precedemment (JoinScreen ou creation anterieure).
+  // Si present, les 3 champs identite (prenom/nom/tel) sont readOnly : un
+  // appareil ne peut pas etre utilise pour se ré-identifier sous un autre
+  // nom via /nouveau, ce qui ecraserait le verrou existant.
+  const [identityLocked, setIdentityLocked] = useState(false)
 
   const telComplet = tel.replace(/\D/g,'').length === 10
   const prenomOk = prenom.trim().length >= 1
@@ -41,12 +46,25 @@ function NouveauInner() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('crew-tel')
-      if (saved) setTel(saved)
-      const savedPrenom = localStorage.getItem('crew-prenom')
-      if (savedPrenom) setPrenom(savedPrenom)
-      const savedNomFamille = localStorage.getItem('crew-nom')
-      if (savedNomFamille) setNomFamille(savedNomFamille)
+      // Identité verrouillée : crew-tel-locked posé par JoinScreen ou une
+      // création précédente. On lit les 3 valeurs et on gèle les champs.
+      const locked = localStorage.getItem('crew-tel-locked')
+      if (locked && locked.replace(/\D/g,'').length === 10) {
+        setIdentityLocked(true)
+        setTel(locked)
+        const lockedPrenom = localStorage.getItem('crew-prenom') || ''
+        const lockedNom = localStorage.getItem('crew-nom') || ''
+        if (lockedPrenom) setPrenom(lockedPrenom)
+        if (lockedNom) setNomFamille(lockedNom)
+      } else {
+        // Pas de verrou : pré-remplir depuis les anciennes clés pour UX (non bloquant)
+        const saved = localStorage.getItem('crew-tel')
+        if (saved) setTel(saved)
+        const savedPrenom = localStorage.getItem('crew-prenom')
+        if (savedPrenom) setPrenom(savedPrenom)
+        const savedNomFamille = localStorage.getItem('crew-nom')
+        if (savedNomFamille) setNomFamille(savedNomFamille)
+      }
       // Vérifier si le code créateur est déjà validé en session
       const sessionCode = sessionStorage.getItem('crew-creator-validated')
       if (sessionCode === '1') setCodeValide(true)
@@ -76,12 +94,33 @@ function NouveauInner() {
   async function creer() {
     if (!nom.trim() || !telComplet || !prenomOk || !nomFamilleOk) return
     setLoading(true)
-    try {
-      localStorage.setItem('crew-prenom', prenom.trim())
-      localStorage.setItem('crew-nom', nomFamille.trim())
-      localStorage.setItem('crew-tel-locked', tel)
-    } catch {}
-    const digits = tel.replace(/\D/g,'')
+
+    // Si l'identite est verrouillee, on utilise les valeurs du localStorage
+    // comme source de verite (pas du state React) pour empecher tout bypass
+    // via devtools ou script d'extension.
+    let prenomFinal = prenom.trim()
+    let nomFinal = nomFamille.trim()
+    let telFinal = tel
+    if (identityLocked) {
+      try {
+        const lockedTel = localStorage.getItem('crew-tel-locked') || ''
+        const lockedPrenom = localStorage.getItem('crew-prenom') || ''
+        const lockedNom = localStorage.getItem('crew-nom') || ''
+        if (lockedTel.replace(/\D/g,'').length === 10) telFinal = lockedTel
+        if (lockedPrenom) prenomFinal = lockedPrenom
+        if (lockedNom) nomFinal = lockedNom
+      } catch {}
+    } else {
+      // Pas de verrou : cette creation pose l'identite pour la premiere fois
+      try {
+        localStorage.setItem('crew-prenom', prenomFinal)
+        localStorage.setItem('crew-nom', nomFinal)
+        localStorage.setItem('crew-tel-locked', telFinal)
+        localStorage.setItem('crew-tel', telFinal)
+      } catch {}
+    }
+
+    const digits = telFinal.replace(/\D/g,'')
     const code = genCode()
     const { error } = await supabase.from('trips').insert({
       code, nom: nom.trim(), type,
@@ -94,11 +133,11 @@ function NouveauInner() {
       const sourceCode = searchParams.get('sourceCode') || null
       const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
       if (!newTrip) throw new Error('Trip introuvable')
-      // Créer membre créateur avec le prénom + nom saisis
-      if (prenom.trim() && nomFamille.trim()) {
+      // Créer membre créateur avec le prénom + nom saisis (ou verrouilles)
+      if (prenomFinal && nomFinal) {
         const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
         const { data: newMembre } = await supabase.from('membres')
-          .insert({ trip_id: newTrip.id, prenom: prenom.trim(), nom: nomFamille.trim(), couleur, is_createur: true, tel: digits })
+          .insert({ trip_id: newTrip.id, prenom: prenomFinal, nom: nomFinal, couleur, is_createur: true, tel: digits })
           .select().single()
         if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
       }
@@ -191,13 +230,27 @@ function NouveauInner() {
             </div>
           )}
 
+          {identityLocked && (
+            <div style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:10,padding:'10px 14px',marginBottom:16,textAlign:'center'}}>
+              <div style={{fontSize:11,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase',marginBottom:3}}>
+                🔒 Identité verrouillée sur cet appareil
+              </div>
+              <div style={{fontSize:12,color:'rgba(255,255,255,.45)',lineHeight:1.5}}>
+                Pour changer d&apos;identité, utilisez « Changer d&apos;utilisateur » depuis Mes trips.
+              </div>
+            </div>
+          )}
+
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)',textAlign:'center',display:'block'}}>VOTRE NUMÉRO DE TÉLÉPHONE</label>
             <input className="input" type="tel" placeholder="ex : 418 000 0000"
-              value={tel} onChange={e=>onTelChange(e.target.value)}
-              style={{background:'rgba(255,255,255,.08)',
-                border:`1.5px solid ${tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
-                color:'#fff',letterSpacing:1,textAlign:'center'}}/>
+              value={tel}
+              onChange={e=>!identityLocked && onTelChange(e.target.value)}
+              readOnly={identityLocked}
+              style={{background:identityLocked?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)',
+                border:`1.5px solid ${identityLocked?'rgba(255,255,255,.1)':tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
+                color:identityLocked?'rgba(255,255,255,.6)':'#fff',letterSpacing:1,textAlign:'center',
+                cursor:identityLocked?'not-allowed':'text'}}/>
             <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5,textAlign:'center'}}>
               Identifie votre compte créateur
             </div>
@@ -206,17 +259,27 @@ function NouveauInner() {
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE PRÉNOM</label>
             <input className="input" placeholder="Votre prénom"
-              value={prenom} onChange={e=>setPrenom(e.target.value)}
-              onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
-              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+              value={prenom}
+              onChange={e=>!identityLocked && setPrenom(e.target.value)}
+              onBlur={()=>{ if (!identityLocked) try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
+              readOnly={identityLocked}
+              style={{background:identityLocked?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)',
+                border:`1.5px solid ${identityLocked?'rgba(255,255,255,.1)':'rgba(255,255,255,.15)'}`,
+                color:identityLocked?'rgba(255,255,255,.6)':'#fff',
+                cursor:identityLocked?'not-allowed':'text'}}/>
           </div>
 
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>VOTRE NOM DE FAMILLE</label>
             <input className="input" placeholder="Votre nom de famille"
-              value={nomFamille} onChange={e=>setNomFamille(e.target.value)}
-              onBlur={()=>{ try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
-              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+              value={nomFamille}
+              onChange={e=>!identityLocked && setNomFamille(e.target.value)}
+              onBlur={()=>{ if (!identityLocked) try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
+              readOnly={identityLocked}
+              style={{background:identityLocked?'rgba(255,255,255,.04)':'rgba(255,255,255,.08)',
+                border:`1.5px solid ${identityLocked?'rgba(255,255,255,.1)':'rgba(255,255,255,.15)'}`,
+                color:identityLocked?'rgba(255,255,255,.6)':'#fff',
+                cursor:identityLocked?'not-allowed':'text'}}/>
             <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
               Deviendra votre nom d&apos;administrateur dans ce trip
             </div>
