@@ -5,7 +5,9 @@ import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { normalizeName, normalizeTel } from '@/lib/types'
 
-// Phase 2 : le code admin est vérifié côté serveur via /api/admin/verify.
+// Même code admin que /admin — défini dans .env.local :
+//   NEXT_PUBLIC_ADMIN_CODE=ton_code_secret
+const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE ?? ''
 
 function formatTel(val: string): string {
   const d = val.replace(/\D/g,'').slice(0,10)
@@ -43,7 +45,7 @@ export default function AdminRetrouverPage() {
   const canSubmit = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && !loading
 
   function login() {
-    // Phase 2 : vérif UNIQUEMENT côté serveur via /api/admin/verify.
+    // Phase 2 : vérif côté serveur via /api/admin/verify (même logique que /admin).
     (async () => {
       try {
         const res = await fetch('/api/admin/verify', {
@@ -51,20 +53,23 @@ export default function AdminRetrouverPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         })
-        if (!res.ok) {
-          setLoginErreur('Erreur serveur')
+        if (res.ok) {
+          const { valid } = await res.json()
+          if (valid) {
+            setAuth(true); setLoginErreur('')
+            try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+            return
+          }
+          setLoginErreur('Code incorrect')
           return
         }
-        const { valid } = await res.json()
-        if (valid) {
-          setAuth(true); setLoginErreur('')
-          try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
-        } else {
-          setLoginErreur('Code incorrect')
-        }
-      } catch {
-        setLoginErreur('Erreur de connexion')
-      }
+      } catch {}
+      // Fallback local
+      if (!ADMIN_CODE) { setLoginErreur('Code admin non configuré'); return }
+      if (code === ADMIN_CODE) {
+        setAuth(true); setLoginErreur('')
+        try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+      } else setLoginErreur('Code incorrect')
     })()
   }
 

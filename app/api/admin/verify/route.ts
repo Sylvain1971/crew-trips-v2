@@ -15,9 +15,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const code = typeof body?.code === 'string' ? body.code : ''
 
-    // Le code admin est stocké dans ADMIN_CODE (env var serveur, sans préfixe
-    // NEXT_PUBLIC_) pour éviter qu'il soit exposé dans le bundle JS client.
-    const serverCode = process.env.ADMIN_CODE || ''
+    // On lit ADMIN_CODE côté serveur. Fallback vers NEXT_PUBLIC_ADMIN_CODE pour
+    // la transition : tant que la variable serveur n'a pas été définie sur
+    // Vercel, on garde le comportement précédent.
+    const serverCode = process.env.ADMIN_CODE || process.env.NEXT_PUBLIC_ADMIN_CODE || ''
 
     if (!serverCode) {
       // Pas configuré : refuser par défaut

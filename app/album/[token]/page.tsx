@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
-import { toSignedUrlsBatch } from '@/lib/storage'
 import type { Message, Trip } from '@/lib/types'
 import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from 'react-zoom-pan-pinch'
 import { SvgIcon } from '@/lib/svgIcons'
@@ -65,20 +64,7 @@ export default function AlbumPublicPage({ params }: { params: Promise<{ token: s
 
       if (cancelled) return
       setTrip(t as Trip)
-      // Phase 2 : bucket privé. Signer toutes les URL photos pour affichage.
-      const photosList = (p || []) as Message[]
-      const urls = photosList.map(ph => ph.image_url).filter((u): u is string => !!u)
-      if (urls.length > 0) {
-        const signed = await toSignedUrlsBatch(urls)
-        let i = 0
-        for (const ph of photosList) {
-          if (ph.image_url) {
-            ph.image_url = signed[i] || ph.image_url
-            i++
-          }
-        }
-      }
-      setPhotos(photosList)
+      setPhotos((p || []) as Message[])
       setState('ready')
     })()
     return () => { cancelled = true }
