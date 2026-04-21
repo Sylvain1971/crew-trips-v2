@@ -192,10 +192,15 @@ export async function apiGetAutorises(tripCode: string): Promise<{ success: bool
   return data as { success: boolean; autorises?: unknown[]; message?: string }
 }
 
-export async function apiGetMembreById(membreId: string): Promise<{ success: boolean; membre?: Membre; message?: string }> {
+export async function apiGetMembreById(membreId: string, tripCode?: string): Promise<{ success: boolean; membre?: Membre; token?: string; message?: string }> {
   const { data, error } = await supabase.rpc('get_membre_by_id', { p_membre_id: membreId })
   if (error) return { success: false, message: error.message }
-  return data as { success: boolean; membre?: Membre; message?: string }
+  const result = data as { success: boolean; membre?: Membre; token?: string; message?: string }
+  // Phase 2 : stocker le token automatiquement si disponible
+  if (result.success && result.token && tripCode) {
+    setStoredToken(tripCode, result.token)
+  }
+  return result
 }
 
 // ====================================================================

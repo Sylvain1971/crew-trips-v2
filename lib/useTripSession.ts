@@ -39,8 +39,9 @@ async function tryLocalStorage(code: string): Promise<Membre | null> {
     const raw = localStorage.getItem(`crew2-${code}`)
     if (!raw) return null
     const m = JSON.parse(raw)
-    // Phase 2 : RPC first, fallback direct
-    const rpc = await apiGetMembreById(m.id)
+    // Phase 2 : RPC first, fallback direct. On passe le tripCode pour que
+    // le wrapper stocke automatiquement le token retourne.
+    const rpc = await apiGetMembreById(m.id, code)
     if (rpc.success && rpc.membre) {
       return { ...rpc.membre, is_createur: rpc.membre.is_createur ?? false }
     }
@@ -102,8 +103,8 @@ async function trySWCache(code: string): Promise<Membre | null> {
   if (!raw) return null
   try {
     const m = JSON.parse(raw)
-    // Phase 2 : RPC first, fallback direct
-    const rpc = await apiGetMembreById(m.id)
+    // Phase 2 : RPC first, fallback direct. On passe tripCode pour stocker le token auto.
+    const rpc = await apiGetMembreById(m.id, code)
     if (rpc.success && rpc.membre) {
       const membre = { ...rpc.membre, is_createur: rpc.membre.is_createur ?? false }
       try { localStorage.setItem(`crew2-${code}`, JSON.stringify(membre)) } catch {}
