@@ -9,9 +9,8 @@ import InfoCardView from './InfoCardView'
 import { SvgIcon } from '@/lib/svgIcons'
 import { TripIcon } from '@/lib/tripIcons'
 
-const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
-// Ordre d'affichage des chips dans les sheets Ajouter/Modifier — même ordre que les filtres
-const CHIP_ORDER = ['itineraire','transport','lodge','permis','equipement','infos','meteo','resto','liens']
+// Ordre unique : filtres, onglet "Tout", chips des sheets, PDF — tout utilise cet ordre
+const CAT_ORDER = ['itineraire','transport','lodge','permis','equipement','infos','meteo','resto','liens']
 
 function formatSize(b: number) {
   if (b < 1024) return `${b} B`
@@ -692,7 +691,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         <div className="sheet-title">Modifier</div>
         <div className="field"><label>Catégorie</label>
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6}}>
-            {CHIP_ORDER.map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;const active=editCat===c.id;return(
+            {CAT_ORDER.map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;const active=editCat===c.id;return(
               <button key={c.id} onClick={()=>setEditCat(c.id)} style={{
                 padding:'7px 3px',borderRadius:14,
                 border:`${active?2:1.5}px solid ${active?c.color:'var(--border)'}`,
@@ -768,7 +767,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <div style={{display:'grid',gridTemplateColumns:'repeat(5,minmax(0,1fr))',gap:6}}>
             {/* Case vide en première position (haut-gauche) pour rythme visuel */}
             <div style={{visibility:'hidden'}} aria-hidden="true" />
-            {CHIP_ORDER.map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;const active=cat===c.id;return(
+            {CAT_ORDER.map(id=>{const c=CATEGORIES.find(x=>x.id===id)!;const active=cat===c.id;return(
               <button key={c.id} onClick={()=>setCat(c.id)} style={{
                 padding:'7px 3px',borderRadius:14,
                 border:`${active?2:1.5}px solid ${active?c.color:'var(--border)'}`,

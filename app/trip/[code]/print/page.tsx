@@ -7,7 +7,7 @@ import { SvgIcon } from '@/lib/svgIcons'
 import CardContent from '../CardContent'
 import type { Trip, InfoCard } from '@/lib/types'
 
-const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
+const CAT_ORDER = ['itineraire','transport','lodge','permis','equipement','infos','meteo','resto','liens']
 
 export default function PrintPage({ params: paramsPromise }: { params: Promise<{ code: string }> }) {
   const params = use(paramsPromise)
@@ -24,7 +24,9 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
       setTrip(t)
       const { data: c } = await supabase.from('infos').select('*').eq('trip_id', t.id).order('created_at', { ascending: true })
       if (c) {
-        const sorted = [...c].sort((a, b) => {
+        // Exclure les cards privées du PDF (partage/impression public)
+        const visibles = c.filter(card => !card.is_prive)
+        const sorted = [...visibles].sort((a, b) => {
           const ai = CAT_ORDER.indexOf(a.categorie), bi = CAT_ORDER.indexOf(b.categorie)
           if (ai !== bi) return ai - bi
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -76,6 +78,11 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           .no-print { display: none !important; }
           a { color: inherit; }
           .wrap { padding: 0 !important; max-width: 100% !important; box-shadow: none !important; }
+          .card, .card-content, .card-link, .lodge-val { overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+          .card img { max-width: 100% !important; height: auto !important; }
+          .card { page-break-inside: avoid; break-inside: avoid; }
+          .section { page-break-inside: auto; }
+          .section-title { page-break-after: avoid; break-after: avoid; }
         }
         .back-btn { position: fixed; top: 16px; left: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 16px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; align-items: center; gap: 6px; }
         .print-btn { position: fixed; top: 16px; right: 16px; background: #0F2D0F; color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-size: 14px; font-weight: 700; cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,.2); display: none; }
