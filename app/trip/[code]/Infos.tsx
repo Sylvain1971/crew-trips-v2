@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
-import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat, getCatSvg, formatNomComplet } from '@/lib/types'
 import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders, withRetry } from '@/lib/utils'
@@ -8,6 +7,7 @@ import { useNavFiltre } from '@/lib/useNavFiltre'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
 import { SvgIcon } from '@/lib/svgIcons'
+import { TripIcon } from '@/lib/tripIcons'
 
 const CAT_ORDER = ['transport','lodge','permis','equipement','infos','itineraire','meteo','resto','liens']
 // Ordre d'affichage des chips dans les sheets Ajouter/Modifier — même ordre que les filtres
@@ -488,7 +488,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
               </div>
             )}
           </div>
-          <Image src="/mountain-badge.webp" alt="Crew Trips" width={72} height={72} style={{flexShrink:0,opacity:.9}} unoptimized />
+          <div style={{flexShrink:0,opacity:.95}}>
+            <TripIcon type={trip.type} size={72} />
+          </div>
         </div>
       </div>
 
@@ -580,7 +582,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:12}}>
                 {[
                   {key:'nom', label:'Nom du Lodge', ph:`Ex: Babine Norlakes`, multiline:false, full:false, hint:''},
-                  {key:'tel', label:'Téléphone', ph:'+1 250 000 0000', multiline:false, full:false, hint:''},
+                  {key:'tel', label:'Téléphone', ph:'+1 250 555 0199', multiline:false, full:false, hint:''},
                   {key:'adresse', label:'Adresse', ph:'Ex: 3740 Cedar Key Avenue, Terrace, BC V8G 4M6', multiline:true, full:true, hint:'Colle n\'importe quel format'},
                   {key:'wifi', label:'Wifi ou code', ph:'Ex: fishing2025', multiline:false, full:false, hint:''},
                   {key:'arrivee', label:"Heure d'arrivée", ph:'Ex: 14h00 le 8 juin', multiline:false, full:false, hint:''},
