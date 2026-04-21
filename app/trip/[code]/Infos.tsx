@@ -213,8 +213,14 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           is_prive: snapshot.isPrive, auteur_id: membre.id,
         }).select().single())
         if (error) throw error
-        // Remplacer la temp par la vraie card
-        setCards(p => p.map(c => c.id === tempId ? data : c))
+        // Remplacer la temp par la vraie card.
+        // FIX BUG CARTE PRIVEE: si Supabase renvoie auteur_id=null (colonne
+        // DB manquante, trigger, ou policy RLS qui strip le champ), on force
+        // auteur_id=membre.id cote client pour que le filtre de visibilite
+        // (!c.is_prive || c.auteur_id === membre.id) n'exclue pas la card
+        // de son propre auteur.
+        const dataWithAuteur = { ...data, auteur_id: data.auteur_id ?? membre.id }
+        setCards(p => p.map(c => c.id === tempId ? dataWithAuteur : c))
       } catch (e: any) {
         // Rollback : retirer la card optimiste, restaurer le sheet avec les valeurs
         setCards(p => p.filter(c => c.id !== tempId))
@@ -292,7 +298,10 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
         }).eq('id', originalCard.id).select().single())
         if (error) throw error
         // Supabase peut renvoyer des valeurs normalisées (timestamps, trimmed...) : on resync
-        setCards(p => p.map(c => c.id === originalCard.id ? data : c))
+        // FIX BUG CARTE PRIVEE: meme precaution que pour save() — si la DB
+        // renvoie auteur_id=null, on preserve celui deja en memoire.
+        const dataWithAuteur = { ...data, auteur_id: data.auteur_id ?? optimisticCard.auteur_id ?? membre.id }
+        setCards(p => p.map(c => c.id === originalCard.id ? dataWithAuteur : c))
       } catch (e: any) {
         // Rollback : restaurer la card d'origine
         setCards(p => p.map(c => c.id === originalCard.id ? originalCard : c))
