@@ -20,12 +20,15 @@ export default function InstallBanner() {
     if (!showOnPage) { setShow(false); return }
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    const wasDismissed = localStorage.getItem('crew-install-dismissed')
     // Attendre que l'utilisateur soit authentifie (crew-tel-locked pose).
     // Avant ca, il remplit le JoinScreen (inscription/reconnexion) et le
     // popup serait une distraction visuelle qui bloque la saisie.
     const isAuth = !!localStorage.getItem('crew-tel-locked')
-    if (isIOS && !isStandalone && !wasDismissed && isAuth) {
+    // Note: pas de persistence du dismiss. Le popup reapparait a chaque
+    // nouvelle session Safari pour encourager l'installation de la PWA
+    // (meilleure experience utilisateur). Si l'utilisateur a deja installe
+    // la PWA, isStandalone=true et on ne montre plus le popup.
+    if (isIOS && !isStandalone && isAuth) {
       const t = setTimeout(() => setShow(true), 5000)
       return () => clearTimeout(t)
     }
@@ -48,9 +51,11 @@ export default function InstallBanner() {
   }, [])
 
   function dismiss() {
+    // Dismiss seulement pour la session courante (state React).
+    // Au prochain chargement de page, le popup reapparaitra apres 5s.
+    // Objectif: encourager l'installation PWA a chaque connexion.
     setDismissed(true)
     setShow(false)
-    localStorage.setItem('crew-install-dismissed', '1')
   }
 
   if (!show || dismissed) return null
