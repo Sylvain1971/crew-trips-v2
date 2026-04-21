@@ -45,15 +45,32 @@ export default function AdminRetrouverPage() {
   const canSubmit = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && !loading
 
   function login() {
-    if (!ADMIN_CODE) {
-      setLoginErreur('NEXT_PUBLIC_ADMIN_CODE non configuré.')
-      return
-    }
-    if (code === ADMIN_CODE) {
-      setAuth(true); setLoginErreur('')
-      try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
-    }
-    else setLoginErreur('Code incorrect')
+    // Phase 2 : vérif côté serveur via /api/admin/verify (même logique que /admin).
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        })
+        if (res.ok) {
+          const { valid } = await res.json()
+          if (valid) {
+            setAuth(true); setLoginErreur('')
+            try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+            return
+          }
+          setLoginErreur('Code incorrect')
+          return
+        }
+      } catch {}
+      // Fallback local
+      if (!ADMIN_CODE) { setLoginErreur('Code admin non configuré'); return }
+      if (code === ADMIN_CODE) {
+        setAuth(true); setLoginErreur('')
+        try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+      } else setLoginErreur('Code incorrect')
+    })()
   }
 
   async function chercher() {
