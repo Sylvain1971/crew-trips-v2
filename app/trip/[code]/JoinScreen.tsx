@@ -445,7 +445,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
                 Numéro de téléphone
               </label>
-              <input className="input" type="tel" placeholder="418 000 0000"
+              <input className="input" type="tel" placeholder="418 XXX XXXX"
                 value={tel} onChange={e=>onChangeTel(e.target.value)}
                 autoFocus
                 style={{fontSize:16,letterSpacing:1,textAlign:'center',
@@ -585,7 +585,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
               Numéro de téléphone
             </label>
-            <input className="input" type="tel" placeholder="418 000 0000"
+            <input className="input" type="tel" placeholder="418 XXX XXXX"
               value={tel} onChange={e=>onChangeTel(e.target.value)}
               style={{fontSize:15,letterSpacing:1,background:'rgba(255,255,255,.06)',
                 border:`1.5px solid ${tel && telComplet ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,

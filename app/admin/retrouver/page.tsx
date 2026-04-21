@@ -185,7 +185,7 @@ export default function AdminRetrouverPage() {
             <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
               Numéro de téléphone
             </label>
-            <input className="input" type="tel" placeholder="418 000 0000"
+            <input className="input" type="tel" placeholder="418 XXX XXXX"
               value={tel}
               onChange={e=>{setTel(formatTel(e.target.value)); setErreur(null)}}
               onKeyDown={e=>e.key==='Enter' && canSubmit && chercher()}
