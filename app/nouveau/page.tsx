@@ -362,12 +362,15 @@ function NouveauInner() {
             </div>
           </div>
 
-          {/* Bouton final: meme hauteur (50px) et meme espacement (20px) que
-              les autres bulles pour un rythme vertical parfaitement constant. */}
+          {/* Bouton final: meme hauteur (50px) que les bulles. marginTop:18
+              pour compenser l'absence de label au-dessus. Les autres champs
+              ont un label (11px + 7px margin = 18px d'espace visuel) avant
+              leur input, ce qui cree une "respiration". Sans marginTop, le
+              bouton parait colle a la bulle Fin. */}
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk}
             style={{background:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.15)':'#fff',
               color:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.4)':'var(--forest)',
-              fontWeight:700,height:50,padding:'0 20px',marginTop:0}}>
+              fontWeight:700,height:50,padding:'0 20px',marginTop:18}}>
             {loading?'Création en cours…':isDuplicate?'Créer ce nouveau trip →':'Créer le trip →'}
           </button>
         </div>
