@@ -250,7 +250,7 @@ function NouveauInner() {
                 <div style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase'}}>
                   🔒 Identité verrouillée
                 </div>
-                <div style={{fontSize:10,color:'rgba(255,255,255,.35)',display:'inline-flex',alignItems:'center',gap:4}}>
+                <div style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase',display:'inline-flex',alignItems:'center',gap:4}}>
                   <span style={{color:'#F59E0B'}}>★</span> Admin du trip
                 </div>
               </div>
