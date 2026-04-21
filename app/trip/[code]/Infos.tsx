@@ -710,7 +710,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <input className="input" value={editTitre} onChange={e=>setEditTitre(e.target.value)} />
         </div>
         <div className="field"><label>Détails (optionnel)</label>
-          <textarea className="input" rows={3} value={editContenu} onChange={e=>setEditContenu(e.target.value)} />
+          <textarea className="input textarea-details" rows={6} value={editContenu} onChange={e=>setEditContenu(e.target.value)} />
         </div>
         <div className="field"><label>Lien (optionnel)</label>
           <input className="input" type="url" placeholder="https://…" value={editLien} onChange={e=>setEditLien(e.target.value)} />
@@ -786,7 +786,7 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
           <input className="input" placeholder={getCatPlaceholders(cat, trip.type).titre} value={titre} onChange={e=>setTitre(e.target.value)} />
         </div>
         <div className="field"><label>Détails (optionnel)</label>
-          <textarea className="input" rows={3} placeholder={getCatPlaceholders(cat, trip.type).details} value={contenu} onChange={e=>setContenu(e.target.value)} />
+          <textarea className="input textarea-details" rows={6} placeholder={getCatPlaceholders(cat, trip.type).details} value={contenu} onChange={e=>setContenu(e.target.value)} />
         </div>
         <div className="field"><label>Lien (optionnel)</label>
           <input className="input" type="url" placeholder="https://…" value={lien} onChange={e=>setLien(e.target.value)} />

@@ -78,7 +78,7 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
                 </span>
               )}
             </div>
-            <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', marginBottom: card.contenu ? 4 : 0 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, letterSpacing: '-.01em', marginBottom: card.contenu ? 4 : 0, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
               {card.titre}
             </div>
           </div>

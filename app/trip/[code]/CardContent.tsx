@@ -32,7 +32,7 @@ export default function CardContent({ contenu, printMode = false }: { contenu: s
 
   if (!parsed) {
     return (
-      <div style={{ fontSize: 13, color: colText2, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+      <div style={{ fontSize: 13, color: colText2, lineHeight: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
         {contenu}
       </div>
     )
@@ -58,6 +58,8 @@ export default function CardContent({ contenu, printMode = false }: { contenu: s
                 flexShrink: 0,
                 paddingRight: 12,
                 color: ci === 0 ? colText3 : colText,
+                overflowWrap: 'anywhere',
+                wordBreak: 'break-word',
               }}>{cell}</span>
             ))}
           </div>

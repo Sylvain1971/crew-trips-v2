@@ -33,10 +33,23 @@ button, input, select, textarea { font-family: inherit; }
   width: 100%; padding: 13px 15px; border: 1.5px solid var(--border);
   border-radius: var(--radius-sm); font-size: 15px; background: var(--white);
   color: var(--text); outline: none; transition: border-color .15s;
-  -webkit-appearance: none;
+  -webkit-appearance: none; box-sizing: border-box;
 }
 .input:focus { border-color: var(--green); }
 textarea.input { resize: none; line-height: 1.5; }
+
+/* Textarea Détails : standard fixe, wrap automatique, scroll interne si long */
+textarea.textarea-details {
+  min-height: 130px;
+  max-height: 300px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
 
 /* Buttons */
 .btn {
