@@ -245,7 +245,7 @@ function NouveauInner() {
 
           {identityLocked ? (
             /* Bloc compact : identite en lecture seule (pas d'inputs), ~100px au lieu de ~400px */
-            <div style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:10,padding:'12px 16px',marginBottom:16}}>
+            <div style={{background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:10,padding:'14px 16px',marginBottom:20}}>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginBottom:6}}>
                 <div style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.55)',letterSpacing:'.12em',textTransform:'uppercase'}}>
                   🔒 Identité verrouillée
@@ -364,7 +364,7 @@ function NouveauInner() {
 
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk}
             style={{background:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.15)':'#fff',
-              color:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:4}}>
+              color:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:8}}>
             {loading?'Création en cours…':isDuplicate?'Créer ce nouveau trip →':'Créer le trip →'}
           </button>
         </div>
