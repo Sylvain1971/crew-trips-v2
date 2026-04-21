@@ -3,6 +3,7 @@ import { useEffect, useState, use } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat, getCatSvg } from '@/lib/types'
 import { getCatLabel, getLodgeLabel } from '@/lib/utils'
+import { toSignedUrlsBatch } from '@/lib/storage'
 import { SvgIcon } from '@/lib/svgIcons'
 import CardContent from '../CardContent'
 import type { Trip, InfoCard } from '@/lib/types'
@@ -31,6 +32,18 @@ export default function PrintPage({ params: paramsPromise }: { params: Promise<{
           if (ai !== bi) return ai - bi
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         })
+        // Phase 2 : bucket privé. Signer les fichier_url avant affichage.
+        const urls = sorted.map(card => card.fichier_url).filter((u): u is string => !!u)
+        if (urls.length > 0) {
+          const signed = await toSignedUrlsBatch(urls)
+          let i = 0
+          for (const card of sorted) {
+            if (card.fichier_url) {
+              card.fichier_url = signed[i] || card.fichier_url
+              i++
+            }
+          }
+        }
         setCards(sorted)
       }
       setReady(true)

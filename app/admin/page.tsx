@@ -6,10 +6,10 @@ import { apiUpsertConfig, apiDeleteTripFull } from '@/lib/api'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 
-// Le code admin est défini dans .env.local :
-//   NEXT_PUBLIC_ADMIN_CODE=ton_code_secret
-// Ne jamais hardcoder cette valeur ici.
-const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE ?? ''
+// Phase 2 : le code admin est vérifié côté serveur via /api/admin/verify.
+// Il n'est plus jamais envoyé au client. La variable serveur ADMIN_CODE
+// est configurée sur Vercel (sans préfixe NEXT_PUBLIC_).
+
 
 interface TripAdmin {
   id: string; code: string; nom: string; type: string
@@ -32,8 +32,8 @@ export default function AdminPage() {
   const [showPwd, setShowPwd] = useState(false)
 
   function login() {
-    // Phase 2 : vérif côté serveur via /api/admin/verify (le code n'est plus exposé au bundle client).
-    // Fallback sur NEXT_PUBLIC_ADMIN_CODE pendant la transition si la route n'est pas encore déployée.
+    // Phase 2 : vérification UNIQUEMENT côté serveur via /api/admin/verify.
+    // Le code ADMIN_CODE n'est plus exposé au bundle client.
     (async () => {
       try {
         const res = await fetch('/api/admin/verify', {
@@ -41,28 +41,20 @@ export default function AdminPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code }),
         })
-        if (res.ok) {
-          const { valid } = await res.json()
-          if (valid) {
-            setAuth(true); setErreur('')
-            try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
-            return
-          }
-          setErreur('Code incorrect')
+        if (!res.ok) {
+          setErreur('Erreur serveur')
           return
         }
+        const { valid } = await res.json()
+        if (valid) {
+          setAuth(true); setErreur('')
+          try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
+        } else {
+          setErreur('Code incorrect')
+        }
       } catch {
-        // Route pas dispo : fallback local
+        setErreur('Erreur de connexion')
       }
-      // Fallback local (à retirer après que /api/admin/verify soit en prod)
-      if (!ADMIN_CODE) {
-        setErreur('Code admin non configuré')
-        return
-      }
-      if (code === ADMIN_CODE) {
-        setAuth(true); setErreur('')
-        try { sessionStorage.setItem('crew-admin-authed', '1') } catch {}
-      } else setErreur('Code incorrect')
     })()
   }
 
