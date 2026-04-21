@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
 import { normalizeName, normalizeTel, formatNomComplet, hashNip, isValidNip } from '@/lib/types'
+import { apiManageAutorises, apiDeleteMemberSafe, apiUpdateTripFields, apiUpdateMember, apiDeleteTripFull, apiSaveNip } from '@/lib/api'
 import { SvgIcon } from '@/lib/svgIcons'
 import QRCode from 'qrcode'
 
@@ -135,14 +136,27 @@ export default function Membres({trip, membre, onTripUpdate}: {
       if (conflit) { alert('Ce téléphone est déjà utilisé par un homonyme.'); return }
     }
 
-    const {data} = await supabase.from('participants_autorises')
-      .insert({
-        trip_id: trip.id,
-        prenom: prenomClean,
-        nom: nomClean,
-        tel: telClean || null
-      })
-      .select().single()
+    // Phase 2 : RPC manage_autorises avec fallback direct
+    let data: ParticipantAutorise | null = null
+    const rpc = await apiManageAutorises(trip.code, trip.id, {
+      action: 'add',
+      prenom: prenomClean,
+      nom: nomClean,
+      tel: telClean || null,
+    })
+    if (rpc.success && rpc.id) {
+      data = { id: rpc.id, trip_id: trip.id, prenom: prenomClean, nom: nomClean, tel: telClean || null } as ParticipantAutorise
+    } else {
+      const { data: d } = await supabase.from('participants_autorises')
+        .insert({
+          trip_id: trip.id,
+          prenom: prenomClean,
+          nom: nomClean,
+          tel: telClean || null
+        })
+        .select().single()
+      data = d
+    }
     if (data) {
       setAutorises(p => [...p, data])
       setNewPrenom(''); setNewNom(''); setNewTel('')
@@ -150,7 +164,11 @@ export default function Membres({trip, membre, onTripUpdate}: {
   }
 
   async function retirerAutorise(id: string, prenom: string, nom: string) {
-    await supabase.from('participants_autorises').delete().eq('id',id)
+    // Phase 2 : RPC manage_autorises avec fallback direct
+    const rpc = await apiManageAutorises(trip.code, trip.id, { action: 'delete', id })
+    if (!rpc.success) {
+      await supabase.from('participants_autorises').delete().eq('id', id)
+    }
     setAutorises(p=>p.filter(a=>a.id!==id))
     // Déconnecter le membre actif correspondant (jamais le créateur)
     const m = membres.find(m =>
@@ -158,7 +176,11 @@ export default function Membres({trip, membre, onTripUpdate}: {
       && normalizeName(m.nom || '') === normalizeName(nom)
     )
     if (m && !m.is_createur) {
-      await supabase.from('membres').delete().eq('id',m.id)
+      // Phase 2 : RPC delete_member_safe avec fallback direct
+      const rpcDel = await apiDeleteMemberSafe(trip.code, m.id)
+      if (!rpcDel.success) {
+        await supabase.from('membres').delete().eq('id', m.id)
+      }
       setMembres(p=>p.filter(x=>x.id!==m.id))
       // Effacer du localStorage uniquement si c'est CE membre (pas le créateur connecté)
       if (typeof window !== 'undefined' && m.id !== membre.id) {
@@ -176,7 +198,11 @@ export default function Membres({trip, membre, onTripUpdate}: {
   async function retirerMembre(m: Membre) {
     if (m.is_createur) return
     if (!confirm(`Retirer ${formatNomComplet(m.prenom, m.nom)} du trip ?`)) return
-    await supabase.from('membres').delete().eq('id',m.id)
+    // Phase 2 : RPC delete_member_safe avec fallback direct
+    const rpc = await apiDeleteMemberSafe(trip.code, m.id)
+    if (!rpc.success) {
+      await supabase.from('membres').delete().eq('id', m.id)
+    }
     setMembres(p=>p.filter(x=>x.id!==m.id))
   }
 
@@ -186,8 +212,12 @@ export default function Membres({trip, membre, onTripUpdate}: {
     // Optimistic : on met à jour l'UI tout de suite
     onTripUpdate({[key]:newVal})
     try {
-      const { error } = await supabase.from('trips').update({[key]:newVal}).eq('id',trip.id)
-      if (error) throw error
+      // Phase 2 : RPC update_trip_fields avec fallback direct
+      const rpc = await apiUpdateTripFields(trip.code, trip.id, { [key]: newVal })
+      if (!rpc.success) {
+        const { error } = await supabase.from('trips').update({[key]:newVal}).eq('id',trip.id)
+        if (error) throw error
+      }
     } catch (e: unknown) {
       // Rollback
       onTripUpdate({[key]:oldVal})
@@ -201,7 +231,11 @@ export default function Membres({trip, membre, onTripUpdate}: {
     if (!prenomClean) { setEditingPrenom(false); return }
     if (prenomClean === membre.prenom && nomClean === (membre.nom || '')) { setEditingPrenom(false); return }
     setSavingPrenom(true)
-    await supabase.from('membres').update({ prenom: prenomClean, nom: nomClean }).eq('id', membre.id)
+    // Phase 2 : RPC update_member avec fallback direct
+    const rpc = await apiUpdateMember(trip.code, membre.id, { prenom: prenomClean, nom: nomClean })
+    if (!rpc.success) {
+      await supabase.from('membres').update({ prenom: prenomClean, nom: nomClean }).eq('id', membre.id)
+    }
     // Mettre à jour le localStorage + liste locale + localStorage crew-prenom/crew-nom
     try {
       const stored = localStorage.getItem(`crew2-${trip.code}`)
@@ -238,18 +272,21 @@ export default function Membres({trip, membre, onTripUpdate}: {
     try {
       const nipHash = await hashNip(nipClean)
       const telDigits = normalizeTel(membre.tel || '')
-      if (!telDigits) {
-        // Cas extreme : membre sans tel. Update uniquement cette ligne.
-        const { error } = await supabase.from('membres')
-          .update({ nip: nipHash })
-          .eq('id', membre.id)
-        if (error) throw error
-      } else {
-        // Cas normal : propagation a toutes les lignes membres avec ce tel.
-        const { error } = await supabase.from('membres')
-          .update({ nip: nipHash })
-          .eq('tel', telDigits)
-        if (error) throw error
+      // Phase 2 : RPC save_nip propage à toutes les lignes du même tel.
+      // Fallback direct si la RPC échoue (RLS pas encore active).
+      const rpc = await apiSaveNip(telDigits, nipHash)
+      if (!rpc.success) {
+        if (!telDigits) {
+          const { error } = await supabase.from('membres')
+            .update({ nip: nipHash })
+            .eq('id', membre.id)
+          if (error) throw error
+        } else {
+          const { error } = await supabase.from('membres')
+            .update({ nip: nipHash })
+            .eq('tel', telDigits)
+          if (error) throw error
+        }
       }
       // Mise a jour locale du state (uniquement pour ce trip-ci, les autres
       // trips auront leur state mis a jour lors de leur prochain chargement)
@@ -271,8 +308,12 @@ export default function Membres({trip, membre, onTripUpdate}: {
     setGeneratingShare(true)
     onTripUpdate({ share_token: newToken })
     try {
-      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
-      if (error) throw error
+      // Phase 2 : RPC update_trip_fields avec fallback direct
+      const rpc = await apiUpdateTripFields(trip.code, trip.id, { share_token: newToken })
+      if (!rpc.success) {
+        const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
+        if (error) throw error
+      }
     } catch (e: unknown) {
       // Rollback
       onTripUpdate({ share_token: oldToken })
@@ -291,8 +332,12 @@ export default function Membres({trip, membre, onTripUpdate}: {
     setGeneratingShare(true)
     onTripUpdate({ share_token: newToken })
     try {
-      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
-      if (error) throw error
+      // Phase 2 : RPC update_trip_fields avec fallback direct
+      const rpc = await apiUpdateTripFields(trip.code, trip.id, { share_token: newToken })
+      if (!rpc.success) {
+        const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
+        if (error) throw error
+      }
     } catch (e: unknown) {
       // Rollback
       onTripUpdate({ share_token: oldToken })
@@ -312,13 +357,17 @@ export default function Membres({trip, membre, onTripUpdate}: {
     if (deleteConfirm !== trip.nom) return
     setDeleting(true)
     try {
-      // Supprimer les tables liées avant le trip (au cas où CASCADE manquant en DB)
-      await supabase.from('messages').delete().eq('trip_id', trip.id)
-      await supabase.from('infos').delete().eq('trip_id', trip.id)
-      await supabase.from('participants_autorises').delete().eq('trip_id', trip.id)
-      await supabase.from('membres').delete().eq('trip_id', trip.id)
-      const { error } = await supabase.from('trips').delete().eq('id', trip.id)
-      if (error) throw new Error(error.message)
+      // Phase 2 : RPC delete_trip_full (cascade côté serveur) avec fallback direct
+      const rpc = await apiDeleteTripFull(trip.code, trip.id)
+      if (!rpc.success) {
+        // Fallback : Supprimer les tables liées avant le trip (au cas où CASCADE manquant en DB)
+        await supabase.from('messages').delete().eq('trip_id', trip.id)
+        await supabase.from('infos').delete().eq('trip_id', trip.id)
+        await supabase.from('participants_autorises').delete().eq('trip_id', trip.id)
+        await supabase.from('membres').delete().eq('trip_id', trip.id)
+        const { error } = await supabase.from('trips').delete().eq('id', trip.id)
+        if (error) throw new Error(error.message)
+      }
       // Nettoyer localStorage
       try {
         localStorage.removeItem(`crew2-${trip.code}`)

@@ -3,6 +3,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat, getCatSvg, formatNomComplet } from '@/lib/types'
 import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders, withRetry } from '@/lib/utils'
+import { apiSaveInfoCard, apiDeleteInfoCard, apiUpdateTripFields } from '@/lib/api'
 import { useNavFiltre } from '@/lib/useNavFiltre'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
@@ -205,19 +206,32 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       setSheetOpen(false)
 
       try {
-        const { data, error } = await withRetry(() => supabase.from('infos').insert({
-          trip_id: trip.id, categorie: cat, titre: snapshot.titre.trim(),
-          contenu: snapshot.contenu.trim()||null, lien: snapshot.lien.trim()||null, fichier_url,
+        // Phase 2 : RPC save_info_card avec fallback direct
+        const rpc = await apiSaveInfoCard(trip.code, trip.id, {
+          id: null,
+          categorie: cat,
+          titre: snapshot.titre.trim(),
+          contenu: snapshot.contenu.trim() || null,
+          lien: snapshot.lien.trim() || null,
+          fichier_url: fichier_url,
+          is_prive: snapshot.isPrive,
+          auteur_id: membre.id,
           membre_prenom: null,
-          is_prive: snapshot.isPrive, auteur_id: membre.id,
-        }).select().single())
-        if (error) throw error
-        // Remplacer la temp par la vraie card.
-        // FIX BUG CARTE PRIVEE: si Supabase renvoie auteur_id=null (colonne
-        // DB manquante, trigger, ou policy RLS qui strip le champ), on force
-        // auteur_id=membre.id cote client pour que le filtre de visibilite
-        // (!c.is_prive || c.auteur_id === membre.id) n'exclue pas la card
-        // de son propre auteur.
+        })
+        let data: any
+        if (rpc.success && rpc.card) {
+          data = rpc.card
+        } else {
+          const { data: d, error } = await withRetry(() => supabase.from('infos').insert({
+            trip_id: trip.id, categorie: cat, titre: snapshot.titre.trim(),
+            contenu: snapshot.contenu.trim()||null, lien: snapshot.lien.trim()||null, fichier_url,
+            membre_prenom: null,
+            is_prive: snapshot.isPrive, auteur_id: membre.id,
+          }).select().single())
+          if (error) throw error
+          data = d
+        }
+        // FIX BUG CARTE PRIVEE: si auteur_id=null renvoyé, on force côté client
         const dataWithAuteur = { ...data, auteur_id: data.auteur_id ?? membre.id }
         setCards(p => p.map(c => c.id === tempId ? dataWithAuteur : c))
       } catch (e: any) {
@@ -285,20 +299,33 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       setEditCard(null); setEditPdfFile(null); setEditFichierRemoved(false); setEditIsPrive(false)
 
       try {
-        const { data, error } = await withRetry(() => supabase.from('infos').update({
-          categorie: optimisticCard.categorie, titre: optimisticCard.titre,
-          contenu: optimisticCard.contenu ?? null, lien: optimisticCard.lien ?? null,
+        // Phase 2 : RPC save_info_card avec fallback direct
+        const rpc = await apiSaveInfoCard(trip.code, trip.id, {
+          id: originalCard.id,
+          categorie: optimisticCard.categorie,
+          titre: optimisticCard.titre,
+          contenu: optimisticCard.contenu ?? null,
+          lien: optimisticCard.lien ?? null,
           fichier_url: optimisticCard.fichier_url ?? null,
-          membre_prenom: optimisticCard.membre_prenom ?? null,
           is_prive: optimisticCard.is_prive ?? false,
-          // Écrit auteur_id seulement si manquant (cards pré-migration).
-          // Évite d'écraser l'auteur légitime quand un admin modifie la card d'un autre.
-          ...(originalCard.auteur_id ? {} : { auteur_id: membre.id }),
-        }).eq('id', originalCard.id).select().single())
-        if (error) throw error
-        // Supabase peut renvoyer des valeurs normalisées (timestamps, trimmed...) : on resync
-        // FIX BUG CARTE PRIVEE: meme precaution que pour save() — si la DB
-        // renvoie auteur_id=null, on preserve celui deja en memoire.
+          auteur_id: originalCard.auteur_id ?? membre.id,
+          membre_prenom: optimisticCard.membre_prenom ?? null,
+        })
+        let data: any
+        if (rpc.success && rpc.card) {
+          data = rpc.card
+        } else {
+          const { data: d, error } = await withRetry(() => supabase.from('infos').update({
+            categorie: optimisticCard.categorie, titre: optimisticCard.titre,
+            contenu: optimisticCard.contenu ?? null, lien: optimisticCard.lien ?? null,
+            fichier_url: optimisticCard.fichier_url ?? null,
+            membre_prenom: optimisticCard.membre_prenom ?? null,
+            is_prive: optimisticCard.is_prive ?? false,
+            ...(originalCard.auteur_id ? {} : { auteur_id: membre.id }),
+          }).eq('id', originalCard.id).select().single())
+          if (error) throw error
+          data = d
+        }
         const dataWithAuteur = { ...data, auteur_id: data.auteur_id ?? optimisticCard.auteur_id ?? membre.id }
         setCards(p => p.map(c => c.id === originalCard.id ? dataWithAuteur : c))
       } catch (e: any) {
@@ -331,8 +358,12 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setCards(p => p.filter(c => c.id !== id))
 
     try {
-      const { error } = await withRetry(() => supabase.from('infos').delete().eq('id', id))
-      if (error) throw error
+      // Phase 2 : RPC delete_info_card avec fallback direct
+      const rpc = await apiDeleteInfoCard(trip.code, trip.id, id)
+      if (!rpc.success) {
+        const { error } = await withRetry(() => supabase.from('infos').delete().eq('id', id))
+        if (error) throw error
+      }
     } catch (e: any) {
       // Rollback : ré-insérer la card à sa position
       setCards(p => {
@@ -367,12 +398,23 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       setEditLodge(false)
 
       try {
-        const { error } = await withRetry(() => supabase.from('trips').update({
-          lodge_nom: lodge.nom||null, lodge_adresse: adresseCleaned||null,
-          lodge_tel: lodge.tel||null, lodge_wifi: lodge.wifi||null,
-          lodge_code: lodge.code||null, lodge_arrivee: lodge.arrivee||null,
-        }).eq('id', trip.id))
-        if (error) throw error
+        // Phase 2 : RPC update_trip_fields avec fallback direct
+        const rpc = await apiUpdateTripFields(trip.code, trip.id, {
+          lodge_nom: lodge.nom || null,
+          lodge_adresse: adresseCleaned || null,
+          lodge_tel: lodge.tel || null,
+          lodge_wifi: lodge.wifi || null,
+          lodge_code: lodge.code || null,
+          lodge_arrivee: lodge.arrivee || null,
+        })
+        if (!rpc.success) {
+          const { error } = await withRetry(() => supabase.from('trips').update({
+            lodge_nom: lodge.nom||null, lodge_adresse: adresseCleaned||null,
+            lodge_tel: lodge.tel||null, lodge_wifi: lodge.wifi||null,
+            lodge_code: lodge.code||null, lodge_arrivee: lodge.arrivee||null,
+          }).eq('id', trip.id))
+          if (error) throw error
+        }
       } catch (e: any) {
         // Rollback : restaurer la sheet avec les anciennes valeurs
         setLodge(snapshotLodge)
@@ -401,13 +443,22 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setEditTrip(false)
 
     try {
-      const { error } = await withRetry(() => supabase.from('trips').update({
+      // Phase 2 : RPC update_trip_fields avec fallback direct
+      const rpc = await apiUpdateTripFields(trip.code, trip.id, {
         nom: newValues.nom,
         destination: newValues.destination || null,
         date_debut: newValues.date_debut || null,
         date_fin: newValues.date_fin || null,
-      }).eq('id', trip.id))
-      if (error) throw error
+      })
+      if (!rpc.success) {
+        const { error } = await withRetry(() => supabase.from('trips').update({
+          nom: newValues.nom,
+          destination: newValues.destination || null,
+          date_debut: newValues.date_debut || null,
+          date_fin: newValues.date_fin || null,
+        }).eq('id', trip.id))
+        if (error) throw error
+      }
     } catch (e: any) {
       // Rollback
       onTripUpdate?.(snapshotTrip)

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { apiUpsertConfig, apiDeleteTripFull } from '@/lib/api'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 
@@ -77,7 +78,14 @@ export default function AdminPage() {
   async function saveCreatorCode() {
     if (!newCreatorCode.trim()) return
     setSavingCode(true)
-    await supabase.from('config').upsert({ key: 'creator_code', value: newCreatorCode.trim() })
+    // Phase 2 : utilise RPC upsert_config qui vérifie le creator_code actuel.
+    // Si pas encore de creator_code défini (bootstrap), fallback sur l'ancien UPSERT direct.
+    const res = await apiUpsertConfig(creatorCode, 'creator_code', newCreatorCode.trim())
+    if (!res.success) {
+      // Bootstrap : si la table config est vide (pas de creator_code actuel), la RPC refuse.
+      // On fait alors un UPSERT direct (seule fois, la sécurité sera ajoutée plus tard).
+      await supabase.from('config').upsert({ key: 'creator_code', value: newCreatorCode.trim() })
+    }
     setCreatorCode(newCreatorCode.trim())
     setCodeSaved(true)
     setTimeout(() => setCodeSaved(false), 2000)
@@ -87,8 +95,14 @@ export default function AdminPage() {
   async function supprimerTrip(trip: TripAdmin) {
     if (!confirm(`Supprimer "${trip.nom}" ?`)) return
     setDeleting(trip.id)
-    // ON DELETE CASCADE gère les tables enfants — une seule requête suffit
-    await supabase.from('trips').delete().eq('id', trip.id)
+    // Phase 2 : RPC delete_trip_full. Exige un token admin du trip.
+    // Pour ça, il faut d'abord générer un token pour l'admin sur ce trip.
+    // Fallback sur DELETE direct si échec (RLS pas encore active).
+    const del = await apiDeleteTripFull(trip.code, trip.id)
+    if (!del.success) {
+      // Fallback : DELETE direct (marche tant que RLS n'est pas active)
+      await supabase.from('trips').delete().eq('id', trip.id)
+    }
     setTrips(p => p.filter(t => t.id !== trip.id))
     setDeleting(null)
   }

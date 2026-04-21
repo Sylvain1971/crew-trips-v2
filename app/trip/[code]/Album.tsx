@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import { canShareFiles, shareAllTogether, shareOneByOne } from '@/lib/shareFiles'
+import { apiPostMessage, apiDeleteMessages, apiUpdateTripFields } from '@/lib/api'
 import type { Message, Membre, Trip } from '@/lib/types'
 import { formatNomComplet } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
@@ -163,8 +164,12 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     setGeneratingShare(true)
     onTripUpdate({ share_token: newToken })
     try {
-      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
-      if (error) throw error
+      // Phase 2 : RPC update_trip_fields avec fallback direct
+      const rpc = await apiUpdateTripFields(trip.code, trip.id, { share_token: newToken })
+      if (!rpc.success) {
+        const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
+        if (error) throw error
+      }
     } catch (e: unknown) {
       onTripUpdate({ share_token: oldToken })
       alert('Erreur lors de la génération du lien : ' + (e instanceof Error ? e.message : String(e)))
@@ -182,8 +187,12 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     setGeneratingShare(true)
     onTripUpdate({ share_token: newToken })
     try {
-      const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
-      if (error) throw error
+      // Phase 2 : RPC update_trip_fields avec fallback direct
+      const rpc = await apiUpdateTripFields(trip.code, trip.id, { share_token: newToken })
+      if (!rpc.success) {
+        const { error } = await supabase.from('trips').update({ share_token: newToken }).eq('id', trip.id)
+        if (error) throw error
+      }
     } catch (e: unknown) {
       onTripUpdate({ share_token: oldToken })
       alert('Erreur : ' + (e instanceof Error ? e.message : String(e)))
@@ -366,15 +375,30 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
 
           const image_url = supabase.storage.from('trip-photos').getPublicUrl(path).data.publicUrl
 
-          const { data, error } = await supabase.from('messages').insert({
-            trip_id: tripId,
+          // Phase 2 : RPC post_message avec fallback direct
+          let data: unknown
+          const rpc = await apiPostMessage(trip.code, tripId, {
+            type: 'photo',
             contenu: caption || null,
             image_url,
             membre_id: membre.id,
             membre_prenom: formatNomComplet(membre.prenom, membre.nom),
             membre_couleur: membre.couleur,
-          }).select().single()
-          if (error) throw error
+          })
+          if (rpc.success && rpc.message) {
+            data = rpc.message
+          } else {
+            const { data: d, error } = await supabase.from('messages').insert({
+              trip_id: tripId,
+              contenu: caption || null,
+              image_url,
+              membre_id: membre.id,
+              membre_prenom: formatNomComplet(membre.prenom, membre.nom),
+              membre_couleur: membre.couleur,
+            }).select().single()
+            if (error) throw error
+            data = d
+          }
 
           // Remplacer la temp par la vraie photo (avec vraie URL)
           setPhotos(prev => prev.map(p => p.id === tempId ? (data as Message) : p))
@@ -492,8 +516,12 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       }
 
       // Supprimer les lignes DB
-      const { error } = await supabase.from('messages').delete().in('id', ids)
-      if (error) throw error
+      // Phase 2 : RPC delete_messages avec fallback direct
+      const rpc = await apiDeleteMessages(trip.code, tripId, ids)
+      if (!rpc.success) {
+        const { error } = await supabase.from('messages').delete().in('id', ids)
+        if (error) throw error
+      }
     } catch (e: unknown) {
       // Rollback
       setPhotos(snapshot)
