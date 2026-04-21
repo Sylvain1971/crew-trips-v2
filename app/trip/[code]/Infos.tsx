@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { CATEGORIES, getCat, getCatSvg, formatNomComplet } from '@/lib/types'
 import { isPdf, countdown, getLodgeLabel, getPermisLabel, getCatLabel, getCatPlaceholders, withRetry } from '@/lib/utils'
 import { apiSaveInfoCard, apiDeleteInfoCard, apiUpdateTripFields } from '@/lib/api'
+import { getStoredUrlForPath, toSignedUrl } from '@/lib/storage'
 import { useNavFiltre } from '@/lib/useNavFiltre'
 import type { InfoCard, Membre, Trip } from '@/lib/types'
 import InfoCardView from './InfoCardView'
@@ -166,7 +167,9 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
       contentType: file.type || 'application/octet-stream'
     })
     if (error) { alert('Erreur upload : ' + error.message); return null }
-    return supabase.storage.from('trip-photos').getPublicUrl(path).data.publicUrl
+    // Phase 2 : bucket en transition vers privé. On stocke l'URL wrapper
+    // (le path sera extrait à l'affichage pour signing).
+    return getStoredUrlForPath(path)
   }, [trip.id, membre.prenom])
 
   // Ajouter une card — optimistic : la card apparaît immédiatement,
@@ -476,15 +479,19 @@ export default function Infos({ trip, membre, onTripUpdate }: { trip: Trip, memb
     setTimeout(() => setCopied(false), 2500)
   }
 
-  // Ouvrir PDF — useCallback (stabilise la réf passée à InfoCardView)
-  const openPdf = useCallback((url: string, nom: string) => {
+  // Ouvrir PDF — useCallback (stabilise la réf passée à InfoCardView).
+  // Phase 2 : bucket en transition vers privé. On signe l'URL à la volée
+  // avant d'ouvrir. En Phase 1 (bucket encore public), toSignedUrl retourne
+  // l'URL originale en fallback.
+  const openPdf = useCallback(async (url: string, nom: string) => {
+    const signedUrl = await toSignedUrl(url) || url
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
     if (isMobile) {
       pushFiltre()
-      window.open(url, '_blank')
+      window.open(signedUrl, '_blank')
     } else {
       pushFiltre()
-      setPdfViewer({ url, nom })
+      setPdfViewer({ url: signedUrl, nom })
     }
   }, [pushFiltre])
 

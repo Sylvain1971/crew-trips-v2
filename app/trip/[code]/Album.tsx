@@ -6,6 +6,7 @@ import { compressImage } from '@/lib/imageCompression'
 import { downloadAlbumAsZip } from '@/lib/downloadAlbum'
 import { canShareFiles, shareAllTogether, shareOneByOne } from '@/lib/shareFiles'
 import { apiPostMessage, apiDeleteMessages, apiUpdateTripFields } from '@/lib/api'
+import { toSignedUrlsBatch, getStoredUrlForPath, deleteFiles } from '@/lib/storage'
 import type { Message, Membre, Trip } from '@/lib/types'
 import { formatNomComplet } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
@@ -38,12 +39,13 @@ type PhotoTileProps = {
   isSelected: boolean
   isMine: boolean
   selectionMode: boolean
+  displayUrl: string // URL signée valide 1h (ou blob pour pending)
   onPointerDown: (id: string) => void
   onPointerUp: () => void
   onClick: (photo: AlbumPhoto, idx: number) => void
 }
 const PhotoTile = memo(function PhotoTile({
-  photo, idx, isSelected, isMine, selectionMode,
+  photo, idx, isSelected, isMine, selectionMode, displayUrl,
   onPointerDown, onPointerUp, onClick,
 }: PhotoTileProps) {
   const pending = photo._pending
@@ -65,7 +67,7 @@ const PhotoTile = memo(function PhotoTile({
         WebkitTouchCallout: 'none',
       }}>
       <img
-        src={thumbUrl(photo.image_url!, 400)}
+        src={thumbUrl(displayUrl, 400)}
         alt={photo.contenu || ''}
         loading="lazy"
         draggable={false}
@@ -121,6 +123,11 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
 
   const [photos, setPhotos] = useState<AlbumPhoto[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Phase 2 : bucket en transition vers privé. On signe toutes les URLs
+  // d'images à l'affichage. signedMap : URL originale stockée en DB -> URL
+  // signée valide 1h. Cache en mémoire pour éviter re-signing à chaque render.
+  const [signedMap, setSignedMap] = useState<Map<string, string>>(new Map())
 
   // Upload state
   const [pending, setPending] = useState<PendingPhoto[]>([])
@@ -269,6 +276,34 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     return () => { supabase.removeChannel(ch) }
   }, [tripId])
 
+  // Phase 2 : bucket en transition vers privé. Signer les URLs dès que photos change.
+  // Filtre les URLs non-signées et non-blob, puis batch-sign. En Phase 1 (bucket
+  // encore public), toSignedUrlsBatch retourne les URLs originales en fallback —
+  // aucune régression visible pour l'utilisateur.
+  useEffect(() => {
+    const urls = photos
+      .map(p => p.image_url)
+      .filter((u): u is string => !!u && !u.startsWith('blob:'))
+      .filter(u => !signedMap.has(u))
+
+    if (urls.length === 0) return
+
+    let cancelled = false
+    toSignedUrlsBatch(urls).then(signed => {
+      if (cancelled) return
+      setSignedMap(prev => {
+        const next = new Map(prev)
+        urls.forEach((orig, i) => {
+          const s = signed[i]
+          if (s) next.set(orig, s)
+        })
+        return next
+      })
+    })
+
+    return () => { cancelled = true }
+  }, [photos, signedMap])
+
   // Cleanup fiable des blob URLs au unmount (uploads en cours, optimistic previews)
   useEffect(() => {
     const set = liveBlobUrls.current
@@ -373,7 +408,10 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
           })
           if (upErr) throw upErr
 
-          const image_url = supabase.storage.from('trip-photos').getPublicUrl(path).data.publicUrl
+          // Phase 2 : bucket en transition vers privé. On stocke une URL
+          // "publique" (en fait un wrapper contenant le path) qu'on signera
+          // à l'affichage via toSignedUrl.
+          const image_url = getStoredUrlForPath(path)
 
           // Phase 2 : RPC post_message avec fallback direct
           let data: unknown
@@ -503,14 +541,11 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     exitSelectionMode()
 
     try {
-      // Supprimer les fichiers storage (best-effort)
-      const paths: string[] = []
-      for (const m of toDelete) {
-        const match = m.image_url?.match(/\/trip-photos\/(.+?)(\?|$)/)
-        if (match) paths.push(decodeURIComponent(match[1]))
-      }
-      if (paths.length > 0) {
-        await supabase.storage.from('trip-photos').remove(paths).catch(err => {
+      // Phase 2 : bucket en transition vers privé. On utilise deleteFiles
+      // qui extrait le path depuis n'importe quelle URL (publique ou signée).
+      const urls = toDelete.map(m => m.image_url).filter((u): u is string => !!u)
+      if (urls.length > 0) {
+        await deleteFiles(urls).catch(err => {
           console.warn('Storage remove failed (ignored):', err)
         })
       }
@@ -692,19 +727,25 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: 2,
           }}>
-            {photos.map((p, idx) => (
-              <PhotoTile
-                key={p.id}
-                photo={p}
-                idx={idx}
-                isSelected={selectedIds.has(p.id)}
-                isMine={p.membre_id === membre.id}
-                selectionMode={selectionMode}
-                onPointerDown={onPhotoPointerDown}
-                onPointerUp={clearLongPress}
-                onClick={onPhotoClick}
-              />
-            ))}
+            {photos.map((p, idx) => {
+              // URL d'affichage : blob pour pending, signée pour existant, fallback original
+              const raw = p.image_url || ''
+              const displayUrl = raw.startsWith('blob:') ? raw : (signedMap.get(raw) || raw)
+              return (
+                <PhotoTile
+                  key={p.id}
+                  photo={p}
+                  idx={idx}
+                  isSelected={selectedIds.has(p.id)}
+                  isMine={p.membre_id === membre.id}
+                  selectionMode={selectionMode}
+                  displayUrl={displayUrl}
+                  onPointerDown={onPhotoPointerDown}
+                  onPointerUp={clearLongPress}
+                  onClick={onPhotoClick}
+                />
+              )
+            })}
           </div>
         )}
       </div>
@@ -847,7 +888,11 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
       {/* Lightbox plein ecran avec swipe entre photos (chargee dynamiquement) */}
       {lightboxIdx !== null && (
         <Lightbox
-          photos={photos}
+          photos={photos.map(p => {
+            const raw = p.image_url || ''
+            const displayUrl = raw.startsWith('blob:') ? raw : (signedMap.get(raw) || raw)
+            return { ...p, image_url: displayUrl }
+          })}
           lightboxIdx={lightboxIdx}
           isZoomed={isZoomed}
           onZoomChange={setIsZoomed}
