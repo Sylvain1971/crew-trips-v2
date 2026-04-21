@@ -455,15 +455,22 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   }
 
   async function deleteSelected() {
-    // Filtrer sur les photos de l'utilisateur courant seulement
-    const mine = photos.filter(p => selectedIds.has(p.id) && p.membre_id === membre.id)
-    if (mine.length === 0) {
-      alert("Tu ne peux supprimer que tes propres photos.")
+    // Permission: createur OU participant avec can_post_photos = true peut
+    // supprimer N'IMPORTE QUELLE photo (pas seulement les siennes).
+    // Coherent avec le modele "trip collaboratif" : si tu peux gerer l'album,
+    // tu peux aussi supprimer. Le toggle 'Peuvent gerer l'album' dans
+    // Permissions (onglet Membres) controle cette capacite pour les participants.
+    const canDeleteAny = membre.is_createur || trip.can_post_photos !== false
+    if (!canDeleteAny) {
+      alert("Tu n'as pas la permission de supprimer des photos. Contacte l'administrateur du trip.")
       return
     }
-    if (!confirm(`Supprimer ${mine.length} photo${mine.length > 1 ? 's' : ''} ?`)) return
 
-    const ids = mine.map(m => m.id)
+    const toDelete = photos.filter(p => selectedIds.has(p.id) && !p._pending)
+    if (toDelete.length === 0) return
+    if (!confirm(`Supprimer ${toDelete.length} photo${toDelete.length > 1 ? 's' : ''} ?`)) return
+
+    const ids = toDelete.map(m => m.id)
     // Snapshot pour rollback
     const snapshot = photos
 
@@ -474,7 +481,7 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
     try {
       // Supprimer les fichiers storage (best-effort)
       const paths: string[] = []
-      for (const m of mine) {
+      for (const m of toDelete) {
         const match = m.image_url?.match(/\/trip-photos\/(.+?)(\?|$)/)
         if (match) paths.push(decodeURIComponent(match[1]))
       }
@@ -532,7 +539,9 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
   const lightboxNext = () => { setLightboxIdx(i => i === null ? null : Math.min(photos.length - 1, i + 1)); setIsZoomed(false) }
 
   const selectedCount = selectedIds.size
-  const selectedMineCount = photos.filter(p => selectedIds.has(p.id) && p.membre_id === membre.id).length
+  // Qui peut supprimer: createur OU participant avec can_post_photos=true
+  // (coherent avec le toggle "Peuvent gerer l'album" dans Permissions)
+  const canDeleteAny = membre.is_createur || trip.can_post_photos !== false
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', background: 'var(--sand)' }}>
@@ -565,10 +574,10 @@ export default function Album({ tripId, trip, membre, onTripUpdate }: { tripId: 
               {sharing ? '…' : `Partager ${selectedCount}`}
             </button>
           )}
-          {selectedMineCount > 0 && (
+          {selectedCount > 0 && canDeleteAny && (
             <button onClick={deleteSelected}
               style={{ background: '#DC2626', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              Supprimer {selectedMineCount}
+              Supprimer {selectedCount}
             </button>
           )}
         </div>
