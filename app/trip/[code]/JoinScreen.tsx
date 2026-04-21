@@ -10,6 +10,7 @@ import {
   isValidNip,
 } from '@/lib/types'
 import { countdown } from '@/lib/utils'
+import { apiJoinTrip } from '@/lib/api'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
@@ -128,6 +129,13 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       if (nomFinal) localStorage.setItem('crew-nom', nomFinal)
       resetRateLimit() // succes = reset compteur
     } catch {}
+    // Phase 2 : générer un access_token serveur (non bloquant si échec).
+    // Le token sera utilisé par get_trip_data après activation de RLS en Session 2.3.
+    if (membre.nip) {
+      apiJoinTrip(trip.code, digits, membre.nip).catch(() => {
+        // Échec silencieux : l'app continue via les SELECT directs jusqu'à activation RLS
+      })
+    }
     onJoin({...membre, nom: membre.nom || '', is_createur: membre.is_createur ?? false})
   }
 
