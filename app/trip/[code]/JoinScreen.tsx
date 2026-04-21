@@ -80,7 +80,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const [nom, setNom] = useState('')
   const [tel, setTel] = useState('')
   const [nip, setNip] = useState('')
-  const [nipConfirm, setNipConfirm] = useState('')
+  const [showNip, setShowNip] = useState(false)
   const [erreur, setErreur] = useState<string|null>(null)
   const [loading, setLoading] = useState(false)
   const [cd, setCd] = useState(()=>countdown(trip.date_debut))
@@ -108,7 +108,6 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   const listeActive = autorises.length > 0
   const telComplet = normalizeTel(tel).length === 10
   const nipValide = isValidNip(nip)
-  const nipsMatch = nip === nipConfirm
 
   function onChangeTel(val: string) {
     const f = formatTel(val)
@@ -189,7 +188,6 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   async function creerNipMigration() {
     if (!pendingMembre) { setMode('reconnexion'); return }
     if (!isValidNip(nip)) { setErreur('NIP requis (4 chiffres).'); return }
-    if (!nipsMatch) { setErreur('Les deux NIP ne correspondent pas.'); return }
 
     setLoading(true); setErreur(null)
     const nipHash = await hashNip(nip)
@@ -213,7 +211,6 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     if (!nomClean) { setErreur('Veuillez entrer votre nom de famille.'); return }
     if (digits.length !== 10) { setErreur('Numéro de téléphone requis (10 chiffres).'); return }
     if (!isValidNip(nip)) { setErreur('NIP requis (4 chiffres).'); return }
-    if (!nipsMatch) { setErreur('Les deux NIP ne correspondent pas.'); return }
 
     setLoading(true); setErreur(null)
 
@@ -295,9 +292,34 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     }
   }
 
-  const canSubmitInscription = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && nipValide && nipsMatch && !loading
+  const canSubmitInscription = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && nipValide && !loading
   const canSubmitReconnexion = telComplet && nipValide && !loading
-  const canSubmitCreerNip = nipValide && nipsMatch && !loading
+  const canSubmitCreerNip = nipValide && !loading
+
+  // Bouton oeil inline pour montrer/masquer le NIP pendant la saisie.
+  // Standard iOS bancaire: masque par defaut, l'utilisateur peut decider
+  // de voir ses chiffres s'il n'est pas sur de ce qu'il a tape.
+  const oeilBtn = (
+    <button type="button" onClick={()=>setShowNip(s => !s)}
+      aria-label={showNip ? 'Masquer le NIP' : 'Afficher le NIP'}
+      style={{position:'absolute',right:10,top:'50%',transform:'translateY(-50%)',
+        background:'none',border:'none',cursor:'pointer',padding:6,
+        color:'rgba(255,255,255,.6)',display:'flex',alignItems:'center'}}>
+      {showNip ? (
+        // oeil barre (masquer)
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      ) : (
+        // oeil simple (afficher)
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      )}
+    </button>
+  )
 
   const entete = (
     <>
@@ -409,15 +431,18 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
                 NIP (4 chiffres)
               </label>
-              <input className="input" type="password" inputMode="numeric" placeholder="••••"
-                value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
-                onKeyDown={e=>e.key==='Enter' && canSubmitReconnexion && reconnecter()}
-                maxLength={4}
-                style={{fontSize:18,letterSpacing:8,textAlign:'center',
-                  background:'rgba(255,255,255,.06)',
-                  border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
-                  color:'#fff'}}
-              />
+              <div style={{position:'relative'}}>
+                <input className="input" type={showNip ? 'text' : 'password'} inputMode="numeric" placeholder="••••"
+                  value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
+                  onKeyDown={e=>e.key==='Enter' && canSubmitReconnexion && reconnecter()}
+                  maxLength={4}
+                  style={{fontSize:18,letterSpacing:showNip ? 4 : 8,textAlign:'center',paddingRight:40,
+                    background:'rgba(255,255,255,.06)',
+                    border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
+                    color:'#fff'}}
+                />
+                {oeilBtn}
+              </div>
             </div>
 
             {erreur && (
@@ -463,31 +488,17 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               Pour sécuriser votre accès, créez un NIP à 4 chiffres. Vous l&apos;utiliserez à chaque connexion sur un nouvel appareil.
             </div>
 
-            <div style={{marginBottom:10}}>
+            <div style={{marginBottom:14}}>
               <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
                 NIP (4 chiffres)
               </label>
-              <input className="input" type="password" inputMode="numeric" placeholder="••••"
+              <input className="input" type="text" inputMode="numeric" placeholder="••••"
                 value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
+                onKeyDown={e=>e.key==='Enter' && canSubmitCreerNip && creerNipMigration()}
                 autoFocus maxLength={4}
-                style={{fontSize:18,letterSpacing:8,textAlign:'center',
+                style={{fontSize:22,letterSpacing:8,textAlign:'center',fontWeight:700,
                   background:'rgba(255,255,255,.06)',
                   border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
-                  color:'#fff'}}
-              />
-            </div>
-
-            <div style={{marginBottom:14}}>
-              <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
-                Confirmer le NIP
-              </label>
-              <input className="input" type="password" inputMode="numeric" placeholder="••••"
-                value={nipConfirm} onChange={e=>onChangeNip(e.target.value, setNipConfirm)}
-                onKeyDown={e=>e.key==='Enter' && canSubmitCreerNip && creerNipMigration()}
-                maxLength={4}
-                style={{fontSize:18,letterSpacing:8,textAlign:'center',
-                  background:'rgba(255,255,255,.06)',
-                  border:`1.5px solid ${nipConfirm && nipsMatch && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
                   color:'#fff'}}
               />
             </div>
@@ -556,33 +567,22 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
           {nipSeparateur}
 
-          <div style={{marginBottom:10}}>
+          <div style={{marginBottom:14}}>
             <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
               NIP (4 chiffres)
             </label>
-            <input className="input" type="password" inputMode="numeric" placeholder="••••"
+            <input className="input" type="text" inputMode="numeric" placeholder="••••"
               value={nip} onChange={e=>onChangeNip(e.target.value, setNip)}
+              onKeyDown={e=>e.key==='Enter' && canSubmitInscription && rejoindre()}
               maxLength={4}
-              style={{fontSize:18,letterSpacing:8,textAlign:'center',
+              style={{fontSize:22,letterSpacing:8,textAlign:'center',fontWeight:700,
                 background:'rgba(255,255,255,.06)',
                 border:`1.5px solid ${nip && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
                 color:'#fff'}}
             />
-          </div>
-
-          <div style={{marginBottom:14}}>
-            <label style={{fontSize:10,fontWeight:600,color:'rgba(255,255,255,.5)',letterSpacing:'.12em',textTransform:'uppercase',display:'block',marginBottom:5}}>
-              Confirmer le NIP
-            </label>
-            <input className="input" type="password" inputMode="numeric" placeholder="••••"
-              value={nipConfirm} onChange={e=>onChangeNip(e.target.value, setNipConfirm)}
-              onKeyDown={e=>e.key==='Enter' && canSubmitInscription && rejoindre()}
-              maxLength={4}
-              style={{fontSize:18,letterSpacing:8,textAlign:'center',
-                background:'rgba(255,255,255,.06)',
-                border:`1.5px solid ${nipConfirm && nipsMatch && nipValide ? '#4ade80' : erreur ? '#f87171' : 'rgba(255,255,255,.1)'}`,
-                color:'#fff'}}
-            />
+            <div style={{fontSize:11,color:'rgba(255,255,255,.4)',marginTop:6,lineHeight:1.5}}>
+              Vous l&apos;utiliserez à chaque connexion sur un nouvel appareil.
+            </div>
           </div>
 
           {erreur && (
@@ -597,7 +597,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
             {loading ? 'Connexion…' : 'Entrer dans le trip →'}
           </button>
 
-          <button onClick={()=>{setMode('choice');setErreur(null);setNip('');setNipConfirm('')}}
+          <button onClick={()=>{setMode('choice');setErreur(null);setNip('')}}
             style={{width:'100%',padding:'10px',background:'none',border:'none',
               color:'rgba(255,255,255,.4)',fontSize:12,cursor:'pointer',fontWeight:500}}>
             ← Retour

@@ -21,7 +21,11 @@ export default function InstallBanner() {
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     const wasDismissed = localStorage.getItem('crew-install-dismissed')
-    if (isIOS && !isStandalone && !wasDismissed) {
+    // Attendre que l'utilisateur soit authentifie (crew-tel-locked pose).
+    // Avant ca, il remplit le JoinScreen (inscription/reconnexion) et le
+    // popup serait une distraction visuelle qui bloque la saisie.
+    const isAuth = !!localStorage.getItem('crew-tel-locked')
+    if (isIOS && !isStandalone && !wasDismissed && isAuth) {
       const t = setTimeout(() => setShow(true), 5000)
       return () => clearTimeout(t)
     }
