@@ -1,0 +1,40 @@
+﻿
+> crew-trips-v2@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.2.3 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ┬À optimizePackageImports
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 4.6s
+  Running TypeScript ...
+  Finished TypeScript in 6.3s ...
+  Collecting page data using 13 workers ...
+  Generating static pages using 13 workers (0/9) ...
+  Generating static pages using 13 workers (2/9) 
+  Generating static pages using 13 workers (4/9) 
+  Generating static pages using 13 workers (6/9) 
+Ô£ô Generating static pages using 13 workers (9/9) in 243ms
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /admin
+Ôö£ Ôùï /admin/retrouver
+Ôö£ ãÆ /album/[token]
+Ôö£ Ôùï /mes-trips
+Ôö£ Ôùï /nouveau
+Ôö£ Ôùï /rejoindre
+Ôö£ ãÆ /trip/[code]
+Ôö£ ãÆ /trip/[code]/created
+Ôö£ ãÆ /trip/[code]/manifest
+Ôö£ ãÆ /trip/[code]/pdf
+Ôöö ãÆ /trip/[code]/print
+
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

@@ -1,0 +1,39 @@
+﻿
+File                              LOC Bytes
+----                              --- -----
+app\trip\[code]\Album.tsx         932 40459
+app\trip\[code]\Infos.tsx         902 53645
+app\trip\[code]\Membres.tsx       794 43149
+app\trip\[code]\JoinScreen.tsx    637 30428
+app\nouveau\page.tsx              389 21563
+app\album\[token]\page.tsx        321 14173
+app\trip\[code]\print\page.tsx    278 18943
+app\mes-trips\page.tsx            263 12949
+app\admin\retrouver\page.tsx      214 10923
+app\trip\[code]\Lightbox.tsx      212  8117
+app\admin\page.tsx                210 12589
+lib\types.tsx                     202 11851
+lib\utils.ts                      175 10848
+lib\useTripSession.ts             160  6790
+app\trip\[code]\InfoCardView.tsx  150  8315
+app\trip\[code]\page.tsx          118  6214
+app\trip\[code]\created\page.tsx  107  6495
+app\InstallBanner.tsx              92  4042
+app\rejoindre\page.tsx             91  4452
+lib\shareFiles.ts                  84  3034
+lib\downloadAlbum.ts               81  2783
+lib\svgIcons.tsx                   80  7119
+app\page.tsx                       77  4515
+lib\imageCompression.ts            72  2561
+app\trip\[code]\CardContent.tsx    70  2848
+lib\useNavFiltre.ts                58  1895
+lib\tripIcons.tsx                  54  1486
+app\layout.tsx                     53  1572
+app\trip\[code]\pdf\route.ts       37  1082
+app\ServiceWorkerRegister.tsx      34  1067
+app\trip\[code]\manifest\route.ts  25   959
+app\trip\[code]\layout.tsx         23   985
+app\album\[token]\layout.tsx       18   603
+lib\supabase.ts                     5   179
+
+
