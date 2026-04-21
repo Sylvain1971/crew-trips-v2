@@ -260,9 +260,6 @@ function NouveauInner() {
               <div style={{fontSize:13,color:'rgba(255,255,255,.55)',marginTop:2,letterSpacing:.5}}>
                 {tel}
               </div>
-              <div style={{fontSize:10,color:'rgba(255,255,255,.35)',marginTop:6,lineHeight:1.5}}>
-                Pour changer d&apos;identité : « Changer d&apos;utilisateur » depuis Mes trips.
-              </div>
             </div>
           ) : (
             /* Premier usage : formulaire complet 3 champs */
