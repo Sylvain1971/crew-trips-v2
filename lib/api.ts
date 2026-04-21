@@ -212,7 +212,6 @@ export type CreateTripResult = {
 }
 
 export async function apiCreateTrip(
-  creatorCode: string,
   params: {
     code: string
     nom: string
@@ -223,11 +222,10 @@ export async function apiCreateTrip(
     createur_prenom: string
     createur_nom: string
     createur_tel: string
-    createur_nip_hash: string
+    createur_nip_hash: string | null
   }
 ): Promise<CreateTripResult> {
   const { data, error } = await supabase.rpc('create_trip', {
-    p_creator_code: creatorCode,
     p_code: params.code,
     p_nom: params.nom,
     p_type: params.type,
@@ -245,6 +243,22 @@ export async function apiCreateTrip(
     setStoredToken(params.code, result.token)
   }
   return result
+}
+
+export async function apiCloneTripContent(
+  dstTripCode: string,
+  dstTripId: string,
+  srcTripCode: string
+): Promise<{ success: boolean; cards_cloned?: number; message?: string }> {
+  const token = getStoredToken(dstTripCode)
+  if (!token) return { success: false, message: 'Pas de token' }
+  const { data, error } = await supabase.rpc('clone_trip_content', {
+    p_token: token,
+    p_dst_trip_id: dstTripId,
+    p_src_trip_code: srcTripCode,
+  })
+  if (error) return { success: false, message: error.message }
+  return data as { success: boolean; cards_cloned?: number; message?: string }
 }
 
 export async function apiDeleteTripFull(tripCode: string, tripId: string): Promise<{ success: boolean; message?: string }> {

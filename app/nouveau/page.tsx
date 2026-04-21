@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { apiCreateTrip, apiCloneTripContent } from '@/lib/api'
 import { getTripExamples } from '@/lib/utils'
 import { TripIcon } from '@/lib/tripIcons'
 import { COULEURS_MEMBRES } from '@/lib/types'
@@ -71,18 +72,25 @@ function NouveauInner() {
     } catch {}
   }, [])
 
-  function validerCode() {
-    supabase.from('config').select('value').eq('key', 'creator_code').single()
-      .then(({ data }) => {
-        const creatorCode = data?.value || ''
-        if (codeAcces.trim() === creatorCode && creatorCode !== '') {
-          setCodeValide(true)
-          setCodeErreur(false)
-          try { sessionStorage.setItem('crew-creator-validated', '1') } catch {}
-        } else {
-          setCodeErreur(true)
-        }
+  async function validerCode() {
+    // Phase 2 : vérification côté serveur (la table config n'est plus lisible).
+    try {
+      const res = await fetch('/api/creator/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeAcces.trim() }),
       })
+      const json = await res.json()
+      if (json?.valid) {
+        setCodeValide(true)
+        setCodeErreur(false)
+        try { sessionStorage.setItem('crew-creator-validated', '1') } catch {}
+      } else {
+        setCodeErreur(true)
+      }
+    } catch {
+      setCodeErreur(true)
+    }
   }
 
   function onTelChange(val: string) {
@@ -122,56 +130,50 @@ function NouveauInner() {
 
     const digits = telFinal.replace(/\D/g,'')
     const code = genCode()
-    const { error } = await supabase.from('trips').insert({
-      code, nom: nom.trim(), type,
-      destination: dest.trim()||null,
-      date_debut: d1||null, date_fin: d2||null,
+
+    // Phase 2 : création via RPC atomique (trip + membre créateur + token)
+    // Le NIP est hérité automatiquement côté serveur si ce téléphone a déjà un NIP ailleurs.
+    const createResult = await apiCreateTrip({
+      code,
+      nom: nom.trim(),
+      type,
+      destination: dest.trim() || null as unknown as string,
+      date_debut: d1 || null,
+      date_fin: d2 || null,
+      createur_prenom: prenomFinal,
+      createur_nom: nomFinal,
       createur_tel: digits,
+      createur_nip_hash: null, // le serveur hérite si possible
     })
-    if (error) { alert('Erreur : ' + error.message); setLoading(false); return }
+    if (!createResult.success || !createResult.trip_id) {
+      alert('Erreur : ' + (createResult.message || 'Création impossible'))
+      setLoading(false); return
+    }
+
     try {
-      const sourceCode = searchParams.get('sourceCode') || null
-      const { data: newTrip } = await supabase.from('trips').select('id').eq('code', code).single()
-      if (!newTrip) throw new Error('Trip introuvable')
-      // Créer membre créateur avec le prénom + nom saisis (ou verrouilles)
-      if (prenomFinal && nomFinal) {
+      // Sauvegarder le membre courant côté client pour navigation immédiate
+      if (prenomFinal) {
         const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
-
-        // Copier automatiquement le NIP existant de cet utilisateur
-        // (identifie par son tel). Le NIP est personnel, pas specifique au trip:
-        // si Sylvain a deja pose 6611 sur un autre trip, on le reutilise ici
-        // au lieu de laisser NULL et forcer la re-creation manuelle.
-        const { data: existingNip } = await supabase.from('membres')
-          .select('nip')
-          .eq('tel', digits)
-          .not('nip', 'is', null)
-          .limit(1)
-          .maybeSingle()
-        const nipHerite = existingNip?.nip || null
-
-        const { data: newMembre } = await supabase.from('membres')
-          .insert({ trip_id: newTrip.id, prenom: prenomFinal, nom: nomFinal, couleur, is_createur: true, tel: digits, nip: nipHerite })
-          .select().single()
-        if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
-      }
-      if (sourceCode) {
-        const { data: src } = await supabase.from('trips').select('*').eq('code', sourceCode).single()
-        if (src) {
-          await supabase.from('trips').update({
-            lodge_nom: src.lodge_nom, lodge_adresse: src.lodge_adresse,
-            lodge_tel: src.lodge_tel, lodge_wifi: src.lodge_wifi,
-            lodge_code: src.lodge_code, lodge_arrivee: src.lodge_arrivee,
-            whatsapp_lien: src.whatsapp_lien,
-          }).eq('id', newTrip.id)
-          const { data: srcInfos } = await supabase.from('infos').select('*').eq('trip_id', src.id)
-          if (srcInfos?.length) {
-            type II = Omit<typeof srcInfos[0],'id'|'trip_id'|'created_at'>
-            await supabase.from('infos').insert(
-              srcInfos.map(({id:_i,trip_id:_t,created_at:_c,...rest}:II&{id:string,trip_id:string,created_at:string})=>({...rest,trip_id:newTrip.id}))
-            )
-          }
+        const newMembre = {
+          id: createResult.membre_id,
+          trip_id: createResult.trip_id,
+          prenom: prenomFinal,
+          nom: nomFinal,
+          tel: digits,
+          couleur,
+          is_createur: true,
         }
+        try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
       }
+
+      // Si duplication : cloner lodge + cards via RPC
+      const sourceCode = searchParams.get('sourceCode') || null
+      if (sourceCode) {
+        await apiCloneTripContent(code, createResult.trip_id, sourceCode).catch(() => {
+          // Échec silencieux : le trip est créé, juste pas de clone
+        })
+      }
+
       try { localStorage.setItem('crew-last-trip', code) } catch {}
       router.push('/trip/' + code + '/created')
     } catch (err) {
