@@ -184,20 +184,38 @@ export default function JoinScreen({trip,autorises,onJoin}:{
   }
 
   // MODE CREER-NIP : l'utilisateur existe en DB mais n'a pas encore de NIP
-  // (migration douce apres deploiement de la feature NIP)
+  // (migration douce apres deploiement de la feature NIP).
+  // Le NIP cree est propage a TOUTES les lignes membres avec le meme tel
+  // (coherent avec le modele "1 personne = 1 NIP unique par tel").
   async function creerNipMigration() {
     if (!pendingMembre) { setMode('reconnexion'); return }
     if (!isValidNip(nip)) { setErreur('NIP requis (4 chiffres).'); return }
 
     setLoading(true); setErreur(null)
     const nipHash = await hashNip(nip)
-    const { error } = await supabase.from('membres').update({ nip: nipHash }).eq('id', pendingMembre.id)
-    if (error) {
-      setErreur('Erreur lors de la création du NIP. Réessayez.')
-      setLoading(false); return
+    const telDigits = normalizeTel(pendingMembre.tel || '')
+
+    if (telDigits) {
+      // Propagation a toutes les lignes avec ce tel (cas normal)
+      const { error } = await supabase.from('membres')
+        .update({ nip: nipHash })
+        .eq('tel', telDigits)
+      if (error) {
+        setErreur('Erreur lors de la création du NIP. Réessayez.')
+        setLoading(false); return
+      }
+    } else {
+      // Cas extreme : membre sans tel (ne devrait pas arriver). Update cette ligne.
+      const { error } = await supabase.from('membres')
+        .update({ nip: nipHash })
+        .eq('id', pendingMembre.id)
+      if (error) {
+        setErreur('Erreur lors de la création du NIP. Réessayez.')
+        setLoading(false); return
+      }
     }
 
-    const digits = normalizeTel(pendingMembre.tel || tel)
+    const digits = telDigits || normalizeTel(tel)
     finaliserConnexion({...pendingMembre, nip: nipHash}, digits, pendingMembre.prenom, pendingMembre.nom || '')
   }
 
@@ -271,6 +289,9 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     }
 
     // Etape 3 : nouvelle inscription
+    // On propage le NIP a toutes les autres lignes avec ce meme tel (s'il y en a)
+    // pour respecter le modele "1 personne = 1 NIP unique". Ca peut arriver si
+    // l'utilisateur etait deja membre d'un autre trip sans NIP (cas migration).
     const isFirst = (membresExistants?.length ?? 0) === 0
     const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
     const { data, error } = await supabase.from('membres')
@@ -285,6 +306,13 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       })
       .select().single()
     if (!error && data) {
+      // Propagation: si l'utilisateur existe deja sur d'autres trips, on met a jour
+      // leur NIP aussi (sinon ils auront l'ancienne valeur ou NULL).
+      // On exclut le trip courant (data.id) pour eviter un update redondant.
+      await supabase.from('membres')
+        .update({ nip: nipHash })
+        .eq('tel', digits)
+        .neq('id', data.id)
       finaliserConnexion(data, digits, prenomFinal, nomFinal)
     } else {
       setErreur('Erreur de connexion. Réessayez.')

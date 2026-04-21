@@ -223,6 +223,11 @@ export default function Membres({trip, membre, onTripUpdate}: {
     // Permet au membre courant de creer (si nip NULL) ou modifier son NIP.
     // Pas de double saisie - l'utilisateur voit le NIP en clair pendant
     // qu'il le tape, peut verifier visuellement avant d'enregistrer.
+    //
+    // IMPORTANT: le NIP est personnel a l'utilisateur (identifie par son tel),
+    // pas specifique au trip. On propage donc le nouveau NIP a TOUTES les
+    // lignes membres avec le meme tel (donc a tous les trips de l'utilisateur).
+    // Coherent avec le modele "1 personne = 1 NIP unique".
     const nipClean = newNip.trim()
     if (!isValidNip(nipClean)) {
       setNipError('NIP requis (4 chiffres).')
@@ -232,11 +237,22 @@ export default function Membres({trip, membre, onTripUpdate}: {
     setNipError(null)
     try {
       const nipHash = await hashNip(nipClean)
-      const { error } = await supabase.from('membres')
-        .update({ nip: nipHash })
-        .eq('id', membre.id)
-      if (error) throw error
-      // Mise a jour locale du state
+      const telDigits = normalizeTel(membre.tel || '')
+      if (!telDigits) {
+        // Cas extreme : membre sans tel. Update uniquement cette ligne.
+        const { error } = await supabase.from('membres')
+          .update({ nip: nipHash })
+          .eq('id', membre.id)
+        if (error) throw error
+      } else {
+        // Cas normal : propagation a toutes les lignes membres avec ce tel.
+        const { error } = await supabase.from('membres')
+          .update({ nip: nipHash })
+          .eq('tel', telDigits)
+        if (error) throw error
+      }
+      // Mise a jour locale du state (uniquement pour ce trip-ci, les autres
+      // trips auront leur state mis a jour lors de leur prochain chargement)
       setMembres(p => p.map(m => m.id === membre.id ? { ...m, nip: nipHash } : m))
       setEditingNip(false)
       setNewNip('')
@@ -616,6 +632,9 @@ export default function Membres({trip, membre, onTripUpdate}: {
                     autoFocus
                     style={{fontSize:20,letterSpacing:8,textAlign:"center",fontWeight:700,padding:"8px 10px",
                       border: nipError ? "1.5px solid #DC2626" : isValidNip(newNip) ? "1.5px solid #16A34A" : "1px solid var(--border)"}} />
+                  <div style={{fontSize:10,color:"var(--text-3)",lineHeight:1.4,fontStyle:"italic"}}>
+                    ℹ️ Ce NIP sera utilisé sur tous vos trips.
+                  </div>
                   {nipError && (
                     <div style={{fontSize:11,color:"#DC2626",lineHeight:1.4}}>{nipError}</div>
                   )}

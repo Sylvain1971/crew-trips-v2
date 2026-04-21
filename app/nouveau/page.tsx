@@ -136,8 +136,21 @@ function NouveauInner() {
       // Créer membre créateur avec le prénom + nom saisis (ou verrouilles)
       if (prenomFinal && nomFinal) {
         const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
+
+        // Copier automatiquement le NIP existant de cet utilisateur
+        // (identifie par son tel). Le NIP est personnel, pas specifique au trip:
+        // si Sylvain a deja pose 6611 sur un autre trip, on le reutilise ici
+        // au lieu de laisser NULL et forcer la re-creation manuelle.
+        const { data: existingNip } = await supabase.from('membres')
+          .select('nip')
+          .eq('tel', digits)
+          .not('nip', 'is', null)
+          .limit(1)
+          .maybeSingle()
+        const nipHerite = existingNip?.nip || null
+
         const { data: newMembre } = await supabase.from('membres')
-          .insert({ trip_id: newTrip.id, prenom: prenomFinal, nom: nomFinal, couleur, is_createur: true, tel: digits })
+          .insert({ trip_id: newTrip.id, prenom: prenomFinal, nom: nomFinal, couleur, is_createur: true, tel: digits, nip: nipHerite })
           .select().single()
         if (newMembre) try { localStorage.setItem(`crew2-${code}`, JSON.stringify(newMembre)) } catch {}
       }
