@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
-import { normalizeName, normalizeTel, formatNomComplet } from '@/lib/types'
+import { normalizeName, normalizeTel, formatNomComplet, hashNip, isValidNip } from '@/lib/types'
 import { SvgIcon } from '@/lib/svgIcons'
 import QRCode from 'qrcode'
 
@@ -25,6 +25,10 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [newPrenomSelf, setNewPrenomSelf] = useState('')
   const [newNomSelf, setNewNomSelf] = useState('')
   const [savingPrenom, setSavingPrenom] = useState(false)
+  const [editingNip, setEditingNip] = useState(false)
+  const [newNip, setNewNip] = useState('')
+  const [savingNip, setSavingNip] = useState(false)
+  const [nipError, setNipError] = useState<string|null>(null)
   const [shareCopied, setShareCopied] = useState(false)
   const [generatingShare, setGeneratingShare] = useState(false)
   const [showQR, setShowQR] = useState(false)
@@ -213,6 +217,34 @@ export default function Membres({trip, membre, onTripUpdate}: {
     setMembres(p => p.map(m => m.id === membre.id ? { ...m, prenom: prenomClean, nom: nomClean } : m))
     setSavingPrenom(false)
     setEditingPrenom(false)
+  }
+
+  async function saveNip() {
+    // Permet au membre courant de creer (si nip NULL) ou modifier son NIP.
+    // Pas de double saisie - l'utilisateur voit le NIP en clair pendant
+    // qu'il le tape, peut verifier visuellement avant d'enregistrer.
+    const nipClean = newNip.trim()
+    if (!isValidNip(nipClean)) {
+      setNipError('NIP requis (4 chiffres).')
+      return
+    }
+    setSavingNip(true)
+    setNipError(null)
+    try {
+      const nipHash = await hashNip(nipClean)
+      const { error } = await supabase.from('membres')
+        .update({ nip: nipHash })
+        .eq('id', membre.id)
+      if (error) throw error
+      // Mise a jour locale du state
+      setMembres(p => p.map(m => m.id === membre.id ? { ...m, nip: nipHash } : m))
+      setEditingNip(false)
+      setNewNip('')
+    } catch (e: unknown) {
+      setNipError('Erreur : ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setSavingNip(false)
+    }
   }
 
   async function generateShareToken() {
@@ -558,6 +590,49 @@ export default function Membres({trip, membre, onTripUpdate}: {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="3" ry="3"/><path d="M8 16l2.5-.5 6.5-6.5a1.5 1.5 0 0 0-2.1-2.1L8.5 13.5 8 16z"/></svg>
                   <span style={{fontSize:11,fontWeight:600,textDecoration:"underline"}}>Modifier mon nom</span>
                 </button>
+              )}
+              {m.id===membre.id && !editingNip && (
+                <button onClick={()=>{setNewNip('');setNipError(null);setEditingNip(true)}}
+                  style={{background:"none",border:"none",padding:0,marginTop:4,cursor:"pointer",display:"flex",alignItems:"center",gap:5,
+                    color: m.nip ? "var(--green)" : "#DC2626"}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <span style={{fontSize:11,fontWeight:600,textDecoration:"underline"}}>
+                    {m.nip ? 'Modifier mon NIP' : '⚠ Créer mon NIP'}
+                  </span>
+                </button>
+              )}
+              {m.id===membre.id && editingNip && (
+                <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8,padding:10,background:"var(--sand)",borderRadius:8,border:"1px solid var(--border)"}}>
+                  <div style={{fontSize:11,color:"var(--text-2)",fontWeight:600,marginBottom:2}}>
+                    {membre.nip ? 'Nouveau NIP (4 chiffres)' : 'Créez votre NIP (4 chiffres)'}
+                  </div>
+                  <input className="input" type="text" inputMode="numeric"
+                    value={newNip} placeholder="••••" maxLength={4}
+                    onChange={e=>{setNewNip(e.target.value.replace(/\D/g,'').slice(0,4));setNipError(null)}}
+                    onKeyDown={e=>{if(e.key==="Enter"&&isValidNip(newNip)) saveNip(); if(e.key==="Escape") setEditingNip(false)}}
+                    autoFocus
+                    style={{fontSize:20,letterSpacing:8,textAlign:"center",fontWeight:700,padding:"8px 10px",
+                      border: nipError ? "1.5px solid #DC2626" : isValidNip(newNip) ? "1.5px solid #16A34A" : "1px solid var(--border)"}} />
+                  {nipError && (
+                    <div style={{fontSize:11,color:"#DC2626",lineHeight:1.4}}>{nipError}</div>
+                  )}
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={saveNip} disabled={savingNip||!isValidNip(newNip)}
+                      style={{flex:1,padding:"8px 12px",borderRadius:8,border:"none",
+                        background: isValidNip(newNip) ? "var(--forest)" : "var(--border)",
+                        color:"#fff",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                      {savingNip?"…":"Enregistrer"}
+                    </button>
+                    <button onClick={()=>{setEditingNip(false);setNewNip('');setNipError(null)}}
+                      style={{padding:"8px 12px",borderRadius:8,border:"1px solid var(--border)",
+                        background:"transparent",color:"var(--text-2)",fontSize:12,cursor:"pointer"}}>
+                      Annuler
+                    </button>
+                  </div>
+                </div>
               )}
               {m.id===membre.id && editingPrenom && (
                 <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:6}}>
