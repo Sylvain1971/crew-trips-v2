@@ -263,3 +263,27 @@ Règles importantes à rappeler à Claude pour l'audit :
 ---
 
 **Fin du brief. Prêt pour session d'audit.**
+
+
+---
+
+## 🐛 BUG CORRIGÉ 2026-04-20 22h00 — Cards privées disparaissent
+
+**Symptôme** : création/modification d'une info card avec toggle "Carte privée" activé → la card disparaissait immédiatement pour son propre auteur.
+
+**Cause racine** : le filtre `cards.filter(c => !c.is_prive || c.auteur_id === membre.id)` dépend de `auteur_id`. Supabase renvoyait `auteur_id=null` dans certains cas (schéma legacy, quirk RLS), rendant la card invisible même pour son auteur.
+
+**Fix (commit `79fee28`)** : fallback côté client dans `save()` et `updateCard()` :
+```typescript
+const dataWithAuteur = { ...data, auteur_id: data.auteur_id ?? membre.id }
+```
+
+**Cleanup DB effectué** :
+- DELETE 2 cards "Test Bergman" (tests)
+- UPDATE 2 cards "Permis - Sylvain" backfilled avec `membres.tel = '4185401302'`
+- Vérification finale : `COUNT(*) WHERE is_prive = true AND auteur_id IS NULL` = 0
+
+**Questions pour l'audit** :
+1. **Pourquoi Supabase renvoyait `auteur_id=null` ?** Est-ce qu'il y a une policy RLS qui strip certains champs du RETURNING ? Une colonne `GENERATED` ou un trigger qui réinitialise ?
+2. **Combien d'autres endroits dans le code** ont le même pattern (filter basé sur un champ qui peut être null) ? Album.tsx avec `auteur_id` ? Messages ?
+3. **Schema audit** : lister toutes les colonnes NULLABLE + leurs impacts sur les filtres UI. Une colonne optionnelle doit avoir un default côté INSERT ou un fallback côté SELECT.
