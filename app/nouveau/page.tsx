@@ -271,7 +271,7 @@ function NouveauInner() {
                   onChange={e=>onTelChange(e.target.value)}
                   style={{background:'rgba(255,255,255,.08)',
                     border:`1.5px solid ${tel && !telComplet?'#f87171':telComplet?'#4ade80':'rgba(255,255,255,.15)'}`,
-                    color:'#fff',letterSpacing:1,textAlign:'center'}}/>
+                    color:'#fff',letterSpacing:1,textAlign:'center',height:50}}/>
                 <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5,textAlign:'center'}}>
                   Identifie votre compte créateur
                 </div>
@@ -283,7 +283,7 @@ function NouveauInner() {
                   value={prenom}
                   onChange={e=>setPrenom(e.target.value)}
                   onBlur={()=>{ try { localStorage.setItem('crew-prenom', prenom.trim()) } catch {} }}
-                  style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+                  style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',height:50}}/>
               </div>
 
               <div className="field">
@@ -292,7 +292,7 @@ function NouveauInner() {
                   value={nomFamille}
                   onChange={e=>setNomFamille(e.target.value)}
                   onBlur={()=>{ try { localStorage.setItem('crew-nom', nomFamille.trim()) } catch {} }}
-                  style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+                  style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',height:50}}/>
                 <div style={{fontSize:11,color:'rgba(255,255,255,.35)',marginTop:5}}>
                   Deviendra votre nom d&apos;administrateur dans ce trip
                 </div>
@@ -300,11 +300,14 @@ function NouveauInner() {
             </>
           )}
 
+          {/* Tous les inputs ont la meme hauteur (50px) pour un rythme visuel
+              constant. L'espacement vertical entre bulles (20px) vient de .field
+              margin-bottom. Le bouton final suit le meme rythme via marginTop:20. */}
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>NOM DU TRIP</label>
             <input className="input" placeholder={`Ex: ${getTripExamples(type).nom}`}
               value={nom} onChange={e=>setNom(e.target.value)}
-              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',height:50}}
               onFocus={e=>{e.target.style.border='1.5px solid rgba(255,255,255,.4)'}}
               onBlur={e=>{e.target.style.border='1.5px solid rgba(255,255,255,.15)'}}/>
           </div>
@@ -312,7 +315,7 @@ function NouveauInner() {
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>ACTIVITÉ</label>
             <select className="input" value={type} onChange={e=>setType(e.target.value)}
-              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}>
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',height:50}}>
               <option value="peche" style={{background:'#1a3a1a',color:'#fff'}}>Pêche à la mouche</option>
               <option value="ski" style={{background:'#1a3a1a',color:'#fff'}}>Ski alpin</option>
               <option value="motoneige" style={{background:'#1a3a1a',color:'#fff'}}>Motoneige</option>
@@ -329,42 +332,42 @@ function NouveauInner() {
             <label style={{color:'rgba(255,255,255,.5)'}}>DESTINATION</label>
             <input className="input" placeholder={`Ex: ${getTripExamples(type).dest}`}
               value={dest} onChange={e=>setDest(e.target.value)}
-              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff'}}/>
+              style={{background:'rgba(255,255,255,.08)',border:'1.5px solid rgba(255,255,255,.15)',color:'#fff',height:50}}/>
           </div>
 
+          {/* DATES : 2 bulles cote-a-cote, chacune avec "Debut" ou "Fin" comme
+              placeholder integre (au lieu du tiret externe). Meme hauteur 50px
+              que les autres champs. Un seul label "DATES" au-dessus. */}
           <div className="field">
             <label style={{color:'rgba(255,255,255,.5)'}}>DATES</label>
             <div style={{display:'flex',gap:8}}>
-              <div style={{flex:1}}>
-                <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>DÉBUT</div>
-                <div style={{position:'relative',height:50}}>
-                  <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
-                    style={{position:'absolute',inset:0,width:'100%',height:'100%',padding:'0 15px',borderRadius:10,
-                      border:'1.5px solid rgba(255,255,255,.15)',background:'rgba(255,255,255,.08)',
-                      color:d1?'#fff':'transparent',fontSize:15,fontFamily:'inherit',outline:'none',
-                      colorScheme:'dark',boxSizing:'border-box'}}/>
-                  {!d1 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
-                    fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
-                </div>
+              <div style={{flex:1,position:'relative',height:50}}>
+                <input type="date" value={d1} onChange={e=>setD1(e.target.value)}
+                  style={{position:'absolute',inset:0,width:'100%',height:'100%',padding:'0 15px',borderRadius:10,
+                    border:'1.5px solid rgba(255,255,255,.15)',background:'rgba(255,255,255,.08)',
+                    color:d1?'#fff':'transparent',fontSize:15,fontFamily:'inherit',outline:'none',
+                    colorScheme:'dark',boxSizing:'border-box'}}/>
+                {!d1 && <span style={{position:'absolute',top:'50%',left:15,transform:'translateY(-50%)',
+                  fontSize:15,color:'rgba(255,255,255,.35)',pointerEvents:'none'}}>Début</span>}
               </div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:10,color:'rgba(255,255,255,.5)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.06em',marginBottom:5}}>FIN</div>
-                <div style={{position:'relative',height:50}}>
-                  <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
-                    style={{position:'absolute',inset:0,width:'100%',height:'100%',padding:'0 15px',borderRadius:10,
-                      border:'1.5px solid rgba(255,255,255,.15)',background:'rgba(255,255,255,.08)',
-                      color:d2?'#fff':'transparent',fontSize:15,fontFamily:'inherit',outline:'none',
-                      colorScheme:'dark',boxSizing:'border-box'}}/>
-                  {!d2 && <span style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',
-                    fontSize:20,color:'rgba(255,255,255,.3)',pointerEvents:'none'}}>–</span>}
-                </div>
+              <div style={{flex:1,position:'relative',height:50}}>
+                <input type="date" value={d2} onChange={e=>setD2(e.target.value)}
+                  style={{position:'absolute',inset:0,width:'100%',height:'100%',padding:'0 15px',borderRadius:10,
+                    border:'1.5px solid rgba(255,255,255,.15)',background:'rgba(255,255,255,.08)',
+                    color:d2?'#fff':'transparent',fontSize:15,fontFamily:'inherit',outline:'none',
+                    colorScheme:'dark',boxSizing:'border-box'}}/>
+                {!d2 && <span style={{position:'absolute',top:'50%',left:15,transform:'translateY(-50%)',
+                  fontSize:15,color:'rgba(255,255,255,.35)',pointerEvents:'none'}}>Fin</span>}
               </div>
             </div>
           </div>
 
+          {/* Bouton final: meme hauteur (50px) et meme espacement (20px) que
+              les autres bulles pour un rythme vertical parfaitement constant. */}
           <button className="btn" onClick={creer} disabled={loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk}
             style={{background:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.15)':'#fff',
-              color:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.4)':'var(--forest)',fontWeight:700,marginTop:8}}>
+              color:loading||!nom.trim()||!telComplet||!prenomOk||!nomFamilleOk?'rgba(255,255,255,.4)':'var(--forest)',
+              fontWeight:700,height:50,padding:'0 20px',marginTop:0}}>
             {loading?'Création en cours…':isDuplicate?'Créer ce nouveau trip →':'Créer le trip →'}
           </button>
         </div>
