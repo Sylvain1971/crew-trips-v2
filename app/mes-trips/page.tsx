@@ -141,20 +141,33 @@ export default function MesTripsPage() {
             <SvgIcon name="lock" size={40} />
           </div>
           <div style={{fontSize:20,fontWeight:700,color:'#fff',marginBottom:10,letterSpacing:'-.02em'}}>
-            {isStandalone ? 'Première connexion dans l\u2019app' : 'Identité requise'}
+            {isStandalone ? 'Rejoindre un trip' : 'Identité requise'}
           </div>
           <div style={{fontSize:14,color:'rgba(255,255,255,.6)',lineHeight:1.6,maxWidth:340,marginBottom:28}}>
             {isStandalone
-              ? <>L&apos;app installée a sa propre mémoire, séparée de Safari. Rejoignez votre trip via son lien d&apos;invitation depuis cette app pour activer votre identité.</>
+              ? <>Cette app et Safari ont chacun leur propre mémoire. Entrez le code ou cliquez sur le lien d&apos;invitation du trip que vous avez reçu — une seule connexion suffit.</>
               : <>Pour voir vos trips, rejoignez-en un via votre lien d&apos;invitation, ou créez-en un nouveau.</>
             }
           </div>
 
           <div style={{display:'flex',flexDirection:'column',gap:10,width:'100%',maxWidth:320}}>
+            {isStandalone && (
+              <button onClick={()=>router.push('/rejoindre')}
+                style={{padding:'14px 20px',borderRadius:12,border:'none',background:'#fff',
+                  color:'var(--forest)',fontWeight:700,fontSize:15,cursor:'pointer'}}>
+                Rejoindre un trip existant →
+              </button>
+            )}
             <button onClick={()=>router.push('/nouveau')}
-              style={{padding:'14px 20px',borderRadius:12,border:'none',background:'#fff',
-                color:'var(--forest)',fontWeight:700,fontSize:15,cursor:'pointer'}}>
-              Créer un nouveau trip →
+              style={isStandalone ? {
+                padding:'13px 20px',borderRadius:12,
+                border:'1.5px solid rgba(255,255,255,.25)',background:'transparent',
+                color:'rgba(255,255,255,.9)',fontWeight:600,fontSize:14,cursor:'pointer'
+              } : {
+                padding:'14px 20px',borderRadius:12,border:'none',background:'#fff',
+                color:'var(--forest)',fontWeight:700,fontSize:15,cursor:'pointer'
+              }}>
+              Créer un nouveau trip {isStandalone ? '' : '→'}
             </button>
             <button onClick={()=>router.push('/')}
               style={{padding:'13px 20px',borderRadius:12,
@@ -166,7 +179,7 @@ export default function MesTripsPage() {
 
           <div style={{fontSize:11,color:'rgba(255,255,255,.3)',marginTop:24,lineHeight:1.6,maxWidth:300}}>
             {isStandalone
-              ? <>Contrainte iOS : l&apos;app installée et Safari sont deux contextes séparés. Une authentification par contexte est nécessaire.</>
+              ? <>iOS sépare les données entre Safari et les apps installées. Vous devrez vous identifier une fois ici.</>
               : <>Un appareil est lié à un seul participant pour des raisons de sécurité.</>
             }
           </div>
