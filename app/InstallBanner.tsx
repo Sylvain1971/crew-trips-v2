@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 export default function InstallBanner() {
   const [show, setShow] = useState(false)
   const [dismissed, setDismissed] = useState(false)
-  const [keyboardOpen, setKeyboardOpen] = useState(false)
   const pathname = usePathname()
 
   // Afficher le banner UNIQUEMENT sur les pages de trip, pas sur /.
@@ -34,59 +33,201 @@ export default function InstallBanner() {
     }
   }, [pathname, showOnPage])
 
-  useEffect(() => {
-    function onFocus() {
-      const tag = document.activeElement?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') setKeyboardOpen(true)
-    }
-    function onBlur() {
-      setTimeout(() => setKeyboardOpen(false), 300)
-    }
-    document.addEventListener('focusin', onFocus)
-    document.addEventListener('focusout', onBlur)
-    return () => {
-      document.removeEventListener('focusin', onFocus)
-      document.removeEventListener('focusout', onBlur)
-    }
-  }, [])
-
   function dismiss() {
     // Dismiss seulement pour la session courante (state React).
     // Au prochain chargement de page, le popup reapparaitra apres 5s.
-    // Objectif: encourager l'installation PWA a chaque connexion.
     setDismissed(true)
     setShow(false)
   }
 
   if (!show || dismissed) return null
 
-  const bottomPos = keyboardOpen ? -300 : 0
-
   return (
-    <div style={{
-      position: 'fixed', bottom: bottomPos, left: 12, right: 12, zIndex: 200,
-      background: '#fff', borderRadius: 12, padding: '10px 12px',
-      boxShadow: '0 4px 24px rgba(0,0,0,.18)', border: '1px solid rgba(0,0,0,.08)',
-      display: 'flex', alignItems: 'flex-start', gap: 10,
-      transition: 'bottom .3s ease',
-      animation: 'slideUp .3s ease'
-    }}>
-      <style>{`@keyframes slideUp { from { transform: translateY(16px); opacity:0 } to { transform: translateY(0); opacity:1 } }`}</style>
-      <img src="/apple-touch-icon.png" alt="" width={36} height={36}
-        style={{borderRadius:8,flexShrink:0,marginTop:2}} />
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{fontWeight:700,fontSize:13,color:'#111',marginBottom:3}}>Installer Crew Trips</div>
-        <div style={{fontSize:11,color:'#666',lineHeight:1.7}}>
-          <span>1. Appuyez sur <strong>Partager</strong> ⬆ en bas</span><br/>
-          <span>2. Faites défiler → <strong>Ajouter à l'écran d'accueil</strong></span><br/>
-          <span>3. Appuyez sur <strong>Ajouter</strong> en haut à droite</span>
+    <>
+      {/* Overlay blurré — ferme au tap hors de la card */}
+      <div
+        onClick={dismiss}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.45)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          zIndex: 199,
+          animation: 'crewInstallFadeIn 0.3s ease-out',
+        }}
+      />
+
+      {/* Card centrée */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="crew-install-title"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'calc(100% - 32px)',
+          maxWidth: 380,
+          maxHeight: 'calc(100vh - 32px)',
+          overflowY: 'auto',
+          background: '#fff',
+          borderRadius: 24,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+          zIndex: 200,
+          animation: 'crewInstallSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      >
+        <style>{`
+          @keyframes crewInstallFadeIn { from { opacity: 0 } to { opacity: 1 } }
+          @keyframes crewInstallSlideUp {
+            from { opacity: 0; transform: translate(-50%, -44%) }
+            to { opacity: 1; transform: translate(-50%, -50%) }
+          }
+        `}</style>
+
+        <div style={{ padding: '28px 24px 20px' }}>
+          {/* Header avec logo */}
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <img
+              src="/apple-touch-icon.png"
+              alt=""
+              width={64}
+              height={64}
+              style={{
+                borderRadius: 16,
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+                marginBottom: 14,
+              }}
+            />
+            <h2
+              id="crew-install-title"
+              style={{
+                margin: 0,
+                fontSize: 19,
+                fontWeight: 700,
+                color: '#111',
+                letterSpacing: '-0.01em',
+                lineHeight: 1.25,
+              }}
+            >
+              Installer Crew Trips
+            </h2>
+            <p
+              style={{
+                margin: '6px 0 0',
+                fontSize: 13,
+                color: 'rgba(0, 0, 0, 0.55)',
+                lineHeight: 1.45,
+              }}
+            >
+              Pour une meilleure expérience sur votre appareil
+            </p>
+          </div>
+
+          {/* Étapes avec vraies icônes iOS */}
+          <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <Step n={1}>
+              Appuyez sur <IoniOSShareIcon />
+              <span style={{ fontWeight: 600 }}> Partager</span> en bas de Safari
+            </Step>
+            <Step n={2}>
+              Faites défiler et appuyez sur <IoniOSAddIcon />
+              <span style={{ fontWeight: 600 }}> Ajouter à l&apos;écran d&apos;accueil</span>
+            </Step>
+            <Step n={3}>
+              Appuyez sur <span style={{ fontWeight: 600 }}>Ajouter</span> en haut à droite
+            </Step>
+          </ol>
+
+          {/* Bouton dismiss */}
+          <button
+            onClick={dismiss}
+            style={{
+              marginTop: 20,
+              width: '100%',
+              padding: '12px 20px',
+              borderRadius: 12,
+              border: '1.5px solid rgba(0, 0, 0, 0.1)',
+              background: 'transparent',
+              color: 'rgba(0, 0, 0, 0.65)',
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            Plus tard
+          </button>
         </div>
       </div>
-      <button onClick={dismiss}
-        style={{background:'none',border:'none',fontSize:26,color:'#e53e3e',cursor:'pointer',
-          padding:'0 2px',lineHeight:1,flexShrink:0,fontWeight:700}}>
-        ×
-      </button>
-    </div>
+    </>
+  )
+}
+
+/* ---------- Sous-composants ---------- */
+
+function Step({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <li style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+      <div
+        style={{
+          flex: '0 0 26px',
+          width: 26,
+          height: 26,
+          borderRadius: '50%',
+          background: 'var(--forest, #1a3d2e)',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 12,
+          fontWeight: 700,
+          marginTop: 1,
+        }}
+      >
+        {n}
+      </div>
+      <div
+        style={{
+          flex: 1,
+          fontSize: 13.5,
+          color: 'rgba(0, 0, 0, 0.8)',
+          lineHeight: 1.5,
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        {children}
+      </div>
+    </li>
+  )
+}
+
+/** Icône iOS "Partager" (carré avec flèche vers le haut) */
+function IoniOSShareIcon() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, margin: '0 2px', verticalAlign: 'middle' }}>
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M11 14V3.5M11 3.5L7.5 7M11 3.5L14.5 7" stroke="#007AFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 10v7a2 2 0 002 2h8a2 2 0 002-2v-7" stroke="#007AFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+  )
+}
+
+/** Icône iOS "Ajouter" (carré avec + au centre) */
+function IoniOSAddIcon() {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, margin: '0 2px', verticalAlign: 'middle' }}>
+      <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <rect x="3" y="3" width="16" height="16" rx="4" stroke="#007AFF" strokeWidth="1.6" />
+        <path d="M11 7v8M7 11h8" stroke="#007AFF" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    </span>
   )
 }
