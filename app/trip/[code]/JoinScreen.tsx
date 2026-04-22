@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
-  COULEURS_MEMBRES,
   matchParticipant,
   normalizeName,
   normalizeTel,
@@ -10,7 +9,7 @@ import {
   isValidNip,
 } from '@/lib/types'
 import { countdown } from '@/lib/utils'
-import { apiJoinTrip } from '@/lib/api'
+import { apiJoinTrip, apiRegisterMember } from '@/lib/api'
 import { TripIcon } from '@/lib/tripIcons'
 import { SvgIcon } from '@/lib/svgIcons'
 import type { Trip, Membre, ParticipantAutorise } from '@/lib/types'
@@ -262,70 +261,58 @@ export default function JoinScreen({trip,autorises,onJoin}:{
 
     const nipHash = await hashNip(nip)
 
-    // Etape 2 : reconnexion — match exact sur prenom + nom + tel dans membres
+    // Phase 2 : les INSERT/UPDATE directs sur membres sont bloques par RLS.
+    // On utilise la RPC register_member qui gere les 3 cas :
+    //  - nouveau membre (insert + token)
+    //  - deja membre par tel dans ce trip (update NIP + token)
+    //  - propagation NIP cross-trip si meme tel ailleurs
+    //
+    // Cas edge non couvert par la RPC : "membreNomSeul" (membre existe par
+    // prenom+nom sans tel dans ce trip). Dans ce cas, register_member va
+    // creer un doublon. On detecte ce cas a priori via SELECT (permis par RLS)
+    // et on refuse gentiment pour que l'admin regularise.
     const { data: membresExistants } = await supabase.from('membres').select('*').eq('trip_id', trip.id)
 
     if (membresExistants && membresExistants.length > 0) {
-      const membreExact = membresExistants.find((m: Membre) =>
+      const membreNomSeulSansTel = membresExistants.find((m: Membre) =>
         normalizeName(m.prenom) === normalizeName(prenomFinal)
         && normalizeName(m.nom || '') === normalizeName(nomFinal)
-        && normalizeTel(m.tel || '') === digits
+        && !normalizeTel(m.tel || '')
       )
-      if (membreExact) {
-        // Membre existant: on met a jour le NIP (premiere creation ou ecrasement
-        // volontaire — pas de probleme car on a valide prenom+nom+tel+nipConfirm).
-        await supabase.from('membres').update({ nip: nipHash }).eq('id', membreExact.id)
-        setLoading(false)
-        finaliserConnexion({...membreExact, nip: nipHash}, digits, prenomFinal, nomFinal)
-        return
+      if (membreNomSeulSansTel) {
+        setErreur("Ce participant existe déjà dans le trip mais sans téléphone. Contactez l'organisateur pour régulariser.")
+        setLoading(false); return
       }
-
-      const membreNomSeul = membresExistants.find((m: Membre) =>
+      const membreNomAvecTelDifferent = membresExistants.find((m: Membre) =>
         normalizeName(m.prenom) === normalizeName(prenomFinal)
         && normalizeName(m.nom || '') === normalizeName(nomFinal)
+        && normalizeTel(m.tel || '')
+        && normalizeTel(m.tel || '') !== digits
       )
-      if (membreNomSeul) {
-        if (normalizeTel(membreNomSeul.tel || '') && normalizeTel(membreNomSeul.tel || '') !== digits) {
-          setErreur("Un autre participant porte déjà ce prénom et nom dans ce trip avec un téléphone différent. Contactez l'organisateur.")
-          setLoading(false); return
-        }
-        await supabase.from('membres').update({ tel: digits, nom: nomFinal, nip: nipHash }).eq('id', membreNomSeul.id)
-        setLoading(false)
-        finaliserConnexion({...membreNomSeul, nom: nomFinal, tel: digits, nip: nipHash}, digits, prenomFinal, nomFinal)
-        return
+      if (membreNomAvecTelDifferent) {
+        setErreur("Un autre participant porte déjà ce prénom et nom dans ce trip avec un téléphone différent. Contactez l'organisateur.")
+        setLoading(false); return
       }
     }
 
-    // Etape 3 : nouvelle inscription
-    // On propage le NIP a toutes les autres lignes avec ce meme tel (s'il y en a)
-    // pour respecter le modele "1 personne = 1 NIP unique". Ca peut arriver si
-    // l'utilisateur etait deja membre d'un autre trip sans NIP (cas migration).
-    const isFirst = (membresExistants?.length ?? 0) === 0
-    const couleur = COULEURS_MEMBRES[Math.floor(Math.random()*COULEURS_MEMBRES.length)]
-    const { data, error } = await supabase.from('membres')
-      .insert({
-        trip_id: trip.id,
-        prenom: prenomFinal,
-        nom: nomFinal,
-        couleur,
-        is_createur: isFirst,
-        tel: digits,
-        nip: nipHash
-      })
-      .select().single()
-    if (!error && data) {
-      // Propagation: si l'utilisateur existe deja sur d'autres trips, on met a jour
-      // leur NIP aussi (sinon ils auront l'ancienne valeur ou NULL).
-      // On exclut le trip courant (data.id) pour eviter un update redondant.
-      await supabase.from('membres')
-        .update({ nip: nipHash })
-        .eq('tel', digits)
-        .neq('id', data.id)
-      finaliserConnexion(data, digits, prenomFinal, nomFinal)
-    } else {
+    // Delegue a la RPC (SECURITY DEFINER, bypass RLS)
+    const result = await apiRegisterMember(trip.code, prenomFinal, nomFinal, digits, nipHash)
+
+    if (!result.success || !result.membre_id) {
+      setErreur(result.message || 'Erreur de connexion. Réessayez.')
+      setLoading(false)
+      return
+    }
+
+    // Recupere le membre complet pour le passer a finaliserConnexion
+    const { data: membreCree } = await supabase.from('membres').select('*').eq('id', result.membre_id).maybeSingle()
+    if (!membreCree) {
       setErreur('Erreur de connexion. Réessayez.')
       setLoading(false)
+      return
     }
+    setLoading(false)
+    finaliserConnexion(membreCree as Membre, digits, prenomFinal, nomFinal)
   }
 
   const canSubmitInscription = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && nipValide && !loading
