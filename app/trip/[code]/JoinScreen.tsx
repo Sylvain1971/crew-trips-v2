@@ -120,7 +120,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     setErreur(null)
   }
 
-  function finaliserConnexion(membre: Membre, digits: string, prenomFinal: string, nomFinal: string) {
+  function finaliserConnexion(membre: Membre, digits: string, prenomFinal: string, nomFinal: string, tokenDejaCree = false) {
     try {
       localStorage.setItem('crew-tel-locked', formatTel(digits))
       localStorage.setItem('crew-tel', formatTel(digits))
@@ -130,7 +130,8 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     } catch {}
     // Phase 2 : générer un access_token serveur (non bloquant si échec).
     // Le token sera utilisé par get_trip_data après activation de RLS en Session 2.3.
-    if (membre.nip) {
+    // Skip si le token a déjà été créé par apiRegisterMember (flow inscription).
+    if (membre.nip && !tokenDejaCree) {
       apiJoinTrip(trip.code, digits, membre.nip).catch(() => {
         // Échec silencieux : l'app continue via les SELECT directs jusqu'à activation RLS
       })
@@ -312,7 +313,8 @@ export default function JoinScreen({trip,autorises,onJoin}:{
       return
     }
     setLoading(false)
-    finaliserConnexion(membreCree as Membre, digits, prenomFinal, nomFinal)
+    // apiRegisterMember a déjà créé le token, on skip le 2e appel dans finaliserConnexion
+    finaliserConnexion(membreCree as Membre, digits, prenomFinal, nomFinal, true)
   }
 
   const canSubmitInscription = prenom.trim().length > 0 && nom.trim().length > 0 && telComplet && nipValide && !loading
