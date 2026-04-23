@@ -437,3 +437,84 @@ export async function apiManageAutorises(
   if (error) return { success: false, message: error.message }
   return data as { success: boolean; id?: string; message?: string }
 }
+
+// ====================================================================
+// P4 : Flow /install — identité décorrélée + invitations push
+// ====================================================================
+
+export type InvitationEnAttente = {
+  trip_id: string
+  trip_code: string
+  trip_nom: string
+  trip_destination: string | null
+  trip_date_debut: string | null
+  trip_date_fin: string | null
+}
+
+/**
+ * Valide une identité (prenom+nom+tel+NIP) sans inscrire en DB.
+ * Vérifie le conflit NIP cross-trip si le tel est déjà enregistré.
+ * Le stockage se fait côté client dans localStorage.
+ */
+export async function apiRegisterIdentity(
+  prenom: string,
+  nom: string,
+  tel: string,
+  nipHash: string
+): Promise<{ success: boolean; prenom?: string; nom?: string; tel?: string; message?: string }> {
+  const { data, error } = await supabase.rpc('register_identity', {
+    p_prenom: prenom,
+    p_nom: nom,
+    p_tel: tel,
+    p_nip_hash: nipHash,
+  })
+  if (error) return { success: false, message: error.message }
+  return data as { success: boolean; prenom?: string; nom?: string; tel?: string; message?: string }
+}
+
+/**
+ * Récupère les invitations en attente pour une identité donnée.
+ * Matching hybride : tel si fourni, sinon prénom+nom insensible casse/accents.
+ * Exclut les trips où déjà membre.
+ */
+export async function apiGetInvitationsEnAttente(
+  prenom: string,
+  nom: string,
+  tel: string | null
+): Promise<{ success: boolean; invitations?: InvitationEnAttente[]; message?: string }> {
+  const { data, error } = await supabase.rpc('get_invitations_en_attente', {
+    p_prenom: prenom,
+    p_nom: nom,
+    p_tel: tel,
+  })
+  if (error) return { success: false, message: error.message }
+  return { success: true, invitations: (data as InvitationEnAttente[]) || [] }
+}
+
+/**
+ * Inscrit l'utilisateur dans un trip à partir d'une invitation en attente.
+ * Délègue à register_member après résolution du trip_code depuis le trip_id.
+ * Stocke automatiquement le token retourné.
+ */
+export async function apiRegisterFromInvitation(
+  tripId: string,
+  tripCode: string,
+  prenom: string,
+  nom: string,
+  tel: string,
+  nipHash: string
+): Promise<JoinTripResult> {
+  const { data, error } = await supabase.rpc('register_from_invitation', {
+    p_trip_id: tripId,
+    p_prenom: prenom,
+    p_nom: nom,
+    p_tel: tel,
+    p_nip_hash: nipHash,
+  })
+  if (error) return { success: false, message: error.message }
+  const result = data as JoinTripResult
+  if (result.success && result.token) {
+    setStoredToken(tripCode, result.token)
+  }
+  return result
+}
