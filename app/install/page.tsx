@@ -69,6 +69,8 @@ export default function InstallPage() {
   }, [router])
 
   // -------- État 1/5 géré via router.replace avant rendu --------
+  // Logo Crew Trips avec pulsation — remplace "Chargement…" pour meilleure
+  // perception de marque pendant la détection de plateforme (~500ms-1s).
   if (state === 'checking') {
     return (
       <main style={{
@@ -78,7 +80,30 @@ export default function InstallPage() {
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-        <div style={{ color: 'rgba(255,255,255,.4)', fontSize: 14 }}>Chargement…</div>
+        <style>{`
+          @keyframes crewLoaderPulse {
+            0%, 100% { opacity: 0.7; transform: scale(0.97); }
+            50% { opacity: 1; transform: scale(1); }
+          }
+          @keyframes crewLoaderFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
+        <div style={{
+          animation: 'crewLoaderFadeIn 0.3s ease-out both, crewLoaderPulse 1.4s ease-in-out 0.3s infinite',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}>
+          <Image
+            src="/logo-hero.webp"
+            alt="Crew Trips"
+            width={120}
+            height={120}
+            priority
+          />
+        </div>
       </main>
     )
   }

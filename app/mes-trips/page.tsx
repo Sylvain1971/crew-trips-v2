@@ -200,11 +200,42 @@ export default function MesTripsPage() {
   // Rendu : 3 états
   // =====================================================
 
-  // État 1 : chargement initial (flash court le temps de lire localStorage)
+  // État 1 : chargement initial (flash court le temps de lire localStorage).
+  // Logo Crew Trips avec pulsation douce — meilleure perception de marque
+  // que le texte "Chargement…" pendant les ~500ms-1s de transition.
   if (pageState === 'checking') {
     return (
-      <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'rgba(255,255,255,.4)', fontSize: 14 }}>Chargement…</div>
+      <main style={{
+        minHeight: '100dvh',
+        background: 'var(--forest)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <style>{`
+          @keyframes crewLoaderPulse {
+            0%, 100% { opacity: 0.7; transform: scale(0.97); }
+            50% { opacity: 1; transform: scale(1); }
+          }
+          @keyframes crewLoaderFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
+        <div style={{
+          animation: 'crewLoaderFadeIn 0.3s ease-out both, crewLoaderPulse 1.4s ease-in-out 0.3s infinite',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}>
+          <Image
+            src="/logo-hero.webp"
+            alt="Crew Trips"
+            width={120}
+            height={120}
+            priority
+          />
+        </div>
       </main>
     )
   }
