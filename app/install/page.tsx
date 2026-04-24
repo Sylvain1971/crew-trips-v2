@@ -168,80 +168,84 @@ function SafariInstallScreen() {
       />
 
       {/* -------- Card flottante (65vh, ne couvre pas tout) -------- */}
+      {/* Popup — layout 3 sections :
+          1. Bloc blanc étapes (haut, dense mais aéré — visible au-dessus de
+             la Share Sheet iOS à l'étape 3)
+          2. Logo Crew Trips (centre, respirant — caché par Share Sheet, OK)
+          3. Bloc blanc instruction finale (bas — caché par Share Sheet, OK)
+          Le container est transparent, seuls les blocs ont un fond. */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="install-title"
         style={{
           position: 'fixed',
-          top: '8%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: 'calc(100% - 32px)',
-          maxWidth: 400,
-          maxHeight: '84vh',
-          background: '#fff',
-          borderRadius: 24,
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+          top: 12,
+          left: 12,
+          right: 12,
+          bottom: 12,
+          background: 'transparent',
           zIndex: 201,
           overflowY: 'auto',
           overflowX: 'hidden',
           animation: 'crewInstallSlideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1)',
           WebkitOverflowScrolling: 'touch',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+          alignItems: 'stretch',
+          maxWidth: 440,
+          marginLeft: 'auto',
+          marginRight: 'auto',
         }}
       >
         <style>{`
           @keyframes crewInstallFadeIn { from { opacity: 0 } to { opacity: 1 } }
           @keyframes crewInstallSlideUp {
-            from { opacity: 0; transform: translate(-50%, 30px) }
-            to   { opacity: 1; transform: translate(-50%, 0) }
+            from { opacity: 0; transform: translateY(30px) }
+            to   { opacity: 1; transform: translateY(0) }
           }
         `}</style>
 
-        <div style={{ padding: '20px 18px 18px' }}>
-          {/* Header — compact pour tout montrer d'un coup d'œil */}
-          <div style={{ textAlign: 'center', marginBottom: 14 }}>
-            <img
-              src="/apple-touch-icon.png"
-              alt=""
-              width={48}
-              height={48}
-              style={{
-                borderRadius: 12,
-                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.18)',
-                marginBottom: 8,
-              }}
-            />
-            <h2
-              id="install-title"
-              style={{
-                margin: 0,
-                fontSize: 18,
-                fontWeight: 700,
-                color: '#111',
-                letterSpacing: '-0.01em',
-                lineHeight: 1.25,
-              }}
-            >
-              Installer Crew Trips sur votre iPhone
-            </h2>
-          </div>
-
+        {/* ============================================================
+            BLOC 1 — Titre + 5 étapes (reste visible pendant Share Sheet)
+            ============================================================ */}
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 20,
+            padding: '16px 16px 16px',
+            boxShadow: '0 6px 18px rgba(0, 0, 0, 0.18)',
+          }}
+        >
+          <h2
+            id="install-title"
+            style={{
+              margin: '0 0 4px',
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#0F2D0F',
+              letterSpacing: '-0.01em',
+              lineHeight: 1.2,
+              textAlign: 'center',
+            }}
+          >
+            Installer Crew Trips
+          </h2>
           <div
             style={{
-              fontSize: 11,
+              fontSize: 9.5,
               fontWeight: 600,
-              color: 'rgba(0,0,0,.45)',
+              color: 'rgba(0,0,0,.42)',
               textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              letterSpacing: '0.12em',
               textAlign: 'center',
-              margin: '6px 0 10px',
+              margin: '0 0 14px',
             }}
           >
             Suivez ces 5 étapes dans Safari
           </div>
 
-          {/* Liste des 5 étapes — compacte, tout visible d'un coup */}
           <ol
             style={{
               margin: 0,
@@ -249,35 +253,92 @@ function SafariInstallScreen() {
               listStyle: 'none',
               display: 'flex',
               flexDirection: 'column',
-              gap: 8,
+              gap: 9,
             }}
           >
-            <Step n={1} title="Tapez sur le bouton menu (trois points)" icon={<IoniOSMenuIcon />} />
+            <Step n={1} title="Tapez sur le bouton menu (⋯)" icon={<IoniOSMenuIcon />} />
             <Step n={2} title="Tapez sur Partager" icon={<IoniOSShareIcon />} />
-            <Step n={3} title="Faites défiler, tapez sur En afficher plus" icon={<IoniOSChevronIcon />} />
-            <Step n={4} title="Tapez sur Ajouter à l'écran d'accueil" icon={<IoniOSAddIcon />} />
-            <Step n={5} title="Tapez sur Ajouter (en haut à droite)" />
+            <Step n={3} title="Faites défiler, tapez En afficher plus" icon={<IoniOSChevronIcon />} />
+            <Step n={4} title="Tapez Ajouter à l'écran d'accueil" icon={<IoniOSAddIcon />} />
+            <Step n={5} title="Tapez Ajouter (en haut à droite)" />
           </ol>
+        </div>
 
-          {/* Pied : instruction finale très visible pour le moment où
-               l'utilisateur revient sur cette page après installation */}
+        {/* ============================================================
+            LOGO CENTRAL — vit dans un cadre respirant sur le fond flou
+            ============================================================ */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '6px 0',
+          }}
+        >
           <div
             style={{
-              marginTop: 14,
-              padding: '12px 14px',
-              background: 'rgba(15, 45, 15, 0.06)',
-              border: '1px solid rgba(15, 45, 15, 0.15)',
-              borderRadius: 10,
-              fontSize: 13,
+              width: 112,
+              height: 112,
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 26,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 6,
+              boxSizing: 'border-box',
+            }}
+          >
+            <img
+              src="/apple-touch-icon.png"
+              alt="Crew Trips"
+              width={96}
+              height={96}
+              style={{
+                borderRadius: 20,
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ============================================================
+            BLOC 2 — Instruction finale (lue avant Share Sheet)
+            ============================================================ */}
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 18,
+            padding: '14px 16px 13px',
+            boxShadow: '0 6px 18px rgba(0, 0, 0, 0.18)',
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              color: 'rgba(0,0,0,.42)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              marginBottom: 5,
+            }}
+          >
+            Une fois installée
+          </div>
+          <p
+            style={{
+              fontSize: 12.5,
               color: '#0F2D0F',
-              textAlign: 'center',
+              margin: 0,
               lineHeight: 1.45,
               fontWeight: 500,
             }}
           >
-            <span style={{ fontWeight: 700 }}>L&apos;icône Crew Trips apparaîtra sur votre écran d&apos;accueil.</span><br />
-            Fermez Safari et ouvrez-la pour commencer.
-          </div>
+            L&apos;icône Crew Trips apparaîtra sur votre écran d&apos;accueil.<br />
+            <span style={{ color: 'rgba(15,45,15,0.72)', fontWeight: 400 }}>
+              Fermez Safari et ouvrez-la pour commencer.
+            </span>
+          </p>
         </div>
       </div>
     </main>
@@ -385,35 +446,35 @@ function Step({
 }) {
   return (
     <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      {/* Numéro dans pastille — plus petit */}
+      {/* Numéro dans pastille — 20×20, chiffre 11 */}
       <div
         style={{
-          flex: '0 0 24px',
-          width: 24,
-          height: 24,
+          flex: '0 0 20px',
+          width: 20,
+          height: 20,
           borderRadius: '50%',
           background: 'var(--forest, #0F2D0F)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 12,
-          fontWeight: 700,
+          fontSize: 11,
+          fontWeight: 600,
         }}
       >
         {n}
       </div>
 
-      {/* Contenu — tout sur une ligne si possible */}
+      {/* Contenu — tout sur une ligne */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            fontSize: 13.5,
-            fontWeight: 600,
-            color: 'rgba(0,0,0,.85)',
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: '#111',
             lineHeight: 1.35,
           }}
         >
