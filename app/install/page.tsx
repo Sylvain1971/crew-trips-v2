@@ -198,61 +198,50 @@ function SafariInstallScreen() {
           }
         `}</style>
 
-        <div style={{ padding: '24px 22px 22px' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: 18 }}>
+        <div style={{ padding: '20px 18px 18px' }}>
+          {/* Header — compact pour tout montrer d'un coup d'œil */}
+          <div style={{ textAlign: 'center', marginBottom: 14 }}>
             <img
               src="/apple-touch-icon.png"
               alt=""
-              width={56}
-              height={56}
+              width={48}
+              height={48}
               style={{
-                borderRadius: 14,
+                borderRadius: 12,
                 boxShadow: '0 6px 20px rgba(0, 0, 0, 0.18)',
-                marginBottom: 12,
+                marginBottom: 8,
               }}
             />
             <h2
               id="install-title"
               style={{
                 margin: 0,
-                fontSize: 19,
+                fontSize: 18,
                 fontWeight: 700,
                 color: '#111',
                 letterSpacing: '-0.01em',
                 lineHeight: 1.25,
               }}
             >
-              Bienvenue dans Crew Trips <span aria-hidden>🎣</span>
+              Installer Crew Trips sur votre iPhone
             </h2>
-            <p
-              style={{
-                margin: '8px 0 0',
-                fontSize: 13,
-                color: 'rgba(0, 0, 0, 0.6)',
-                lineHeight: 1.5,
-              }}
-            >
-              Pas besoin de passer par l&apos;App Store.<br />
-              L&apos;app s&apos;installe directement depuis Safari.
-            </p>
           </div>
 
           <div
             style={{
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 600,
               color: 'rgba(0,0,0,.45)',
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               textAlign: 'center',
-              margin: '18px 0 14px',
+              margin: '6px 0 10px',
             }}
           >
-            Suivez ces 5 étapes
+            Suivez ces 5 étapes dans Safari
           </div>
 
-          {/* Liste des 5 étapes */}
+          {/* Liste des 5 étapes — compacte, tout visible d'un coup */}
           <ol
             style={{
               margin: 0,
@@ -260,39 +249,34 @@ function SafariInstallScreen() {
               listStyle: 'none',
               display: 'flex',
               flexDirection: 'column',
-              gap: 12,
+              gap: 8,
             }}
           >
-            <Step n={1} title="Tapez sur le bouton menu" icon={<IoniOSMenuIcon />}>
-              Situé en bas à droite de Safari (trois points)
-            </Step>
-            <Step n={2} title="Tapez sur Partager" icon={<IoniOSShareIcon />}>
-              Option visible dans le menu
-            </Step>
-            <Step n={3} title="Tapez sur En afficher plus" icon={<IoniOSChevronIcon />}>
-              Faites défiler vers le bas
-            </Step>
-            <Step n={4} title="Tapez sur Ajouter à l'écran d'accueil" icon={<IoniOSAddIcon />}>
-              Dans la liste qui s&apos;affiche
-            </Step>
-            <Step n={5} title="Tapez sur Ajouter (en haut à droite)">
-              L&apos;icône Crew Trips apparaîtra sur votre écran d&apos;accueil
-            </Step>
+            <Step n={1} title="Tapez sur le bouton menu (trois points)" icon={<IoniOSMenuIcon />} />
+            <Step n={2} title="Tapez sur Partager" icon={<IoniOSShareIcon />} />
+            <Step n={3} title="Faites défiler, tapez sur En afficher plus" icon={<IoniOSChevronIcon />} />
+            <Step n={4} title="Tapez sur Ajouter à l'écran d'accueil" icon={<IoniOSAddIcon />} />
+            <Step n={5} title="Tapez sur Ajouter (en haut à droite)" />
           </ol>
 
-          {/* Ligne de séparation + pied */}
+          {/* Pied : instruction finale très visible pour le moment où
+               l'utilisateur revient sur cette page après installation */}
           <div
             style={{
-              marginTop: 22,
-              paddingTop: 16,
-              borderTop: '1px solid rgba(0,0,0,.08)',
+              marginTop: 14,
+              padding: '12px 14px',
+              background: 'rgba(15, 45, 15, 0.06)',
+              border: '1px solid rgba(15, 45, 15, 0.15)',
+              borderRadius: 10,
               fontSize: 13,
-              color: 'rgba(0,0,0,.6)',
+              color: '#0F2D0F',
               textAlign: 'center',
-              lineHeight: 1.5,
+              lineHeight: 1.45,
+              fontWeight: 500,
             }}
           >
-            Ouvrez ensuite l&apos;app depuis votre écran d&apos;accueil pour commencer.
+            <span style={{ fontWeight: 700 }}>L&apos;icône Crew Trips apparaîtra sur votre écran d&apos;accueil.</span><br />
+            Fermez Safari et ouvrez-la pour commencer.
           </div>
         </div>
       </div>
@@ -395,59 +379,59 @@ function Step({
   children,
 }: {
   n: number
-  title: string
+  title: React.ReactNode
   icon?: React.ReactNode
-  children: React.ReactNode
+  children?: React.ReactNode
 }) {
   return (
-    <li style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-      {/* Numéro dans pastille */}
+    <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* Numéro dans pastille — plus petit */}
       <div
         style={{
-          flex: '0 0 28px',
-          width: 28,
-          height: 28,
+          flex: '0 0 24px',
+          width: 24,
+          height: 24,
           borderRadius: '50%',
           background: 'var(--forest, #0F2D0F)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: 700,
-          marginTop: 1,
         }}
       >
         {n}
       </div>
 
-      {/* Contenu */}
+      {/* Contenu — tout sur une ligne si possible */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            fontSize: 14,
+            fontSize: 13.5,
             fontWeight: 600,
             color: 'rgba(0,0,0,.85)',
-            lineHeight: 1.4,
-            flexWrap: 'wrap',
+            lineHeight: 1.35,
           }}
         >
           {icon}
           <span>{title}</span>
         </div>
-        <div
-          style={{
-            marginTop: 3,
-            fontSize: 12.5,
-            color: 'rgba(0, 0, 0, 0.55)',
-            lineHeight: 1.45,
-          }}
-        >
-          {children}
-        </div>
+        {children && (
+          <div
+            style={{
+              marginTop: 2,
+              fontSize: 12,
+              color: 'rgba(0, 0, 0, 0.55)',
+              lineHeight: 1.4,
+            }}
+          >
+            {children}
+          </div>
+        )}
       </div>
     </li>
   )
