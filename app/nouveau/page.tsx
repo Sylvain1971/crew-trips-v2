@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { apiCreateTrip, apiCloneTripContent } from '@/lib/api'
 import { getTripExamples } from '@/lib/utils'
@@ -39,6 +40,9 @@ function NouveauInner() {
   // appareil ne peut pas etre utilise pour se ré-identifier sous un autre
   // nom via /nouveau, ce qui ecraserait le verrou existant.
   const [identityLocked, setIdentityLocked] = useState(false)
+  // isMounted évite le flash initial pendant que useEffect lit le localStorage.
+  // Sans ce garde, React rend le formulaire vide pendant ~500ms avant l'hydratation.
+  const [isMounted, setIsMounted] = useState(false)
 
   const telComplet = tel.replace(/\D/g,'').length === 10
   const prenomOk = prenom.trim().length >= 1
@@ -70,6 +74,7 @@ function NouveauInner() {
       const sessionCode = sessionStorage.getItem('crew-creator-validated')
       if (sessionCode === '1') setCodeValide(true)
     } catch {}
+    setIsMounted(true)
   }, [])
 
   async function validerCode() {
@@ -181,6 +186,38 @@ function NouveauInner() {
       try { localStorage.setItem('crew-last-trip', code) } catch {}
       router.push('/trip/' + code + '/created')
     }
+  }
+
+  // Loader pendant l'hydratation (évite le flash du formulaire vide)
+  if (!isMounted) {
+    return (
+      <main style={{
+        minHeight: '100dvh',
+        background: 'var(--forest)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <style>{`
+          @keyframes crewLoaderPulse {
+            0%, 100% { opacity: 0.7; transform: scale(0.97); }
+            50% { opacity: 1; transform: scale(1); }
+          }
+          @keyframes crewLoaderFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+        `}</style>
+        <div style={{
+          animation: 'crewLoaderFadeIn 0.3s ease-out both, crewLoaderPulse 1.4s ease-in-out 0.3s infinite',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}>
+          <Image src="/logo-hero.webp" alt="Crew Trips" width={120} height={120} priority />
+        </div>
+      </main>
+    )
   }
 
   return (

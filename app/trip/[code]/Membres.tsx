@@ -527,7 +527,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
           </div>
           <div style={{fontSize:12,color:'var(--text-3)',marginBottom:12,lineHeight:1.5}}>
             {autorises.length===0
-              ? 'Liste vide — tout le monde peut entrer. Ajoutez des participants pour restreindre l\'accès.'
+              ? 'Liste vide — personne ne peut rejoindre ce trip. Ajoutez les participants pour leur donner accès.'
               : `${autorises.length} participant${autorises.length>1?'s':''} autorisé${autorises.length>1?'s':''}.`}
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
