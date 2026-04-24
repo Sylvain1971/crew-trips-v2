@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -437,7 +437,7 @@ function InvitationsSection({
               borderRadius: 14,
             }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-              <div style={{ fontSize: 28, lineHeight: 1, marginTop: 2 }} aria-hidden>🎣</div>
+              <div style={{ marginTop: 2 }} aria-hidden><TripIcon type={inv.trip_type} size={40} /></div>
               <div style={{ flex: 1, minWidth: 0, color: '#fff' }}>
                 <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4, wordBreak: 'break-word' }}>{inv.trip_nom}</div>
                 {inv.trip_destination && (

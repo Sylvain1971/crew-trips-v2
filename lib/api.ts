@@ -1,4 +1,4 @@
-/**
+﻿/**
  * lib/api.ts
  * Wrapper unique autour des fonctions RPC Supabase.
  * Introduit progressivement pour remplacer les .from().select/insert/update/delete
@@ -449,6 +449,7 @@ export type InvitationEnAttente = {
   trip_destination: string | null
   trip_date_debut: string | null
   trip_date_fin: string | null
+  trip_type: string
 }
 
 /**
@@ -493,8 +494,16 @@ export async function apiGetInvitationsEnAttente(
 
 /**
  * Inscrit l'utilisateur dans un trip à partir d'une invitation en attente.
- * Délègue à register_member après résolution du trip_code depuis le trip_id.
- * Stocke automatiquement le token retourné.
+ *
+ * Étape 1 : register_from_invitation inscrit le membre dans la DB
+ *           (délègue à register_member après résolution du trip_code).
+ * Étape 2 : join_trip génère et retourne le token d'auth à stocker
+ *           en localStorage (register_member ne retourne plus de token
+ *           depuis le hotfix P4h qui a retiré share_token).
+ *
+ * Si l'étape 1 réussit mais l'étape 2 échoue : on retourne quand même
+ * success=true (l'utilisateur est bien membre). Il pourra se
+ * reconnecter via join_trip plus tard depuis /mes-trips.
  */
 export async function apiRegisterFromInvitation(
   tripId: string,
@@ -504,6 +513,7 @@ export async function apiRegisterFromInvitation(
   tel: string,
   nipHash: string
 ): Promise<JoinTripResult> {
+  // Étape 1 : inscription
   const { data, error } = await supabase.rpc('register_from_invitation', {
     p_trip_id: tripId,
     p_prenom: prenom,
@@ -513,8 +523,19 @@ export async function apiRegisterFromInvitation(
   })
   if (error) return { success: false, message: error.message }
   const result = data as JoinTripResult
-  if (result.success && result.token) {
-    setStoredToken(tripCode, result.token)
+  if (!result.success) return result
+
+  // Étape 2 : récupérer le token d'auth via join_trip
+  try {
+    const joinResult = await apiJoinTrip(tripCode, tel, nipHash)
+    if (joinResult.success && joinResult.token) {
+      // apiJoinTrip stocke déjà le token via setStoredToken
+      return { ...result, token: joinResult.token }
+    }
+  } catch {
+    // Silencieux : l'inscription a marché, le token peut être récupéré
+    // au prochain chargement de /mes-trips ou du trip.
   }
+
   return result
 }
