@@ -354,16 +354,7 @@ export default function MesTripsPage() {
             </div>
           ))}
 
-          {trips.length > 0 && (
-            <button onClick={() => router.push('/nouveau')}
-              style={{
-                marginTop: 16, width: '100%', padding: '12px 20px', borderRadius: 12,
-                border: '1.5px solid rgba(255,255,255,.2)', background: 'transparent',
-                color: 'rgba(255,255,255,.85)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
-              }}>
-              + Créer un nouveau trip
-            </button>
-          )}
+
         </div>
       </div>
     </main>
