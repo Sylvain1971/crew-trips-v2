@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <main style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',background:'var(--forest)',padding:'56px 20px 40px',position:'relative'}}>
 
-      {/* Signature hero — positionnee vers le haut, pas centree */}
+      {/* Signature hero — positionnée vers le haut, pas centrée */}
       <div style={{textAlign:'center',marginBottom:80,display:'flex',flexDirection:'column',alignItems:'center'}}>
         <Image
           src="/logo-hero.webp"
@@ -42,26 +42,23 @@ export default function Home() {
           <div style={{marginLeft:'auto',fontSize:20,color:'var(--text-3)'}}>›</div>
         </button>
 
-        {/* Nouveau trip */}
-        <button onClick={()=>router.push('/nouveau')}
-          style={{width:'100%',padding:'18px 24px',borderRadius:16,border:'1.5px solid rgba(255,255,255,.2)',
-            background:'rgba(255,255,255,.08)',color:'#fff',fontSize:16,fontWeight:700,
-            cursor:'pointer',display:'flex',alignItems:'center',gap:14,textAlign:'left'}}>
-          <div style={{width:44,height:44,borderRadius:12,background:'rgba(255,255,255,.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>
-            ✚
-          </div>
-          <div>
-            <div style={{fontSize:16,fontWeight:700}}>Nouveau trip</div>
-            <div style={{fontSize:12,color:'rgba(255,255,255,.7)',fontWeight:400,marginTop:2}}>Créer un trip pour votre groupe</div>
-          </div>
-          <div style={{marginLeft:'auto',fontSize:20,color:'rgba(255,255,255,.55)'}}>›</div>
-        </button>
-
       </div>
 
       <p style={{fontSize:11,color:'rgba(255,255,255,.35)',textAlign:'center',position:'absolute',bottom:24,left:0,right:0}}>
         crew-trips-v2.vercel.app
       </p>
+
+      {/* Bouton + pour créer un nouveau trip — symétrique au ⚙️ */}
+      <button onClick={()=>router.push('/nouveau')} aria-label="Créer un nouveau trip"
+        style={{position:'fixed',bottom:24,left:20,
+          background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.15)',
+          borderRadius:'50%',width:40,height:40,display:'flex',alignItems:'center',justifyContent:'center',
+          cursor:'pointer',color:'rgba(255,255,255,.55)',padding:0}}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
 
       <a href="/admin" aria-label="Administration" style={{position:'fixed',bottom:24,right:20,
         background:'rgba(255,255,255,.1)',border:'1px solid rgba(255,255,255,.15)',

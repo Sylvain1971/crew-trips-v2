@@ -48,7 +48,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
     // - Participant: affiche le QR d'office pour aider un autre participant
     //   deja ajoute a la liste a se connecter rapidement (telephone a telephone)
     if (typeof window !== 'undefined') {
-      const url = `${window.location.origin}/trip/${trip.code}`
+      const url = `${window.location.origin}/install`
       QRCode.toDataURL(url, { width: 512, margin: 2, color: { dark: '#0F2D0F', light: '#ffffff' } })
         .then(d => setQrDataUrl(d))
         .catch(() => {})
@@ -56,25 +56,25 @@ export default function Membres({trip, membre, onTripUpdate}: {
   },[trip.id, trip.code])
 
   function copyLink() {
-    navigator.clipboard.writeText(`${window.location.origin}/trip/${trip.code}`)
+    navigator.clipboard.writeText(`${window.location.origin}/install`)
     setCopied(true); setTimeout(()=>setCopied(false),3000)
   }
   function openTexto() {
-    const url = `${window.location.origin}/trip/${trip.code}`
-    const body = `Je t'invite au trip ${trip.nom}. Voici le lien: ${url}`
+    const url = `${window.location.origin}/install`
+    const body = `Je t'invite au trip ${trip.nom} sur Crew Trips. Installe l'app ici: ${url}`
     window.location.href = `sms:&body=${encodeURIComponent(body)}`
   }
   function openMail() {
-    const url = `${window.location.origin}/trip/${trip.code}`
+    const url = `${window.location.origin}/install`
     const subject = `Invitation : ${trip.nom} (Crew Trips)`
-    const body = `Je t'invite au trip ${trip.nom}.\n\n${url}\n\nCrew Trips regroupe les infos du voyage — vols, lodge, chat. Aucun compte requis.`
+    const body = `Je t'invite au trip ${trip.nom}.\n\nInstalle l'app ici : ${url}\n\nCrew Trips regroupe les infos du voyage — vols, lodge, chat. Aucun compte requis. L'invitation au trip apparaitra automatiquement apres creation de ton identite.`
     window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   }
   async function openQRModal() {
     // Si deja genere (cas normal), juste ouvrir la modal
     if (qrDataUrl) { setShowQR(true); return }
     // Fallback si la generation au mount a echoue
-    const url = `${window.location.origin}/trip/${trip.code}`
+    const url = `${window.location.origin}/install`
     try {
       const dataUrl = await QRCode.toDataURL(url, { width: 512, margin: 2, color: { dark: '#0F2D0F', light: '#ffffff' } })
       setQrDataUrl(dataUrl)
@@ -405,7 +405,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
         <div style={{background:'rgba(255,255,255,.08)',borderRadius:10,padding:'8px 12px',fontSize:12,
           color:'rgba(255,255,255,.6)',fontFamily:'monospace',marginBottom:12,wordBreak:'break-all',
           border:'1px solid rgba(255,255,255,.12)'}}>
-          {typeof window!=='undefined'?`${window.location.origin}/trip/${trip.code}`:`/trip/${trip.code}`}
+          {typeof window!=='undefined'?`${window.location.origin}/install`:`/trip/${trip.code}`}
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           <button onClick={copyLink} style={{gridColumn:'1 / -1',padding:'12px',borderRadius:10,border:'none',
@@ -435,7 +435,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
       </div>
       )}
 
-      {/* QR code pour aider un copain — participants (non createurs) seulement.
+      {/* QR code pour inviter un copain — participants (non createurs) seulement.
           Affiche le QR du trip d'office pour que le participant puisse le
           montrer a un autre participant DEJA ajoute a la liste, qui est a
           cote de lui (telephone a telephone). Pas de boutons de partage:
@@ -446,7 +446,7 @@ export default function Membres({trip, membre, onTripUpdate}: {
             QR code pour aider un copain
           </div>
           <div style={{color:'rgba(255,255,255,.6)',fontSize:13,marginBottom:14,lineHeight:1.55,maxWidth:320,margin:'0 auto 14px'}}>
-            Montrez ce code à un autre participant déjà ajouté à la liste qui est à côté de vous — il pourra rejoindre le trip directement.
+            Montrez ce code à quelqu'un pour qu'il installe Crew Trips. S'il a été ajouté à la liste des participants, l'invitation à ce trip apparaîtra automatiquement après sa création d'identité.
           </div>
 
           {qrDataUrl ? (
