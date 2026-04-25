@@ -58,6 +58,8 @@ export default function MesTripsPage() {
   const [invitLoading, setInvitLoading] = useState(false)
   const [joiningId, setJoiningId] = useState<string | null>(null)
   const [joinError, setJoinError] = useState<string | null>(null)
+  // Nom du trip en cours d'inscription (pour l'overlay "Inscription en cours…")
+  const [joiningTripName, setJoiningTripName] = useState<string | null>(null)
 
   // --- État de la page ---
   const [pageState, setPageState] = useState<PageState>('checking')
@@ -173,12 +175,15 @@ export default function MesTripsPage() {
   // -----------------------------------------------------------------
   async function rejoindreInvitation(inv: InvitationEnAttente) {
     setJoiningId(inv.trip_id); setJoinError(null)
+    // Afficher l'overlay IMMÉDIATEMENT (masque le flash entre fin API et navigation)
+    setJoiningTripName(inv.trip_nom)
 
     const digits = normalizeTel(tel)
     const nipHash = localStorage.getItem('crew-nip-hash') || ''
     if (!nipHash) {
       setJoinError('NIP manquant. Veuillez ressaisir votre identité.')
       setJoiningId(null)
+      setJoiningTripName(null)
       return
     }
 
@@ -189,10 +194,13 @@ export default function MesTripsPage() {
     if (!result.success) {
       setJoinError(result.message || "Erreur d'inscription. Réessayez.")
       setJoiningId(null)
+      setJoiningTripName(null)
       return
     }
-    // Succès : on retire l'invitation de la liste et on redirige
-    setInvitations(prev => prev.filter(i => i.trip_id !== inv.trip_id))
+    // Succès : redirection IMMÉDIATE.
+    // On NE filtre PAS l'invitation localement (causait flash "aucun trip").
+    // L'overlay reste affiché jusqu'à la navigation. Le retour sur /mes-trips
+    // re-fetchera naturellement la liste à jour via useEffect.
     router.push(`/trip/${inv.trip_code}`)
   }
 
@@ -261,6 +269,62 @@ export default function MesTripsPage() {
   // État 3 : autorisé — trips + invitations
   return (
     <main style={{ minHeight: '100dvh', background: 'var(--forest)', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Overlay "Inscription en cours…" — masque le flash entre la fin de
+          register_from_invitation et la navigation vers /trip/[code]. Logo
+          Crew Trips animé pour cohérence avec les loaders /install et /nouveau. */}
+      {joiningTripName && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'var(--forest)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 20,
+        }}>
+          <style>{`
+            @keyframes crewLoaderPulse {
+              0%, 100% { opacity: 0.7; transform: scale(0.97); }
+              50% { opacity: 1; transform: scale(1); }
+            }
+            @keyframes crewLoaderFadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+          `}</style>
+          <div style={{
+            animation: 'crewLoaderFadeIn 0.3s ease-out both, crewLoaderPulse 1.4s ease-in-out 0.3s infinite',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 18,
+          }}>
+            <Image src="/logo-hero.webp" alt="Crew Trips" width={120} height={120} priority />
+            <div style={{
+              color: 'rgba(255,255,255,.85)',
+              fontSize: 15,
+              fontWeight: 500,
+              textAlign: 'center',
+              maxWidth: 280,
+              lineHeight: 1.4,
+            }}>
+              Inscription en cours…
+              <div style={{
+                fontSize: 13,
+                color: 'rgba(255,255,255,.55)',
+                marginTop: 4,
+                fontWeight: 400,
+              }}>
+                {joiningTripName}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ background: 'var(--forest)', padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
         <button onClick={() => router.push('/')}
