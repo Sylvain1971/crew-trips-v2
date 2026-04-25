@@ -170,6 +170,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
     if (!membre.nip) {
       setLoading(false)
       setPendingMembre(membre)
+      setNip('')  // P4j3: reset le NIP pour forcer une saisie consciente du nouveau NIP
       setMode('creer-nip')
       // Pre-remplir le tel pour eviter de le retaper
       return
@@ -527,7 +528,7 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               Bienvenue {pendingMembre?.prenom} !
             </div>
             <div style={{fontSize:12,color:'rgba(255,255,255,.5)',textAlign:'center',marginBottom:18,lineHeight:1.65}}>
-              Pour sécuriser votre accès, créez un NIP à 4 chiffres. Vous l&apos;utiliserez à chaque connexion sur un nouvel appareil.
+              Aucun NIP n&apos;est défini sur votre compte (création initiale ou réinitialisation par l&apos;administrateur). Créez un NIP à 4 chiffres — vous l&apos;utiliserez à chaque connexion sur un nouvel appareil.
             </div>
 
             <div style={{marginBottom:14}}>
