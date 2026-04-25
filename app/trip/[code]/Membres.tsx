@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Membre, Trip, ParticipantAutorise } from '@/lib/types'
 import { normalizeName, normalizeTel, formatNomComplet, hashNip, isValidNip } from '@/lib/types'
-import { apiManageAutorises, apiDeleteMemberSafe, apiUpdateTripFields, apiUpdateMember, apiDeleteTripFull, apiSaveNip } from '@/lib/api'
+import { apiManageAutorises, apiDeleteMemberSafe, apiUpdateTripFields, apiUpdateMember, apiDeleteTripFull, apiSaveNip, apiAdminResetMemberNip } from '@/lib/api'
 import { SvgIcon } from '@/lib/svgIcons'
 import QRCode from 'qrcode'
 
@@ -30,6 +30,10 @@ export default function Membres({trip, membre, onTripUpdate}: {
   const [newNip, setNewNip] = useState('')
   const [savingNip, setSavingNip] = useState(false)
   const [nipError, setNipError] = useState<string|null>(null)
+  // P4j : Reset NIP par admin
+  const [resetNipMembre, setResetNipMembre] = useState<Membre | null>(null)
+  const [resettingNip, setResettingNip] = useState(false)
+  const [resetMessage, setResetMessage] = useState<string | null>(null)
   const [shareCopied, setShareCopied] = useState(false)
   const [generatingShare, setGeneratingShare] = useState(false)
   const [showQR, setShowQR] = useState(false)
@@ -297,6 +301,22 @@ export default function Membres({trip, membre, onTripUpdate}: {
       setNipError('Erreur : ' + (e instanceof Error ? e.message : String(e)))
     } finally {
       setSavingNip(false)
+    }
+  }
+
+  // P4j : Reset NIP d'un membre par l'admin
+  async function confirmResetNip() {
+    if (!resetNipMembre) return
+    setResettingNip(true)
+    const r = await apiAdminResetMemberNip(trip.code, resetNipMembre.id)
+    setResettingNip(false)
+    if (r.success) {
+      setMembres(p => p.map(m => m.id === resetNipMembre.id ? { ...m, nip: null } : m))
+      setResetMessage(`NIP de ${resetNipMembre.prenom} réinitialisé. ${resetNipMembre.prenom} devra définir un nouveau NIP au prochain login.`)
+      setTimeout(() => setResetMessage(null), 5000)
+      setResetNipMembre(null)
+    } else {
+      alert(r.message || 'Erreur lors de la réinitialisation du NIP.')
     }
   }
 
@@ -645,6 +665,12 @@ export default function Membres({trip, membre, onTripUpdate}: {
                     ⚠ NOM MANQUANT
                   </span>
                 )}
+                {m.nip === null && !m.is_createur && (
+                  <span title="NIP réinitialisé — sera redéfini au prochain login" style={{fontSize:10,fontWeight:700,color:'#B45309',background:'#FEF3C7',
+                    border:'1px solid #FDE68A',borderRadius:6,padding:'2px 6px',letterSpacing:'.04em'}}>
+                    🔓 NIP À REDÉFINIR
+                  </span>
+                )}
               </div>
               <div style={{fontSize:11,color:'var(--text-3)',marginTop:1}}>
                 {m.id===membre.id ? 'Vous · ' : ''}
@@ -733,11 +759,20 @@ export default function Membres({trip, membre, onTripUpdate}: {
               </div>
             </div>
             {isCreateur && !m.is_createur && (
-              <button onClick={()=>retirerMembre(m)}
-                style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8,
-                  padding:'5px 10px',fontSize:12,fontWeight:600,color:'#DC2626',cursor:'pointer'}}>
-                Retirer
-              </button>
+              <div style={{display:'flex',flexDirection:'column',gap:6,flexShrink:0}}>
+                <button onClick={()=>setResetNipMembre(m)}
+                  title="Réinitialiser le NIP de ce membre"
+                  style={{background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,
+                    padding:'5px 10px',fontSize:12,fontWeight:600,color:'#B45309',cursor:'pointer',
+                    display:'inline-flex',alignItems:'center',gap:4,whiteSpace:'nowrap'}}>
+                  🔓 Reset NIP
+                </button>
+                <button onClick={()=>retirerMembre(m)}
+                  style={{background:'#FEF2F2',border:'1px solid #FECACA',borderRadius:8,
+                    padding:'5px 10px',fontSize:12,fontWeight:600,color:'#DC2626',cursor:'pointer'}}>
+                  Retirer
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -804,6 +839,47 @@ export default function Membres({trip, membre, onTripUpdate}: {
           )}
         </div>
       )}
+      {/* P4j : Modale confirmation Reset NIP */}
+      {resetNipMembre && (
+        <div onClick={()=>!resettingNip && setResetNipMembre(null)}
+          style={{position:'fixed',inset:0,background:'rgba(0,0,0,.6)',zIndex:1000,
+            display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:'#fff',borderRadius:16,padding:24,maxWidth:400,width:'100%'}}>
+            <div style={{fontSize:18,fontWeight:700,marginBottom:8,color:'#0F2D0F',display:'inline-flex',alignItems:'center',gap:7}}>
+              <span>🔓</span> Réinitialiser le NIP ?
+            </div>
+            <div style={{fontSize:14,color:'var(--text-2)',marginBottom:18,lineHeight:1.5}}>
+              Le NIP de <strong>{formatNomComplet(resetNipMembre.prenom, resetNipMembre.nom)}</strong> sera supprimé. Au prochain login, {resetNipMembre.prenom} devra définir un nouveau NIP.
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button onClick={confirmResetNip} disabled={resettingNip}
+                style={{flex:1,padding:'12px',borderRadius:10,border:'none',
+                  background:resettingNip?'#FCD34D':'#B45309',color:'#fff',fontWeight:700,fontSize:14,
+                  cursor:resettingNip?'default':'pointer'}}>
+                {resettingNip?'Réinitialisation…':'Réinitialiser'}
+              </button>
+              <button onClick={()=>setResetNipMembre(null)} disabled={resettingNip}
+                style={{padding:'12px 16px',borderRadius:10,border:'1px solid var(--border)',
+                  background:'#fff',color:'var(--text-2)',fontWeight:600,fontSize:14,
+                  cursor:resettingNip?'default':'pointer'}}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* P4j : Toast succès reset NIP */}
+      {resetMessage && (
+        <div style={{position:'fixed',bottom:24,left:'50%',transform:'translateX(-50%)',
+          background:'#16A34A',color:'#fff',padding:'12px 20px',borderRadius:10,
+          fontWeight:600,fontSize:13,zIndex:1100,boxShadow:'0 4px 12px rgba(0,0,0,.2)',
+          maxWidth:'calc(100% - 32px)',textAlign:'center',lineHeight:1.4}}>
+          {resetMessage}
+        </div>
+      )}
+
       {/* QR Code modal */}
       {showQR && (
         <div onClick={()=>setShowQR(false)}

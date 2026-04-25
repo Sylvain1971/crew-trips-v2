@@ -83,6 +83,34 @@ export function clearStoredToken(tripCode: string): void {
   try { window.localStorage.removeItem(TOKEN_KEY(tripCode)) } catch {}
 }
 
+/**
+ * Récupère le token stocké, OU regénère un token via apiGetMembreById si absent.
+ *
+ * Contexte : tryTelReconnect (useTripSession) reconnecte le membre via son
+ * tel sans valider le NIP (donc sans générer de token). Quand l'utilisateur
+ * tente ensuite une mutation (apiSaveInfoCard, etc.), il n'a pas de token,
+ * tombe sur le fallback INSERT direct, qui est bloqué par RLS.
+ *
+ * Cette fonction lit le membre.id depuis localStorage `crew2-${tripCode}`
+ * et appelle apiGetMembreById (qui stocke automatiquement un token valide
+ * grâce à la RPC SQL #9 token-stability). Cas géré silencieusement.
+ */
+async function getOrRefreshToken(tripCode: string): Promise<string | null> {
+  let token = getStoredToken(tripCode)
+  if (token) return token
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(`crew2-${tripCode}`)
+    if (!raw) return null
+    const m = JSON.parse(raw) as { id?: string }
+    if (!m?.id) return null
+    await apiGetMembreById(m.id, tripCode)
+    return getStoredToken(tripCode)
+  } catch {
+    return null
+  }
+}
+
 // ====================================================================
 // Fonctions RPC wrappées
 // ====================================================================
@@ -126,7 +154,7 @@ export async function apiJoinTrip(
 export async function apiGetTripData(
   tripCode: string
 ): Promise<GetTripDataResult> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) {
     return { success: false, message: 'Pas de token. Veuillez vous reconnecter.' }
   }
@@ -184,6 +212,32 @@ export async function apiRegisterMember(
     setStoredToken(tripCode, result.token)
   }
   return result
+}
+
+/**
+ * P4j : Reset NIP par admin.
+ * Met membres.nip à NULL pour le membre cible et invalide ses access_tokens.
+ * Le membre devra définir un nouveau NIP au prochain login (mode 'creer-nip'
+ * du JoinScreen détecte automatiquement nip IS NULL).
+ *
+ * Sécurité côté serveur :
+ *  - Le caller doit avoir un token access_tokens valide pour ce trip
+ *  - Le caller doit être is_createur=true sur ce trip
+ *  - Pas de reset de son propre NIP par cette voie
+ */
+export async function apiAdminResetMemberNip(
+  tripCode: string,
+  memberId: string
+): Promise<{ success: boolean; prenom?: string; nom?: string; message?: string }> {
+  const token = await getOrRefreshToken(tripCode)
+  if (!token) return { success: false, message: 'Pas de token' }
+  const { data, error } = await supabase.rpc('admin_reset_member_nip', {
+    p_token: token,
+    p_trip_code: tripCode,
+    p_member_id: memberId,
+  })
+  if (error) return { success: false, message: error.message }
+  return data as { success: boolean; prenom?: string; nom?: string; message?: string }
 }
 
 export async function apiGetAutorises(tripCode: string): Promise<{ success: boolean; autorises?: unknown[]; message?: string }> {
@@ -255,7 +309,7 @@ export async function apiCloneTripContent(
   dstTripId: string,
   srcTripCode: string
 ): Promise<{ success: boolean; cards_cloned?: number; message?: string }> {
-  const token = getStoredToken(dstTripCode)
+  const token = await getOrRefreshToken(dstTripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('clone_trip_content', {
     p_token: token,
@@ -267,7 +321,7 @@ export async function apiCloneTripContent(
 }
 
 export async function apiDeleteTripFull(tripCode: string, tripId: string): Promise<{ success: boolean; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('delete_trip_full', { p_token: token, p_trip_id: tripId })
   if (error) return { success: false, message: error.message }
@@ -282,7 +336,7 @@ export async function apiUpdateTripFields(
   tripId: string,
   updates: Record<string, unknown>
 ): Promise<{ success: boolean; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('update_trip_fields', {
     p_token: token,
@@ -298,7 +352,7 @@ export async function apiUpdateMember(
   membreId: string,
   updates: Record<string, unknown>
 ): Promise<{ success: boolean; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('update_member', {
     p_token: token,
@@ -313,7 +367,7 @@ export async function apiDeleteMemberSafe(
   tripCode: string,
   membreId: string
 ): Promise<{ success: boolean; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('delete_member_safe', { p_token: token, p_membre_id: membreId })
   if (error) return { success: false, message: error.message }
@@ -345,7 +399,7 @@ export async function apiSaveInfoCard(
     membre_prenom?: string | null
   }
 ): Promise<{ success: boolean; card?: unknown; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('save_info_card', {
     p_token: token,
@@ -365,7 +419,7 @@ export async function apiSaveInfoCard(
 }
 
 export async function apiDeleteInfoCard(tripCode: string, tripId: string, id: string): Promise<{ success: boolean; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('delete_info_card', { p_token: token, p_trip_id: tripId, p_id: id })
   if (error) return { success: false, message: error.message }
@@ -386,7 +440,7 @@ export async function apiPostMessage(
     membre_couleur?: string | null
   }
 ): Promise<{ success: boolean; message?: unknown; error?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, error: 'Pas de token' }
   const { data, error } = await supabase.rpc('post_message', {
     p_token: token,
@@ -405,7 +459,7 @@ export async function apiPostMessage(
 }
 
 export async function apiDeleteMessages(tripCode: string, tripId: string, ids: string[]): Promise<{ success: boolean; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('delete_messages', { p_token: token, p_trip_id: tripId, p_ids: ids })
   if (error) return { success: false, message: error.message }
@@ -423,7 +477,7 @@ export async function apiManageAutorises(
     tel?: string | null
   }
 ): Promise<{ success: boolean; id?: string; message?: string }> {
-  const token = getStoredToken(tripCode)
+  const token = await getOrRefreshToken(tripCode)
   if (!token) return { success: false, message: 'Pas de token' }
   const { data, error } = await supabase.rpc('manage_autorises', {
     p_token: token,
