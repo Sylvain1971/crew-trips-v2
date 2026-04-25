@@ -101,9 +101,9 @@ export default function InfoCardView({ card, canDelete, canEdit, isCreateur, col
                 </a>
               )}
               {isImage && (
-                <a href={card.fichier_url!} target="_blank" rel="noreferrer" style={badge()} onClick={saveFiltreToSession}>
+                <button onClick={() => onOpenPdf(card.fichier_url!, card.titre)} style={badge()}>
                   {SVG.image} Voir la photo
-                </a>
+                </button>
               )}
               {pdfUrl && (
                 <button onClick={() => onOpenPdf(pdfUrl, card.titre)} style={badge()}>

@@ -482,9 +482,26 @@ export default function JoinScreen({trip,autorises,onJoin}:{
               {loading ? 'Connexion…' : 'Entrer dans le trip →'}
             </button>
 
-            <div style={{fontSize:11,color:'rgba(255,255,255,.4)',textAlign:'center',marginTop:6,lineHeight:1.5}}>
-              🤔 NIP oublié ? Contactez l&apos;administrateur du trip pour qu&apos;il le réinitialise.
-            </div>
+            {trip.createur_tel ? (
+              <a
+                href={`sms:${trip.createur_tel}?&body=${encodeURIComponent(
+                  `Salut, j'ai oublié mon NIP pour le trip "${trip.nom}". Peux-tu le réinitialiser dans l'app ? (Groupe → 🔓 Reset NIP à côté de mon nom)`
+                )}`}
+                style={{
+                  display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                  width:'100%',padding:'10px',marginTop:6,borderRadius:10,
+                  background:'rgba(255,255,255,.06)',
+                  border:'1px solid rgba(255,255,255,.12)',
+                  color:'rgba(255,255,255,.65)',
+                  fontSize:12,fontWeight:600,textDecoration:'none',
+                }}>
+                🤔 NIP oublié ? Demander à l&apos;administrateur
+              </a>
+            ) : (
+              <div style={{fontSize:11,color:'rgba(255,255,255,.4)',textAlign:'center',marginTop:6,lineHeight:1.5}}>
+                🤔 NIP oublié ? Contactez l&apos;administrateur du trip pour qu&apos;il le réinitialise.
+              </div>
+            )}
 
             {!isStandalone && (
               <button onClick={()=>{setMode('choice');setErreur(null);setNip('')}}
