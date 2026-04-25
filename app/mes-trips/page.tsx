@@ -551,6 +551,14 @@ function CreateIdentityScreen({
   const [showNip, setShowNip] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // P4j5 : si l'inscription échoue avec un tel déjà associé à un autre NIP,
+  // on charge les invitations pour récupérer le tel de l'admin du trip
+  // et offrir un bouton SMS pré-rempli "Contacter l'admin".
+  const [adminContacts, setAdminContacts] = useState<Array<{
+    prenom: string | null
+    tel: string
+    tripNom: string
+  }>>([])
 
   const telDigits = normalizeTel(tel)
   const telComplet = telDigits.length === 10
@@ -566,7 +574,7 @@ function CreateIdentityScreen({
     if (!telComplet) { setErreur('Numéro de téléphone requis (10 chiffres).'); return }
     if (!nipValide) { setErreur('NIP requis (4 chiffres).'); return }
 
-    setLoading(true); setErreur(null)
+    setLoading(true); setErreur(null); setAdminContacts([])
 
     const nipHash = await hashNip(nip)
     const result = await apiRegisterIdentity(prenomClean, nomClean, telDigits, nipHash)
@@ -574,6 +582,29 @@ function CreateIdentityScreen({
     if (!result.success) {
       setErreur(result.message || "Erreur lors de la validation de l'identité.")
       setLoading(false)
+      // P4j5 : tenter de récupérer le tel de l'admin pour offrir un bouton SMS
+      // (silencieux : si aucune invitation, on ne fait rien)
+      try {
+        const inv = await apiGetInvitationsEnAttente(prenomClean, nomClean, telDigits)
+        if (inv.success && inv.invitations && inv.invitations.length > 0) {
+          // Dédupliquer par tel (un même admin peut avoir plusieurs trips)
+          const seenTels = new Set<string>()
+          const contacts: Array<{ prenom: string | null; tel: string; tripNom: string }> = []
+          for (const i of inv.invitations) {
+            if (i.trip_createur_tel && !seenTels.has(i.trip_createur_tel)) {
+              seenTels.add(i.trip_createur_tel)
+              contacts.push({
+                prenom: i.trip_createur_prenom,
+                tel: i.trip_createur_tel,
+                tripNom: i.trip_nom,
+              })
+            }
+          }
+          setAdminContacts(contacts)
+        }
+      } catch {
+        // Silencieux
+      }
       return
     }
 
@@ -726,6 +757,34 @@ function CreateIdentityScreen({
               borderRadius: 10, padding: '10px 14px', marginBottom: 10,
             }}>
               <p style={{ fontSize: 13, color: '#fca5a5', textAlign: 'center', lineHeight: 1.5, margin: 0 }}>{erreur}</p>
+            </div>
+          )}
+
+          {/* P4j5 : boutons SMS pour contacter les admins quand inscription échoue */}
+          {erreur && adminContacts.length > 0 && (
+            <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,.5)',
+                letterSpacing: '.12em', textTransform: 'uppercase', textAlign: 'center', marginBottom: 2,
+              }}>
+                💬 Besoin d&apos;aide ?
+              </div>
+              {adminContacts.map((admin) => (
+                <a key={admin.tel}
+                  href={`sms:${admin.tel}?&body=${encodeURIComponent(
+                    `Salut${admin.prenom ? ' ' + admin.prenom : ''}, je n'arrive pas à m'inscrire à Crew Trips pour le trip "${admin.tripNom}". Peux-tu m'aider ?`
+                  )}`}
+                  style={{
+                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                    width:'100%',padding:'10px 12px',borderRadius:10,
+                    background:'rgba(255,255,255,.06)',
+                    border:'1px solid rgba(255,255,255,.15)',
+                    color:'rgba(255,255,255,.85)',
+                    fontSize:13,fontWeight:600,textDecoration:'none',
+                  }}>
+                  📱 Contacter {admin.prenom || 'l\'administrateur'} ({admin.tripNom})
+                </a>
+              ))}
             </div>
           )}
 

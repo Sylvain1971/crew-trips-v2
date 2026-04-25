@@ -504,6 +504,8 @@ export type InvitationEnAttente = {
   trip_date_debut: string | null
   trip_date_fin: string | null
   trip_type: string
+  trip_createur_tel: string | null
+  trip_createur_prenom: string | null
 }
 
 /**
