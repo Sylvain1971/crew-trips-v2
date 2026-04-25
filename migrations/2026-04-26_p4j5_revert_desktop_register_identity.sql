@@ -1,10 +1,18 @@
 -- =============================================================================
--- P4j5 : register_identity expose admin_tel/admin_prenom/trip_nom en cas d'erreur
+-- P4j5 REVERT (Desktop) : retire les champs admin_tel/admin_prenom/trip_nom
+-- du retour de register_identity.
 -- =============================================================================
--- Quand register_identity rejette un NIP different (cas C de P4j4), le frontend
--- doit pouvoir afficher un bouton "Contacter l'admin" pour permettre a l'utilisateur
--- de demander un reset du NIP. Pour ca, la RPC retourne maintenant les infos
--- de l'admin du trip le plus recent du membre concerne.
+-- Contexte : 2 approches P4j5 ont ete creees en parallele (Claude mobile +
+-- Claude desktop). L'approche mobile (modification de get_invitations_en_attente)
+-- a ete retenue car elle reutilise les invitations deja chargees, plus propre
+-- que dupliquer la logique dans register_identity.
+--
+-- Cette migration restaure register_identity a sa version P4j4 :
+-- - Cas A (nouveau)              -> success simple
+-- - Cas B (nip match)            -> success
+-- - Cas C (nip different)        -> error "NIP different" SANS admin info
+-- - Cas D (nip NULL)             -> success + propagation
+-- - Cas E (multi-trip cross-tel) -> propagation a tous
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION register_identity(
@@ -22,9 +30,6 @@ DECLARE
   v_tel_norm TEXT;
   v_existing_nip TEXT;
   v_membres_sans_nip INT;
-  v_admin_tel TEXT;
-  v_admin_prenom TEXT;
-  v_trip_nom TEXT;
 BEGIN
   IF p_prenom IS NULL OR trim(p_prenom) = '' THEN
     RETURN jsonb_build_object('success', false, 'message', 'Prenom requis.');
@@ -50,26 +55,9 @@ BEGIN
   LIMIT 1;
 
   IF v_existing_nip IS NOT NULL AND v_existing_nip != p_nip_hash THEN
-    SELECT
-      t.nom,
-      t.createur_tel,
-      COALESCE(
-        (SELECT prenom FROM membres WHERE trip_id = t.id AND is_createur = true LIMIT 1),
-        'l''administrateur'
-      )
-    INTO v_trip_nom, v_admin_tel, v_admin_prenom
-    FROM trips t
-    JOIN membres m ON m.trip_id = t.id
-    WHERE normalize_tel(m.tel) = v_tel_norm
-    ORDER BY t.created_at DESC
-    LIMIT 1;
-
     RETURN jsonb_build_object(
       'success', false,
-      'message', 'Ce numero de telephone est deja associe a un NIP different.',
-      'admin_tel', v_admin_tel,
-      'admin_prenom', v_admin_prenom,
-      'trip_nom', v_trip_nom
+      'message', 'Ce numero de telephone est deja associe a un NIP different.'
     );
   END IF;
 

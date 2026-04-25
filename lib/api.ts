@@ -518,7 +518,7 @@ export async function apiRegisterIdentity(
   nom: string,
   tel: string,
   nipHash: string
-): Promise<{ success: boolean; prenom?: string; nom?: string; tel?: string; message?: string; admin_tel?: string; admin_prenom?: string; trip_nom?: string }> {
+): Promise<{ success: boolean; prenom?: string; nom?: string; tel?: string; message?: string }> {
   const { data, error } = await supabase.rpc('register_identity', {
     p_prenom: prenom,
     p_nom: nom,
@@ -526,7 +526,7 @@ export async function apiRegisterIdentity(
     p_nip_hash: nipHash,
   })
   if (error) return { success: false, message: error.message }
-  return data as { success: boolean; prenom?: string; nom?: string; tel?: string; message?: string; admin_tel?: string; admin_prenom?: string; trip_nom?: string }
+  return data as { success: boolean; prenom?: string; nom?: string; tel?: string; message?: string }
 }
 
 /**
